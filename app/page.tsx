@@ -1,68 +1,86 @@
-import Image from "next/image";
-
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
+    <div id="home" className="min-h-screen bg-slate-950 text-white">
+      <header className="border-b border-white/10">
+        <nav
+          aria-label="Main navigation"
+          className="mx-auto flex h-20 max-w-6xl items-center justify-between px-6 lg:px-8"
+        >
+          <a href="#home" className="flex items-center gap-3">
+            <span className="flex size-9 items-center justify-center rounded-full border border-emerald-300/40 bg-emerald-300/10 text-sm font-semibold text-emerald-300">
+              PC
+            </span>
+            <span className="text-sm font-semibold tracking-wide">
+              Predictive Compass
+            </span>
+          </a>
+
+          <div className="flex items-center gap-6 text-sm text-slate-300 sm:gap-8">
+            <a className="transition-colors hover:text-white" href="#home">
+              Home
+            </a>
             <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+              className="transition-colors hover:text-white"
+              href="#predictions"
             >
-              Templates
-            </a>{" "}
-            or the{" "}
+              Predictions
+            </a>
             <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+              className="rounded-full border border-white/15 px-4 py-2 font-medium text-white transition-colors hover:border-emerald-300/50 hover:bg-emerald-300/10"
+              href="#login"
             >
-              Learning
-            </a>{" "}
-            center.
+              Login
+            </a>
+          </div>
+        </nav>
+      </header>
+
+      <main className="mx-auto flex w-full max-w-6xl flex-col px-6 pb-20 pt-24 lg:px-8 lg:pt-32">
+        <section className="max-w-3xl">
+          <p className="mb-5 text-sm font-semibold uppercase tracking-[0.24em] text-emerald-300">
+            Football intelligence, clearly guided
           </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+          <h1 className="text-5xl font-semibold tracking-[-0.04em] text-balance sm:text-6xl lg:text-7xl">
+            Predictive Compass
+          </h1>
+          <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-300 sm:text-xl">
+            Thoughtful football match predictions designed to help you see the
+            game ahead with greater clarity.
+          </p>
+        </section>
+
+        <section
+          id="predictions"
+          aria-labelledby="predictions-title"
+          className="mt-20 rounded-3xl border border-white/10 bg-white/[0.04] p-6 shadow-2xl shadow-black/20 sm:p-8 lg:mt-28 lg:p-10"
+        >
+          <div className="flex items-center justify-between border-b border-white/10 pb-6">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-300">
+                Match centre
+              </p>
+              <h2
+                id="predictions-title"
+                className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl"
+              >
+                Today&apos;s Predictions
+              </h2>
+            </div>
+            <span className="hidden rounded-full bg-white/[0.06] px-3 py-1.5 text-xs text-slate-400 sm:block">
+              Coming soon
+            </span>
+          </div>
+
+          <div className="flex min-h-64 flex-col items-center justify-center text-center">
+            <div className="mb-5 size-2 rounded-full bg-emerald-300 shadow-[0_0_24px_rgba(110,231,183,0.75)]" />
+            <p className="text-lg font-medium text-slate-200">
+              Predictions will appear here
+            </p>
+            <p className="mt-2 max-w-sm text-sm leading-6 text-slate-500">
+              Today&apos;s match outlooks will be displayed in this space.
+            </p>
+          </div>
+        </section>
       </main>
     </div>
   );
