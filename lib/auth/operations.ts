@@ -1,6 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import { internalAuthIdentifierForPhone } from "./internal-identifier";
 import {
   loginSchema,
   registerSchema,
@@ -20,13 +19,12 @@ export async function registerCustomer(
   const parsed = registerSchema.safeParse(input);
   if (!parsed.success) return validationError(parsed.error);
 
-  const { displayName, phone, password } = parsed.data;
-  const email = internalAuthIdentifierForPhone(phone);
+  const { displayName, email, password } = parsed.data;
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
-      data: { display_name: displayName, phone_number: phone },
+      data: { display_name: displayName },
     },
   });
 
@@ -50,13 +48,12 @@ export async function loginCustomer(
 ): Promise<OperationResult> {
   const parsed = loginSchema.safeParse(input);
   if (!parsed.success) return validationError(parsed.error);
-  const { phone, password } = parsed.data;
-  const email = internalAuthIdentifierForPhone(phone);
+  const { email, password } = parsed.data;
   const { error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) {
     return {
       status: "error",
-      message: "Incorrect phone number or password.",
+      message: "Incorrect email or password.",
     };
   }
   return { status: "success", redirectTo: "/account" };

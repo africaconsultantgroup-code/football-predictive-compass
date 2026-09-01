@@ -11,12 +11,10 @@ type AuthAction = (
 ) => Promise<AuthActionState>;
 
 type Field = {
-  name: "displayName" | "phone" | "password" | "confirmPassword";
+  name: "displayName" | "email" | "password" | "confirmPassword";
   label: string;
-  type: "text" | "tel" | "password";
+  type: "text" | "email" | "password";
   autoComplete: string;
-  inputMode?: "tel";
-  placeholder?: string;
 };
 
 export function AuthForm({
@@ -44,9 +42,7 @@ export function AuthForm({
             autoComplete={field.autoComplete}
             className="mt-2 w-full rounded-xl border border-white/10 bg-slate-950/70 px-4 py-3 text-white outline-none transition focus:border-emerald-300/60 focus:ring-2 focus:ring-emerald-300/10"
             id={field.name}
-            inputMode={field.inputMode}
             name={field.name}
-            placeholder={field.placeholder}
             required
             type={field.type}
           />

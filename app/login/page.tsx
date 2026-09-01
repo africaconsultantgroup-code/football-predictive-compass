@@ -10,7 +10,7 @@ export default function LoginPage() {
       <AuthForm
         action={loginAction}
         fields={[
-          { name: "phone", label: "Phone number", type: "tel", autoComplete: "tel", inputMode: "tel", placeholder: "0241234567" },
+          { name: "email", label: "Email", type: "email", autoComplete: "email" },
           { name: "password", label: "Password", type: "password", autoComplete: "current-password" },
         ]}
         submitLabel="Log in"
