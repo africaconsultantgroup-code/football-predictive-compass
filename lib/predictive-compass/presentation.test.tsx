@@ -77,7 +77,7 @@ describe("customer prediction presentation", () => {
     expect(preview).toMatchObject({ competition: "Premier League", prediction_available: true, locked: true });
     expect(serialized).not.toMatch(/predicted_outcome|predicted_score|probabilities|reliability|customer_summary|customer_key_factors/);
     expect(html).toContain("Prediction available");
-    expect(html).toContain("Locked · Full Access");
+    expect(html).toContain("Locked · Match access required");
     expect(html).not.toContain("Arsenal Win");
     expect(html).not.toContain("42%");
   });

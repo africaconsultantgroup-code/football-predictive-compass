@@ -115,7 +115,7 @@ export async function getPredictionOffers(
     priceAmount: product.price_amount,
     currency: product.currency,
     matchCount: product.prediction_access_product_matches.length,
-  }));
+  })).filter((offer) => offer.scopeType === "match" || offer.matchCount >= 2);
 }
 
 export async function getActivePredictionGrants(
