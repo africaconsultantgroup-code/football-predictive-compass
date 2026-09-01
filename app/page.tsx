@@ -2,8 +2,10 @@ import { Suspense } from "react";
 
 import { PredictionsContent, PredictionsLoading } from "./predictions";
 import LiveMatches from "./live-matches";
+import { getCurrentUser } from "../lib/auth/session";
 
-export default function Home() {
+export default async function Home() {
+  const user = await getCurrentUser();
   return (
     <div id="home" className="min-h-screen bg-slate-950 text-white">
       <header className="border-b border-white/10">
@@ -30,12 +32,14 @@ export default function Home() {
             >
               Predictions
             </a>
-            <a
-              className="rounded-full border border-white/15 px-4 py-2 font-medium text-white transition-colors hover:border-emerald-300/50 hover:bg-emerald-300/10"
-              href="#login"
-            >
-              Login
-            </a>
+            {user ? (
+              <a className="rounded-full border border-white/15 px-4 py-2 font-medium text-white transition-colors hover:border-emerald-300/50 hover:bg-emerald-300/10" href="/account">Account</a>
+            ) : (
+              <div className="flex items-center gap-3">
+                <a className="transition-colors hover:text-white" href="/login">Login</a>
+                <a className="rounded-full border border-white/15 px-4 py-2 font-medium text-white transition-colors hover:border-emerald-300/50 hover:bg-emerald-300/10" href="/register">Register</a>
+              </div>
+            )}
           </div>
         </nav>
       </header>
