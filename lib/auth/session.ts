@@ -8,7 +8,6 @@ import { createCustomerAuthServerClient } from "../supabase/auth-server";
 export type CurrentCustomer = {
   id: string;
   email: string | null;
-  displayName: string | null;
 };
 
 export function customerFromVerifiedClaims(
@@ -18,16 +17,9 @@ export function customerFromVerifiedClaims(
   const claims = data?.claims;
   if (error || !claims || typeof claims.sub !== "string") return null;
 
-  const metadata = claims.user_metadata;
-  const displayName =
-    metadata && typeof metadata === "object" &&
-    typeof (metadata as Record<string, unknown>).display_name === "string"
-      ? (metadata as Record<string, string>).display_name
-      : null;
   return {
     id: claims.sub,
     email: typeof claims.email === "string" ? claims.email : null,
-    displayName,
   };
 }
 

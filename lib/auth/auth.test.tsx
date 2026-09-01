@@ -1,11 +1,13 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { readFileSync } from "node:fs";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
 import { AccountDetails } from "../../app/account/page";
 import { loginCustomer, logoutCustomer, registerCustomer } from "./operations";
+import { getCustomerProfile, updateCustomerDisplayName } from "./profile";
 import { customerFromVerifiedClaims, requireUserWith } from "./session";
 import { getPublicSupabaseConfig } from "../supabase/config";
 
@@ -101,24 +103,83 @@ describe("email and password login and logout", () => {
 });
 
 describe("account session protection", () => {
-  const customer = { id: "user-1", email: "ada@example.com", displayName: "Ada Fan" };
+  const customer = { id: "user-1", email: "ada@example.com" };
 
   it("renders an authenticated customer from verified claims", () => {
     expect(customerFromVerifiedClaims({ claims: {
       sub: customer.id,
       email: customer.email,
-      user_metadata: { display_name: customer.displayName },
     } }, null)).toEqual(customer);
-    const html = renderToStaticMarkup(<AccountDetails user={customer} />);
+    const html = renderToStaticMarkup(
+      <AccountDetails user={customer} displayName="Ada Fan" />,
+    );
     expect(html).toContain("ada@example.com");
     expect(html).toContain("Ada Fan");
-    expect(html).toContain("My Account");
+    expect(html).toContain("Customer Account");
+    expect(html).toContain("No active plan");
+    expect(html).toContain("Free / Preview");
   });
 
   it("redirects unauthenticated account access to login", async () => {
     const redirect = vi.fn(() => { throw new Error("REDIRECT:/login"); });
     await expect(requireUserWith(async () => null, redirect)).rejects.toThrow("REDIRECT:/login");
     expect(redirect).toHaveBeenCalledOnce();
+  });
+});
+
+describe("customer profiles", () => {
+  it("loads only the authenticated customer's profile id", async () => {
+    const maybeSingle = vi.fn().mockResolvedValue({
+      data: { id: "user-1", display_name: "Ada Fan" },
+      error: null,
+    });
+    const eq = vi.fn(() => ({ maybeSingle }));
+    const select = vi.fn(() => ({ eq }));
+    const client = { from: vi.fn(() => ({ select })) } as unknown as SupabaseClient;
+
+    await expect(getCustomerProfile(client, "user-1")).resolves.toEqual({
+      id: "user-1",
+      displayName: "Ada Fan",
+    });
+    expect(eq).toHaveBeenCalledWith("id", "user-1");
+  });
+
+  it("updates only the authenticated customer's display name", async () => {
+    const single = vi.fn().mockResolvedValue({ data: { id: "user-1" }, error: null });
+    const select = vi.fn(() => ({ single }));
+    const eq = vi.fn(() => ({ select }));
+    const update = vi.fn(() => ({ eq }));
+    const client = { from: vi.fn(() => ({ update })) } as unknown as SupabaseClient;
+
+    await expect(updateCustomerDisplayName(client, "user-1", "  Ada Updated  "))
+      .resolves.toEqual({ status: "success", message: "Name updated." });
+    expect(update).toHaveBeenCalledWith({ display_name: "Ada Updated" });
+    expect(eq).toHaveBeenCalledWith("id", "user-1");
+  });
+
+  it("rejects a response for a different customer id", async () => {
+    const single = vi.fn().mockResolvedValue({ data: { id: "user-2" }, error: null });
+    const client = {
+      from: vi.fn(() => ({
+        update: vi.fn(() => ({
+          eq: vi.fn(() => ({ select: vi.fn(() => ({ single })) })),
+        })),
+      })),
+    } as unknown as SupabaseClient;
+
+    const result = await updateCustomerDisplayName(client, "user-1", "Ada Updated");
+    expect(result.status).toBe("error");
+  });
+
+  it("creates and protects profiles by auth.users.id in the migration", () => {
+    const migration = readFileSync(
+      "supabase/migrations/20260901153610_customer_profiles.sql",
+      "utf8",
+    );
+    expect(migration).toContain("values (new.id, new.raw_user_meta_data ->> 'display_name')");
+    expect(migration).toContain("using ((select auth.uid()) = id)");
+    expect(migration).toContain("with check ((select auth.uid()) = id)");
+    expect(migration).not.toMatch(/create policy[\s\S]*for (insert|delete)/i);
   });
 });
 
