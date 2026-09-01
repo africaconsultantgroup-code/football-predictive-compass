@@ -23,10 +23,19 @@ import type {
   FootballStage,
 } from "./schema";
 import { createFootballCoreClient } from "./server";
+import { capabilities, type CustomerAccess } from "../auth/access";
+import { toLiveListPreview } from "./preview";
 
 const apiKey = "live-football-service-secret";
 const baseUrl = "https://core.example.test";
 const matchId = `fm_${"a".repeat(32)}`;
+const visitorAccess: CustomerAccess = { customer: null, subscription: null, capabilities: new Set() };
+const freeAccess: CustomerAccess = { customer: { id: "free", email: "free@example.com" }, subscription: null, capabilities: new Set() };
+const fullAccess: CustomerAccess = {
+  customer: { id: "full", email: "full@example.com" },
+  subscription: { name: "Full Access", endsAt: null },
+  capabilities: new Set(Object.values(capabilities)),
+};
 
 const livePrediction = {
   predicted_outcome: "home_win" as const,
@@ -144,7 +153,7 @@ describe("live Core client", () => {
 
 describe("same-origin live route boundary", () => {
   it("returns only supplied sanitized data and no credential", async () => {
-    const handler = createLiveListHandler(async () => ({ domain: "football", matches: [] }));
+    const handler = createLiveListHandler(async () => ({ domain: "football", matches: [] }), async () => fullAccess, capabilities.liveFull, (value) => value);
     const response = await handler();
     expect(response.status).toBe(200);
     expect(response.headers.get("Cache-Control")).toBe("no-store");
@@ -152,7 +161,7 @@ describe("same-origin live route boundary", () => {
   });
 
   it("handles upstream failure without exposing details", async () => {
-    const handler = createLiveListHandler(async () => { throw new Error(`Core ${baseUrl} ${apiKey}`); });
+    const handler = createLiveListHandler(async () => { throw new Error(`Core ${baseUrl} ${apiKey}`); }, async () => fullAccess, capabilities.liveFull, (value) => value);
     const response = await handler();
     const body = await response.text();
     expect(response.status).toBe(503);
@@ -162,8 +171,34 @@ describe("same-origin live route boundary", () => {
 
   it("rejects an invalid match ID before invoking Core", async () => {
     const load = vi.fn();
-    const response = await createLiveMatchHandler(load)("not-a-match");
+    const response = await createLiveMatchHandler(load, async () => fullAccess, capabilities.liveFull)("not-a-match");
     expect(response.status).toBe(400);
+    expect(load).not.toHaveBeenCalled();
+  });
+
+  it.each([visitorAccess, freeAccess])("returns preview data without protected live intelligence", async (access) => {
+    const value = { domain: "football" as const, matches: [liveMatch()] };
+    const handler = createLiveListHandler(async () => value, async () => access, capabilities.liveFull, (input) => toLiveListPreview(input as typeof value));
+    const response = await handler();
+    const body = await response.json();
+    expect(response.status).toBe(200);
+    expect(body.matches[0]).toMatchObject({ competition: "Premier League", prediction_available: true, locked: true });
+    expect(body.matches[0]).not.toHaveProperty("latest_prediction");
+    expect(JSON.stringify(body)).not.toMatch(/predicted_outcome|probabilities|reliability|customer_summary|customer_key_factors/);
+  });
+
+  it("returns full live intelligence only with live capability", async () => {
+    const value = { domain: "football" as const, matches: [liveMatch()] };
+    const response = await createLiveListHandler(async () => value, async () => fullAccess, capabilities.liveFull, () => null)();
+    expect((await response.json()).matches[0].latest_prediction.probabilities.home_win).toBe(58.25);
+  });
+
+  it("returns 401 for visitors and 403 for free customers on premium detail", async () => {
+    const load = vi.fn(async () => liveMatch());
+    const visitor = await createLiveMatchHandler(load, async () => visitorAccess, capabilities.liveFull)(matchId);
+    const free = await createLiveMatchHandler(load, async () => freeAccess, capabilities.liveFull)(matchId);
+    expect(visitor.status).toBe(401);
+    expect(free.status).toBe(403);
     expect(load).not.toHaveBeenCalled();
   });
 });

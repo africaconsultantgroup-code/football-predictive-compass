@@ -111,13 +111,30 @@ describe("account session protection", () => {
       email: customer.email,
     } }, null)).toEqual(customer);
     const html = renderToStaticMarkup(
-      <AccountDetails user={customer} displayName="Ada Fan" />,
+      <AccountDetails user={customer} displayName="Ada Fan" access={{ customer, subscription: null, capabilities: new Set() }} />,
     );
     expect(html).toContain("ada@example.com");
     expect(html).toContain("Ada Fan");
     expect(html).toContain("Customer Account");
     expect(html).toContain("No active plan");
     expect(html).toContain("Free / Preview");
+  });
+
+  it("shows Full Access from real subscription state", () => {
+    const html = renderToStaticMarkup(
+      <AccountDetails
+        user={customer}
+        displayName="Ada Fan"
+        access={{
+          customer,
+          subscription: { name: "Full Access", endsAt: "2026-10-01T00:00:00.000Z" },
+          capabilities: new Set(["football.prematch.full"]),
+        }}
+      />,
+    );
+    expect(html).toContain("Full Access");
+    expect(html).toContain("Access until");
+    expect(html).not.toContain("Free / Preview");
   });
 
   it("redirects unauthenticated account access to login", async () => {

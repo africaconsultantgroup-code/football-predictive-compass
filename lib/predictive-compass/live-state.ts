@@ -1,16 +1,16 @@
 import type {
-  FootballLiveMatch,
+  FootballLiveMatchView,
   FootballPredictionHistoryEntry,
 } from "./schema";
 
 export type LiveMatchesState = {
-  matches: FootballLiveMatch[];
+  matches: FootballLiveMatchView[];
   hasLoaded: boolean;
   updateDelayed: boolean;
 };
 
 export type LiveMatchesAction =
-  | { type: "success"; matches: FootballLiveMatch[] }
+  | { type: "success"; matches: FootballLiveMatchView[] }
   | { type: "failure" };
 
 export const initialLiveMatchesState: LiveMatchesState = {
@@ -19,7 +19,7 @@ export const initialLiveMatchesState: LiveMatchesState = {
   updateDelayed: false,
 };
 
-export function uniqueMatches(matches: FootballLiveMatch[]) {
+export function uniqueMatches(matches: FootballLiveMatchView[]) {
   return [...new Map(matches.map((match) => [match.match_id, match])).values()];
 }
 
@@ -38,7 +38,7 @@ export function liveMatchesReducer(
   };
 }
 
-export function livePollDelay(matches: FootballLiveMatch[], hidden: boolean) {
+export function livePollDelay(matches: FootballLiveMatchView[], hidden: boolean) {
   if (hidden) return 60_000;
   return matches.some(
     (match) => match.stage !== "PREMATCH" && match.stage !== "FINAL",

@@ -12,9 +12,10 @@ import {
   isActivelyLive,
 } from "../lib/predictive-compass/presentation";
 import {
-  footballLiveMatchListSchema,
+  footballCustomerLiveMatchListSchema,
   footballPredictionHistorySchema,
   type FootballLiveMatch,
+  type FootballLiveMatchView,
   type FootballPredictionHistory,
 } from "../lib/predictive-compass/schema";
 import {
@@ -25,7 +26,7 @@ import {
   shouldLoadHistory,
 } from "../lib/predictive-compass/live-state";
 
-function scoreLabel(match: FootballLiveMatch) {
+function scoreLabel(match: FootballLiveMatchView) {
   if (!match.current_score) return `${match.home_team} vs ${match.away_team}`;
   return `${match.home_team} ${match.current_score.home} \u2013 ${match.current_score.away} ${match.away_team}`;
 }
@@ -125,7 +126,28 @@ function PredictionTimeline({ match }: { match: FootballLiveMatch }) {
   );
 }
 
-export function LiveMatchCard({ match }: { match: FootballLiveMatch }) {
+export function LiveMatchCard({ match }: { match: FootballLiveMatchView }) {
+  if ("locked" in match) {
+    const minute = formatMatchMinute(match.minute, match.added_time);
+    const active = isActivelyLive(match.stage);
+    return (
+      <article className="rounded-2xl border border-emerald-300/20 bg-slate-950/70 p-5 shadow-xl shadow-emerald-950/20 sm:p-6">
+        <div className="flex items-start justify-between gap-4 border-b border-white/10 pb-5">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-300">{match.competition}</p>
+            <h3 className="mt-3 text-xl font-semibold text-white">{scoreLabel(match)}</h3>
+            <p className="mt-2 text-sm font-semibold uppercase tracking-[0.12em] text-slate-300">{minute ? `${minute} · ` : ""}{formatFootballStage(match.stage)}</p>
+          </div>
+          {active ? <span className="flex shrink-0 items-center gap-2 rounded-full bg-emerald-300/10 px-3 py-1.5 text-xs font-bold text-emerald-300"><span className="size-1.5 animate-pulse rounded-full bg-emerald-300" />LIVE</span> : null}
+        </div>
+        <div className="py-6 text-center">
+          <p className="text-sm font-semibold text-emerald-300">{match.prediction_available ? "Live prediction available" : "Live prediction is being prepared"}</p>
+          <p className="mt-2 text-sm text-slate-400">Live intelligence and prediction timelines require Full Access.</p>
+          <span className="mt-4 inline-flex rounded-full border border-white/15 px-3 py-1.5 text-xs font-semibold text-slate-300">Locked · Full Access</span>
+        </div>
+      </article>
+    );
+  }
   const prediction = match.latest_prediction;
   const minute = formatMatchMinute(match.minute, match.added_time);
   const active = isActivelyLive(match.stage);
@@ -209,7 +231,7 @@ export default function LiveMatches() {
           signal: controller.signal,
         });
         if (!response.ok) throw new Error("live update unavailable");
-        const result = footballLiveMatchListSchema.parse(await response.json());
+        const result = footballCustomerLiveMatchListSchema.parse(await response.json());
         if (mountedRef.current) {
           matchesRef.current = result.matches;
           dispatch({ type: "success", matches: result.matches });

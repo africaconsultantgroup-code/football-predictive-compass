@@ -79,6 +79,24 @@ export const footballLiveMatchSchema = z
   })
   .strip();
 
+export const footballLiveMatchPreviewSchema = z
+  .object({
+    match_id: footballMatchIdSchema,
+    competition: z.string().min(1),
+    home_team: z.string().min(1),
+    away_team: z.string().min(1),
+    kickoff_at: z.string().datetime({ offset: true }).nullable(),
+    status: z.string().min(1),
+    minute: z.number().int().min(0).max(130).nullable(),
+    added_time: z.number().int().min(0).max(30).nullable(),
+    current_score: footballScoreSchema.nullable(),
+    stage: footballStageSchema,
+    updated_at: z.string().datetime({ offset: true }).nullable(),
+    prediction_available: z.boolean(),
+    locked: z.literal(true),
+  })
+  .strict();
+
 export const footballLiveMatchListSchema = z
   .object({
     domain: z.literal("football"),
@@ -87,6 +105,18 @@ export const footballLiveMatchListSchema = z
   .transform(({ matches }) => ({
     domain: "football" as const,
     matches: matches.map((match) => footballLiveMatchSchema.parse(match)),
+  }));
+
+export const footballCustomerLiveMatchListSchema = z
+  .object({
+    domain: z.literal("football"),
+    matches: z.array(z.unknown()),
+  })
+  .transform(({ matches }) => ({
+    domain: "football" as const,
+    matches: matches.map((match) =>
+      z.union([footballLiveMatchSchema, footballLiveMatchPreviewSchema]).parse(match),
+    ),
   }));
 
 export const footballMatchPredictionSchema = z
@@ -150,6 +180,8 @@ export const footballPredictionHistorySchema = z
 export type FootballStage = z.infer<typeof footballStageSchema>;
 export type FootballLivePrediction = z.infer<typeof footballLivePredictionSchema>;
 export type FootballLiveMatch = z.infer<typeof footballLiveMatchSchema>;
+export type FootballLiveMatchPreview = z.infer<typeof footballLiveMatchPreviewSchema>;
+export type FootballLiveMatchView = FootballLiveMatch | FootballLiveMatchPreview;
 export type FootballLiveMatchList = z.infer<typeof footballLiveMatchListSchema>;
 export type FootballMatchPrediction = z.infer<typeof footballMatchPredictionSchema>;
 export type FootballPredictionHistory = z.infer<typeof footballPredictionHistorySchema>;

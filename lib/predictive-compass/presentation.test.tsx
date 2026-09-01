@@ -3,7 +3,8 @@ import { describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
-import { PredictionCard } from "../../app/predictions";
+import { PredictionCard, PredictionPreviewCard } from "../../app/predictions";
+import { toPredictionPreview } from "./preview";
 import type { FootballPrediction } from "./schema";
 import { formatPredictedOutcome } from "./presentation";
 
@@ -66,5 +67,17 @@ describe("customer prediction presentation", () => {
 
     expect(html).not.toContain("<script>");
     expect(html).toContain("&lt;script&gt;");
+  });
+
+  it("renders a locked fixture preview without full prediction intelligence", () => {
+    const preview = toPredictionPreview(prediction);
+    const serialized = JSON.stringify(preview);
+    const html = renderToStaticMarkup(<PredictionPreviewCard prediction={preview} />);
+    expect(preview).toMatchObject({ competition: "Premier League", prediction_available: true, locked: true });
+    expect(serialized).not.toMatch(/predicted_outcome|predicted_score|probabilities|reliability|customer_summary|customer_key_factors/);
+    expect(html).toContain("Prediction available");
+    expect(html).toContain("Locked · Full Access");
+    expect(html).not.toContain("Arsenal Win");
+    expect(html).not.toContain("42%");
   });
 });
