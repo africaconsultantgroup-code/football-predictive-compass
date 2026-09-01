@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 
 import { PredictionsContent, PredictionsLoading } from "./predictions";
+import LiveMatches from "./live-matches";
 
 export default function Home() {
   return (
@@ -52,6 +53,8 @@ export default function Home() {
             game ahead with greater clarity.
           </p>
         </section>
+
+        <LiveMatches />
 
         <section
           id="predictions"

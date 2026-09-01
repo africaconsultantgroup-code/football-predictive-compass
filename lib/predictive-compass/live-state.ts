@@ -1,0 +1,64 @@
+import type {
+  FootballLiveMatch,
+  FootballPredictionHistoryEntry,
+} from "./schema";
+
+export type LiveMatchesState = {
+  matches: FootballLiveMatch[];
+  hasLoaded: boolean;
+  updateDelayed: boolean;
+};
+
+export type LiveMatchesAction =
+  | { type: "success"; matches: FootballLiveMatch[] }
+  | { type: "failure" };
+
+export const initialLiveMatchesState: LiveMatchesState = {
+  matches: [],
+  hasLoaded: false,
+  updateDelayed: false,
+};
+
+export function uniqueMatches(matches: FootballLiveMatch[]) {
+  return [...new Map(matches.map((match) => [match.match_id, match])).values()];
+}
+
+export function liveMatchesReducer(
+  state: LiveMatchesState,
+  action: LiveMatchesAction,
+): LiveMatchesState {
+  if (action.type === "failure") {
+    return { ...state, hasLoaded: true, updateDelayed: true };
+  }
+
+  return {
+    matches: uniqueMatches(action.matches),
+    hasLoaded: true,
+    updateDelayed: false,
+  };
+}
+
+export function livePollDelay(matches: FootballLiveMatch[], hidden: boolean) {
+  if (hidden) return 60_000;
+  return matches.some(
+    (match) => match.stage !== "PREMATCH" && match.stage !== "FINAL",
+  )
+    ? 20_000
+    : 60_000;
+}
+
+export function shouldLoadHistory(
+  opening: boolean,
+  hasHistory: boolean,
+  loading: boolean,
+) {
+  return opening && !hasHistory && !loading;
+}
+
+export function chronologicalHistory(
+  entries: FootballPredictionHistoryEntry[],
+) {
+  return [...entries].sort((left, right) =>
+    (left.generated_at ?? "").localeCompare(right.generated_at ?? ""),
+  );
+}

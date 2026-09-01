@@ -1,5 +1,42 @@
 import { z } from "zod";
 
+export const footballStageSchema = z.enum([
+  "PREMATCH",
+  "FIRST_HALF_LIVE",
+  "HALFTIME",
+  "SECOND_HALF_LIVE",
+  "FINAL",
+]);
+
+export const footballProbabilitiesSchema = z.object({
+  home_win: z.number().min(0).max(100),
+  draw: z.number().min(0).max(100),
+  away_win: z.number().min(0).max(100),
+});
+
+export const footballScoreSchema = z.object({
+  home: z.number().int().nonnegative(),
+  away: z.number().int().nonnegative(),
+});
+
+export const footballReliabilitySchema = z.object({
+  score: z.number().min(0).max(100).nullable(),
+  label: z.enum(["Low", "Moderate", "High", "Unavailable"]),
+});
+
+export const footballLivePredictionSchema = z
+  .object({
+    predicted_outcome: z.enum(["home_win", "draw", "away_win"]),
+    predicted_score: footballScoreSchema.nullable(),
+    probabilities: footballProbabilitiesSchema,
+    reliability: footballReliabilitySchema,
+    verification_status: z.string().min(1),
+    important_information_pending: z.boolean(),
+    customer_summary: z.string().min(1),
+    customer_key_factors: z.array(z.string().min(1)).max(3),
+  })
+  .strip();
+
 export const footballPredictionSchema = z
   .object({
     prediction_id: z.string().min(1),
@@ -7,21 +44,11 @@ export const footballPredictionSchema = z
     home_team: z.string().min(1),
     away_team: z.string().min(1),
     kickoff_at: z.string().datetime({ offset: true }).nullable(),
-    stage: z.enum(["PREMATCH", "FIRST_HALF_LIVE", "HALFTIME", "SECOND_HALF_LIVE", "FINAL"]),
+    stage: footballStageSchema,
     predicted_outcome: z.enum(["home_win", "draw", "away_win"]),
-    predicted_score: z.object({
-      home: z.number().int().nonnegative(),
-      away: z.number().int().nonnegative(),
-    }).nullable(),
-    probabilities: z.object({
-      home_win: z.number().min(0).max(100),
-      draw: z.number().min(0).max(100),
-      away_win: z.number().min(0).max(100),
-    }),
-    reliability: z.object({
-      score: z.number().min(0).max(100).nullable(),
-      label: z.enum(["Low", "Moderate", "High", "Unavailable"]),
-    }),
+    predicted_score: footballScoreSchema.nullable(),
+    probabilities: footballProbabilitiesSchema,
+    reliability: footballReliabilitySchema,
     verification_status: z.string().min(1),
     important_information_pending: z.boolean(),
     customer_summary: z.string().min(1),
@@ -32,6 +59,101 @@ export const footballPredictionSchema = z
   .strip();
 
 export type FootballPrediction = z.infer<typeof footballPredictionSchema>;
+
+export const footballMatchIdSchema = z.string().regex(/^fm_[a-f0-9]{32}$/);
+
+export const footballLiveMatchSchema = z
+  .object({
+    match_id: footballMatchIdSchema,
+    competition: z.string().min(1),
+    home_team: z.string().min(1),
+    away_team: z.string().min(1),
+    kickoff_at: z.string().datetime({ offset: true }).nullable(),
+    status: z.string().min(1),
+    minute: z.number().int().min(0).max(130).nullable(),
+    added_time: z.number().int().min(0).max(30).nullable(),
+    current_score: footballScoreSchema.nullable(),
+    stage: footballStageSchema,
+    latest_prediction: footballLivePredictionSchema.nullable(),
+    updated_at: z.string().datetime({ offset: true }).nullable(),
+  })
+  .strip();
+
+export const footballLiveMatchListSchema = z
+  .object({
+    domain: z.literal("football"),
+    matches: z.array(z.unknown()),
+  })
+  .transform(({ matches }) => ({
+    domain: "football" as const,
+    matches: matches.map((match) => footballLiveMatchSchema.parse(match)),
+  }));
+
+export const footballMatchPredictionSchema = z
+  .object({
+    match_id: footballMatchIdSchema,
+    competition: z.string().min(1),
+    home_team: z.string().min(1),
+    away_team: z.string().min(1),
+    kickoff_at: z.string().datetime({ offset: true }).nullable(),
+    status: z.string().min(1),
+    minute: z.number().int().min(0).max(130).nullable(),
+    added_time: z.number().int().min(0).max(30).nullable(),
+    current_score: footballScoreSchema.nullable(),
+    stage: footballStageSchema,
+    prediction: footballLivePredictionSchema,
+    updated_at: z.string().datetime({ offset: true }).nullable(),
+  })
+  .strip();
+
+export const footballPredictionHistoryEntrySchema = z
+  .object({
+    stage: footballStageSchema,
+    minute: z.number().int().min(0).max(130).nullable(),
+    current_score: footballScoreSchema.nullable(),
+    predicted_outcome: z.enum(["home_win", "draw", "away_win"]),
+    predicted_score: footballScoreSchema.nullable(),
+    probabilities: footballProbabilitiesSchema,
+    reliability: footballReliabilitySchema,
+    generated_at: z.string().datetime({ offset: true }).nullable(),
+    change_reason: z.enum([
+      "interval_update",
+      "goal",
+      "red_card",
+      "penalty",
+      "score_correction",
+      "halftime",
+      "match_started",
+      "final",
+      "update",
+    ]),
+    change_description: z.string().min(1),
+  })
+  .strip();
+
+export const footballPredictionHistorySchema = z
+  .object({
+    match_id: footballMatchIdSchema,
+    competition: z.string().min(1),
+    home_team: z.string().min(1),
+    away_team: z.string().min(1),
+    kickoff_at: z.string().datetime({ offset: true }).nullable(),
+    history: z.array(z.unknown()),
+  })
+  .transform((history) => ({
+    ...history,
+    history: history.history.map((entry) =>
+      footballPredictionHistoryEntrySchema.parse(entry),
+    ),
+  }));
+
+export type FootballStage = z.infer<typeof footballStageSchema>;
+export type FootballLivePrediction = z.infer<typeof footballLivePredictionSchema>;
+export type FootballLiveMatch = z.infer<typeof footballLiveMatchSchema>;
+export type FootballLiveMatchList = z.infer<typeof footballLiveMatchListSchema>;
+export type FootballMatchPrediction = z.infer<typeof footballMatchPredictionSchema>;
+export type FootballPredictionHistory = z.infer<typeof footballPredictionHistorySchema>;
+export type FootballPredictionHistoryEntry = z.infer<typeof footballPredictionHistoryEntrySchema>;
 
 const upcomingEnvelopeSchema = z.union([
   z.array(z.unknown()),

@@ -1,6 +1,13 @@
 import "server-only";
 
-import { footballPredictionSchema, parseUpcomingFootballPredictions } from "./schema";
+import {
+  footballLiveMatchListSchema,
+  footballMatchIdSchema,
+  footballMatchPredictionSchema,
+  footballPredictionHistorySchema,
+  footballPredictionSchema,
+  parseUpcomingFootballPredictions,
+} from "./schema";
 
 const DEFAULT_TIMEOUT_MS = 8_000;
 
@@ -109,6 +116,47 @@ export function createFootballCoreClient({
         throw new CoreClientError("malformed");
       }
     },
+
+    async getLiveFootballMatches() {
+      try {
+        return footballLiveMatchListSchema.parse(
+          await request("api/v1/domains/football/matches/live"),
+        );
+      } catch (error) {
+        if (error instanceof CoreClientError) throw error;
+        throw new CoreClientError("malformed");
+      }
+    },
+
+    async getLiveFootballPrediction(matchId: string) {
+      const validMatchId = footballMatchIdSchema.safeParse(matchId);
+      if (!validMatchId.success) throw new CoreClientError("malformed");
+      try {
+        return footballMatchPredictionSchema.parse(
+          await request(
+            `api/v1/domains/football/matches/${encodeURIComponent(validMatchId.data)}/prediction`,
+          ),
+        );
+      } catch (error) {
+        if (error instanceof CoreClientError) throw error;
+        throw new CoreClientError("malformed");
+      }
+    },
+
+    async getLiveFootballPredictionHistory(matchId: string) {
+      const validMatchId = footballMatchIdSchema.safeParse(matchId);
+      if (!validMatchId.success) throw new CoreClientError("malformed");
+      try {
+        return footballPredictionHistorySchema.parse(
+          await request(
+            `api/v1/domains/football/matches/${encodeURIComponent(validMatchId.data)}/prediction/history`,
+          ),
+        );
+      } catch (error) {
+        if (error instanceof CoreClientError) throw error;
+        throw new CoreClientError("malformed");
+      }
+    },
   };
 }
 
@@ -129,4 +177,16 @@ export async function getUpcomingFootballPredictions() {
 
 export async function getFootballPrediction(predictionId: string) {
   return getConfiguredClient().getFootballPrediction(predictionId);
+}
+
+export async function getLiveFootballMatches() {
+  return getConfiguredClient().getLiveFootballMatches();
+}
+
+export async function getLiveFootballPrediction(matchId: string) {
+  return getConfiguredClient().getLiveFootballPrediction(matchId);
+}
+
+export async function getLiveFootballPredictionHistory(matchId: string) {
+  return getConfiguredClient().getLiveFootballPredictionHistory(matchId);
 }
