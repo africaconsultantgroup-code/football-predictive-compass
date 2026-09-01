@@ -1,3 +1,7 @@
+import { Suspense } from "react";
+
+import { PredictionsContent, PredictionsLoading } from "./predictions";
+
 export default function Home() {
   return (
     <div id="home" className="min-h-screen bg-slate-950 text-white">
@@ -66,20 +70,14 @@ export default function Home() {
                 Today&apos;s Predictions
               </h2>
             </div>
-            <span className="hidden rounded-full bg-white/[0.06] px-3 py-1.5 text-xs text-slate-400 sm:block">
-              Coming soon
+            <span className="hidden rounded-full bg-emerald-300/10 px-3 py-1.5 text-xs text-emerald-300 sm:block">
+              Upcoming matches
             </span>
           </div>
 
-          <div className="flex min-h-64 flex-col items-center justify-center text-center">
-            <div className="mb-5 size-2 rounded-full bg-emerald-300 shadow-[0_0_24px_rgba(110,231,183,0.75)]" />
-            <p className="text-lg font-medium text-slate-200">
-              Predictions will appear here
-            </p>
-            <p className="mt-2 max-w-sm text-sm leading-6 text-slate-500">
-              Today&apos;s match outlooks will be displayed in this space.
-            </p>
-          </div>
+          <Suspense fallback={<PredictionsLoading />}>
+            <PredictionsContent />
+          </Suspense>
         </section>
       </main>
     </div>
