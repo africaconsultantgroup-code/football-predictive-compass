@@ -91,6 +91,9 @@ function PredictionTimeline({ match }: { match: FootballLiveMatch }) {
             <ol className="space-y-4 border-l border-emerald-300/25 pl-4">
               {entries.map((entry, index) => {
                 const minute = formatMatchMinute(entry.minute, null);
+                if ("locked" in entry) {
+                  return <li key={`${entry.generated_at ?? "entry"}-${index}`} className="relative"><span className="absolute -left-[1.18rem] top-1.5 size-2 rounded-full bg-slate-500" /><p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">{minute ?? formatFootballStage(entry.stage)}</p><p className="mt-1 text-sm font-medium text-slate-400">Locked · Purchase this stage to unlock</p></li>;
+                }
                 const event = formatChangeReason(entry.change_reason);
                 const heading = minute ?? formatFootballStage(entry.stage);
                 return (
@@ -144,6 +147,7 @@ export function LiveMatchCard({ match }: { match: FootballLiveMatchView }) {
           <p className="text-sm font-semibold text-emerald-300">{match.prediction_available ? "Live prediction available" : "Live prediction is being prepared"}</p>
           <p className="mt-2 text-sm text-slate-400">Live intelligence and prediction timelines require Full Access.</p>
           <span className="mt-4 inline-flex rounded-full border border-white/15 px-3 py-1.5 text-xs font-semibold text-slate-300">Locked · Full Access</span>
+          {match.offers.length ? <div className="mt-5 space-y-2">{match.offers.map((offer) => <div className="rounded-xl border border-white/10 px-3 py-2 text-left text-xs text-slate-300" key={offer.productId}><span className="font-semibold text-white">{offer.scopeType === "kickoff_slot" ? `Unlock all ${offer.matchCount} matches at this kickoff` : "Unlock this match"}</span><span className="block text-slate-400">{offer.priceAmount === null ? "Price coming soon" : `${offer.currency} ${offer.priceAmount.toFixed(2)}`}</span></div>)}</div> : null}
         </div>
       </article>
     );

@@ -2,7 +2,9 @@ import type {
   FootballLiveMatch,
   FootballLiveMatchList,
   FootballPrediction,
+  FootballPredictionHistoryEntry,
 } from "./schema";
+import type { PredictionAccessOffer } from "../auth/match-access";
 
 export type FootballPredictionPreview = Pick<
   FootballPrediction,
@@ -11,6 +13,7 @@ export type FootballPredictionPreview = Pick<
   prediction_id: string;
   prediction_available: true;
   locked: true;
+  offers: PredictionAccessOffer[];
 };
 
 export type FootballLiveMatchPreview = Pick<
@@ -29,10 +32,12 @@ export type FootballLiveMatchPreview = Pick<
 > & {
   prediction_available: boolean;
   locked: true;
+  offers: PredictionAccessOffer[];
 };
 
 export function toPredictionPreview(
   prediction: FootballPrediction,
+  offers: PredictionAccessOffer[] = [],
 ): FootballPredictionPreview {
   return {
     match_id: prediction.match_id,
@@ -44,11 +49,13 @@ export function toPredictionPreview(
     stage: prediction.stage,
     prediction_available: true,
     locked: true,
+    offers,
   };
 }
 
 export function toLiveMatchPreview(
   match: FootballLiveMatch,
+  offers: PredictionAccessOffer[] = [],
 ): FootballLiveMatchPreview {
   return {
     match_id: match.match_id,
@@ -64,9 +71,19 @@ export function toLiveMatchPreview(
     updated_at: match.updated_at,
     prediction_available: match.latest_prediction !== null,
     locked: true,
+    offers,
   };
 }
 
-export function toLiveListPreview(list: FootballLiveMatchList) {
-  return { domain: "football" as const, matches: list.matches.map(toLiveMatchPreview) };
+export function toLiveListPreview(list: FootballLiveMatchList, offers: PredictionAccessOffer[] = []) {
+  return { domain: "football" as const, matches: list.matches.map((match) => toLiveMatchPreview(match, offers)) };
+}
+
+export function toLockedHistoryEntry(entry: FootballPredictionHistoryEntry) {
+  return {
+    stage: entry.stage,
+    minute: entry.minute,
+    generated_at: entry.generated_at,
+    locked: true as const,
+  };
 }

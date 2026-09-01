@@ -5,6 +5,7 @@ import { requireUser } from "../../lib/auth/session";
 import type { CurrentCustomer } from "../../lib/auth/session";
 import { createCustomerAuthServerClient } from "../../lib/supabase/auth-server";
 import { getCustomerAccess, type CustomerAccess } from "../../lib/auth/access";
+import { getActivePredictionGrants, type PredictionAccessSummary } from "../../lib/auth/match-access";
 
 export const dynamic = "force-dynamic";
 
@@ -12,10 +13,12 @@ export function AccountDetails({
   user,
   displayName,
   access,
+  predictionAccess = [],
 }: {
   user: CurrentCustomer;
   displayName: string | null;
   access: CustomerAccess;
+  predictionAccess?: PredictionAccessSummary[];
 }) {
   const planName = access.subscription?.name ?? "No active plan";
   const accessLabel = access.subscription?.name ?? "Free / Preview";
@@ -35,6 +38,7 @@ export function AccountDetails({
         <p className="mt-6 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Access</p>
         <p className="mt-2 text-slate-200">{accessLabel}</p>
         {access.subscription?.endsAt ? <><p className="mt-6 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Access until</p><time className="mt-2 block text-slate-200" dateTime={access.subscription.endsAt}>{new Intl.DateTimeFormat("en-GB", { dateStyle: "long" }).format(new Date(access.subscription.endsAt))}</time></> : null}
+        <div className="mt-8 border-t border-white/10 pt-6"><h2 className="text-lg font-semibold">Prediction Access</h2>{predictionAccess.length ? <ul className="mt-4 space-y-3">{predictionAccess.map((grant) => <li className="rounded-xl bg-white/[0.04] p-4" key={grant.productId}><p className="font-semibold text-white">{grant.name}</p><p className="mt-1 text-sm capitalize text-slate-300">{grant.stage} · {grant.scopeType === "kickoff_slot" ? `${grant.matchCount} matches` : "Single match"}</p><p className="mt-1 text-sm text-emerald-300">Unlocked</p></li>)}</ul> : <p className="mt-3 text-sm text-slate-400">No purchased prediction access.</p>}</div>
         <ProfileForm displayName={displayName} />
         <form action={logoutAction} className="mt-10">
           <button className="rounded-xl border border-white/15 px-5 py-3 text-sm font-semibold transition hover:border-emerald-300/50 hover:bg-emerald-300/10" type="submit">Log out</button>
@@ -51,5 +55,6 @@ export default async function AccountPage() {
     user.id,
   );
   const access = await getCustomerAccess();
-  return <AccountDetails user={user} displayName={profile?.displayName ?? null} access={access} />;
+  const predictionAccess = await getActivePredictionGrants(await createCustomerAuthServerClient(), user.id);
+  return <AccountDetails user={user} displayName={profile?.displayName ?? null} access={access} predictionAccess={predictionAccess} />;
 }

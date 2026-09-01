@@ -1,6 +1,7 @@
 import type {
   FootballLiveMatchView,
   FootballPredictionHistoryEntry,
+  FootballLockedHistoryEntry,
 } from "./schema";
 
 export type LiveMatchesState = {
@@ -56,7 +57,7 @@ export function shouldLoadHistory(
 }
 
 export function chronologicalHistory(
-  entries: FootballPredictionHistoryEntry[],
+  entries: Array<FootballPredictionHistoryEntry | FootballLockedHistoryEntry>,
 ) {
   return [...entries].sort((left, right) =>
     (left.generated_at ?? "").localeCompare(right.generated_at ?? ""),

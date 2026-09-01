@@ -7,8 +7,10 @@ import {
   formatReliability,
 } from "../lib/predictive-compass/presentation";
 import { getUpcomingFootballPredictions } from "../lib/predictive-compass/server";
-import { accessHasCapability, capabilities, getCustomerAccess } from "../lib/auth/access";
+import { getCustomerAccess } from "../lib/auth/access";
 import { toPredictionPreview, type FootballPredictionPreview } from "../lib/predictive-compass/preview";
+import { createCustomerAuthServerClient } from "../lib/supabase/auth-server";
+import { getPredictionOffers, hasPredictionAccess } from "../lib/auth/match-access";
 
 function kickoffLabel(kickoffAt: string | null) {
   if (!kickoffAt) return "Kickoff time to be confirmed";
@@ -93,6 +95,7 @@ export function PredictionPreviewCard({ prediction }: { prediction: FootballPred
         <p className="text-sm font-semibold text-emerald-300">Prediction available</p>
         <p className="mt-2 text-sm text-slate-400">Full prediction intelligence is available with Full Access.</p>
         <span className="mt-4 inline-flex rounded-full border border-white/15 px-3 py-1.5 text-xs font-semibold text-slate-300">Locked · Full Access</span>
+        {prediction.offers.length ? <div className="mt-5 space-y-2">{prediction.offers.map((offer) => <div className="rounded-xl border border-white/10 px-3 py-2 text-left text-xs text-slate-300" key={offer.productId}><span className="font-semibold text-white">{offer.scopeType === "kickoff_slot" ? `Unlock all ${offer.matchCount} matches at this kickoff` : "Unlock this match"}</span><span className="block text-slate-400">{offer.priceAmount === null ? "Price coming soon" : `${offer.currency} ${offer.priceAmount.toFixed(2)}`}</span></div>)}</div> : null}
       </div>
     </article>
   );
@@ -104,32 +107,35 @@ export function PredictionsLoading() {
 
 async function loadPredictions() {
   try {
-    const [predictions, access] = await Promise.all([
+    const [predictions, access, supabase] = await Promise.all([
       getUpcomingFootballPredictions(),
       getCustomerAccess(),
+      createCustomerAuthServerClient(),
     ]);
-    const full = accessHasCapability(access, capabilities.prematchFull);
+    const views = await Promise.all(predictions.map(async (prediction) => {
+      const unlocked = await hasPredictionAccess({ access, supabase, matchId: prediction.match_id, stage: "prematch" });
+      return unlocked ? prediction : toPredictionPreview(prediction, await getPredictionOffers(supabase, prediction.match_id, "prematch"));
+    }));
     return {
-      predictions: full ? predictions : predictions.map(toPredictionPreview),
-      full,
+      predictions: views,
       failed: false,
     } as const;
   } catch {
-    return { predictions: [], full: false, failed: true } as const;
+    return { predictions: [], failed: true } as const;
   }
 }
 
 export async function PredictionsContent() {
   await connection();
-  const { predictions, full, failed } = await loadPredictions();
+  const { predictions, failed } = await loadPredictions();
   if (failed) {
     return <div className="flex min-h-64 items-center justify-center text-center text-slate-400" role="alert">Predictions are temporarily unavailable. Please try again shortly.</div>;
   }
   if (!predictions.length) {
     return <div className="flex min-h-64 items-center justify-center text-center text-slate-400">No upcoming predictions are available right now.</div>;
   }
-  return <div className="grid gap-5 pt-6 lg:grid-cols-2">{full
-    ? (predictions as FootballPrediction[]).map((prediction) => <PredictionCard key={prediction.prediction_id} prediction={prediction} />)
-    : (predictions as FootballPredictionPreview[]).map((prediction) => <PredictionPreviewCard key={prediction.prediction_id} prediction={prediction} />)
-  }</div>;
+  return <div className="grid gap-5 pt-6 lg:grid-cols-2">{predictions.map((prediction) => "locked" in prediction
+    ? <PredictionPreviewCard key={prediction.prediction_id} prediction={prediction as FootballPredictionPreview} />
+    : <PredictionCard key={prediction.prediction_id} prediction={prediction as FootballPrediction} />
+  )}</div>;
 }

@@ -95,6 +95,14 @@ export const footballLiveMatchPreviewSchema = z
     updated_at: z.string().datetime({ offset: true }).nullable(),
     prediction_available: z.boolean(),
     locked: z.literal(true),
+    offers: z.array(z.object({
+      productId: z.string().uuid(),
+      name: z.string().min(1),
+      scopeType: z.enum(["match", "kickoff_slot"]),
+      priceAmount: z.number().nonnegative().nullable(),
+      currency: z.string().regex(/^[A-Z]{3}$/),
+      matchCount: z.number().int().positive(),
+    }).strict()),
   })
   .strict();
 
@@ -162,6 +170,13 @@ export const footballPredictionHistoryEntrySchema = z
   })
   .strip();
 
+export const footballLockedHistoryEntrySchema = z.object({
+  stage: footballStageSchema,
+  minute: z.number().int().min(0).max(130).nullable(),
+  generated_at: z.string().datetime({ offset: true }).nullable(),
+  locked: z.literal(true),
+}).strict();
+
 export const footballPredictionHistorySchema = z
   .object({
     match_id: footballMatchIdSchema,
@@ -173,9 +188,10 @@ export const footballPredictionHistorySchema = z
   })
   .transform((history) => ({
     ...history,
-    history: history.history.map((entry) =>
-      footballPredictionHistoryEntrySchema.parse(entry),
-    ),
+    history: history.history.map((entry) => z.union([
+      footballPredictionHistoryEntrySchema,
+      footballLockedHistoryEntrySchema,
+    ]).parse(entry)),
   }));
 
 export type FootballStage = z.infer<typeof footballStageSchema>;
@@ -187,6 +203,7 @@ export type FootballLiveMatchList = z.infer<typeof footballLiveMatchListSchema>;
 export type FootballMatchPrediction = z.infer<typeof footballMatchPredictionSchema>;
 export type FootballPredictionHistory = z.infer<typeof footballPredictionHistorySchema>;
 export type FootballPredictionHistoryEntry = z.infer<typeof footballPredictionHistoryEntrySchema>;
+export type FootballLockedHistoryEntry = z.infer<typeof footballLockedHistoryEntrySchema>;
 
 const upcomingEnvelopeSchema = z.union([
   z.array(z.unknown()),

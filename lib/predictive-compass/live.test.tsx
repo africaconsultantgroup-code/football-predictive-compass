@@ -25,6 +25,7 @@ import type {
 import { createFootballCoreClient } from "./server";
 import { capabilities, type CustomerAccess } from "../auth/access";
 import { toLiveListPreview } from "./preview";
+import { toLockedHistoryEntry } from "./preview";
 
 const apiKey = "live-football-service-secret";
 const baseUrl = "https://core.example.test";
@@ -199,7 +200,7 @@ describe("same-origin live route boundary", () => {
     const free = await createLiveMatchHandler(load, async () => freeAccess, capabilities.liveFull)(matchId);
     expect(visitor.status).toBe(401);
     expect(free.status).toBe(403);
-    expect(load).not.toHaveBeenCalled();
+    expect(load).toHaveBeenCalledOnce();
   });
 });
 
@@ -277,5 +278,11 @@ describe("live customer presentation", () => {
     expect(formatChangeReason("goal")).toBe("Goal");
     expect(formatChangeReason("red_card")).toBe("Red Card");
     expect(formatChangeReason("interval_update")).toBeNull();
+  });
+
+  it("removes all prediction intelligence from a locked timeline stage", () => {
+    const locked = toLockedHistoryEntry(historyEntry("2026-09-01T18:18:00.000Z", "goal"));
+    expect(locked).toMatchObject({ stage: "FIRST_HALF_LIVE", locked: true });
+    expect(JSON.stringify(locked)).not.toMatch(/predicted_outcome|predicted_score|probabilities|reliability|change_reason|change_description/);
   });
 });
