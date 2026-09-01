@@ -6,7 +6,7 @@ import type {
 
 export type FootballPredictionPreview = Pick<
   FootballPrediction,
-  "competition" | "home_team" | "away_team" | "kickoff_at" | "stage"
+  "match_id" | "competition" | "home_team" | "away_team" | "kickoff_at" | "stage"
 > & {
   prediction_id: string;
   prediction_available: true;
@@ -35,6 +35,7 @@ export function toPredictionPreview(
   prediction: FootballPrediction,
 ): FootballPredictionPreview {
   return {
+    match_id: prediction.match_id,
     prediction_id: prediction.prediction_id,
     competition: prediction.competition,
     home_team: prediction.home_team,

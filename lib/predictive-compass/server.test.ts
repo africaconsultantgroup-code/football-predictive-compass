@@ -8,6 +8,7 @@ const apiKey = "football-service-secret";
 const baseUrl = "https://core.example.test/";
 
 const prediction = {
+  match_id: "fm_0123456789abcdef0123456789abcdef",
   prediction_id: "pred-001",
   competition: "Premier League",
   home_team: "Aston Villa",
@@ -66,6 +67,7 @@ describe("Football Core client", () => {
 
     expect(result).toHaveLength(1);
     expect(result[0].prediction_id).toBe("pred-001");
+    expect(result[0].match_id).toBe("fm_0123456789abcdef0123456789abcdef");
     expect(result[0]).not.toHaveProperty("model_version");
     expect(JSON.stringify(result)).not.toContain(apiKey);
   });

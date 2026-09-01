@@ -8,6 +8,8 @@ export const footballStageSchema = z.enum([
   "FINAL",
 ]);
 
+export const footballMatchIdSchema = z.string().regex(/^fm_[a-f0-9]{32}$/);
+
 export const footballProbabilitiesSchema = z.object({
   home_win: z.number().min(0).max(100),
   draw: z.number().min(0).max(100),
@@ -39,6 +41,7 @@ export const footballLivePredictionSchema = z
 
 export const footballPredictionSchema = z
   .object({
+    match_id: footballMatchIdSchema.nullable(),
     prediction_id: z.string().min(1),
     competition: z.string().min(1),
     home_team: z.string().min(1),
@@ -59,8 +62,6 @@ export const footballPredictionSchema = z
   .strip();
 
 export type FootballPrediction = z.infer<typeof footballPredictionSchema>;
-
-export const footballMatchIdSchema = z.string().regex(/^fm_[a-f0-9]{32}$/);
 
 export const footballLiveMatchSchema = z
   .object({

@@ -9,6 +9,7 @@ import type { FootballPrediction } from "./schema";
 import { formatPredictedOutcome } from "./presentation";
 
 const prediction: FootballPrediction = {
+  match_id: "fm_0123456789abcdef0123456789abcdef",
   prediction_id: "pred-001",
   competition: "Premier League",
   home_team: "Aston Villa",
