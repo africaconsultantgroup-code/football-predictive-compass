@@ -29,7 +29,7 @@ export function FootballHero() {
         <div className="pitch-orbit orbit-one" />
         <div className="pitch-orbit orbit-two" />
         <div className="football-ball"><span /><i /></div>
-        <div className="visual-stat stat-primary"><small>Model signal</small><strong>LIVE</strong><span>Updating with match data</span></div>
+        <div className="visual-stat stat-primary"><small>Football intelligence</small><strong>Probability-led</strong><span>Built from match data</span></div>
         <div className="visual-stat stat-secondary"><small>Intelligence</small><strong>3 stages</strong><span>Prematch · Live · Halftime</span></div>
         <div className="stadium-caption"><span className="status-dot" />Probability-led match intelligence</div>
       </div>

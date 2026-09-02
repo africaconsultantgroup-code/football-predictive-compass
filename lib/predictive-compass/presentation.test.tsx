@@ -5,7 +5,7 @@ vi.mock("server-only", () => ({}));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
 
 import { fixtureDateLabel, KickoffSlotOffers, PredictionCard, PredictionPreviewCard, sortPredictionViews } from "../../app/predictions";
-import { OfferList, PredictionEmptyState } from "../../app/experience-components";
+import { FootballHero, OfferList, PredictionEmptyState } from "../../app/experience-components";
 import { toPredictionPreview } from "./preview";
 import type { FootballPrediction } from "./schema";
 import { formatPredictedOutcome } from "./presentation";
@@ -35,6 +35,15 @@ const prediction: FootballPrediction = {
 };
 
 describe("customer prediction presentation", () => {
+  it("uses truthful static hero messaging instead of simulated live state", () => {
+    const html = renderToStaticMarkup(<FootballHero />);
+    expect(html).toContain("Football intelligence");
+    expect(html).toContain("Probability-led");
+    expect(html).toContain("Built from match data");
+    expect(html).not.toContain(">LIVE<");
+    expect(html).not.toContain("Updating with match data");
+  });
+
   it.each([
     ["home_win", "Aston Villa Win"],
     ["draw", "Draw"],
