@@ -122,7 +122,7 @@ describe("account session protection", () => {
     expect(html).toContain("No prediction access purchased yet.");
     expect(html).toContain("Browse Predictions");
     expect(html).toContain("Account Actions");
-    expect(html).toContain("probability-based insights, not guaranteed outcomes");
+    expect(html).not.toMatch(/probability|confidence|unpredictable|guaranteed|insight, not certainty/i);
   });
 
   it("shows Full Access from real subscription state", () => {

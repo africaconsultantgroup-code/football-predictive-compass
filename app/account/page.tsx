@@ -41,7 +41,7 @@ export function AccountDetails({ user, displayName, access, predictionAccess = [
 
         <section className="account-section"><div className="account-section-title"><div><p className="section-kicker">Payment activity</p><h2>Recent Purchases</h2></div></div>{recentPayments.length ? <ul className="purchase-list">{recentPayments.map((payment) => <li key={payment.id}><div><strong>{payment.name}</strong><span className="capitalize">{payment.stage} · {new Intl.DateTimeFormat("en-GB", { dateStyle: "medium" }).format(new Date(payment.createdAt))}</span></div><div><b>{payment.currency} {Number(payment.amount).toFixed(2)}</b><span className="capitalize">{payment.status}</span></div></li>)}</ul> : <div className="account-empty"><p>No purchases yet.</p><Link href="/#predictions">Explore Predictions →</Link></div>}</section>
 
-        <footer className="account-footer"><p>Predictions are probability-based insights, not guaranteed outcomes.</p><div><span>Account Actions</span><form action={logoutAction}><button type="submit">Log out</button></form></div></footer>
+        <footer className="account-footer"><div><span>Account Actions</span><form action={logoutAction}><button type="submit">Log out</button></form></div></footer>
       </section>
     </main>
   );
