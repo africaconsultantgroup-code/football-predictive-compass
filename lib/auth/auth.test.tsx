@@ -116,8 +116,13 @@ describe("account session protection", () => {
     expect(html).toContain("ada@example.com");
     expect(html).toContain("Ada Fan");
     expect(html).toContain("Customer Account");
-    expect(html).toContain("No active plan");
     expect(html).toContain("Free / Preview");
+    expect(html).toContain("Prediction Access");
+    expect(html).toContain("Recent Purchases");
+    expect(html).toContain("No prediction access purchased yet.");
+    expect(html).toContain("Browse Predictions");
+    expect(html).toContain("Account Actions");
+    expect(html).toContain("probability-based insights, not guaranteed outcomes");
   });
 
   it("shows Full Access from real subscription state", () => {
@@ -133,8 +138,21 @@ describe("account session protection", () => {
       />,
     );
     expect(html).toContain("Full Access");
-    expect(html).toContain("Access until");
+    expect(html).toContain("Until 1 Oct 2026");
     expect(html).not.toContain("Free / Preview");
+  });
+
+  it("renders real grants and recent purchases as a compact dashboard", () => {
+    const html = renderToStaticMarkup(<AccountDetails user={customer} displayName="Ada Fan" access={{ customer, subscription: null, capabilities: new Set() }} predictionAccess={[{
+      productId: "11111111-1111-1111-1111-111111111111", name: "19:00 Kickoff Slot", stage: "prematch", scopeType: "kickoff_slot", matchCount: 3, expiresAt: null,
+    }]} recentPayments={[{
+      id: "payment-1", name: "19:00 Kickoff Slot", stage: "prematch", amount: 20, currency: "GHS", status: "successful", createdAt: "2026-09-02T12:00:00.000Z",
+    }]} />);
+    expect(html).toContain("19:00 Kickoff Slot");
+    expect(html).toContain("3 matches · Kickoff Slot");
+    expect(html).toContain("✓ Unlocked");
+    expect(html).toContain("GHS 20.00");
+    expect(html).toContain("successful");
   });
 
   it("redirects unauthenticated account access to login", async () => {

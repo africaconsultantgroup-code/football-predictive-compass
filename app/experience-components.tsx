@@ -1,4 +1,5 @@
 import type { PredictionAccessOffer } from "../lib/auth/match-access";
+import { CheckoutButton as CheckoutLauncher } from "./checkout-button";
 
 export function BrandMark() {
   return (
@@ -14,7 +15,8 @@ export function FootballHero() {
       <div className="hero-copy">
         <p className="eyebrow"><span className="status-dot" />Data-driven football insights</p>
         <h1 id="hero-title">Smarter Football<br /><span>Predictions</span></h1>
-        <p className="hero-intro">Data-driven match insights highlighting the most likely outcomes, probabilities and evolving match intelligence — not guarantees.</p>
+        <p className="hero-intro">See upcoming matches, explore model-generated probabilities and unlock the prediction stage you need.</p>
+        <div className="hero-actions"><a className="hero-primary" href="#upcoming-matches">View Upcoming Predictions <span aria-hidden="true">↓</span></a><a className="hero-secondary" href="#how-it-works">How It Works</a></div>
         <div className="benefit-grid">
           <Benefit icon="chart" title="Data-Backed Analysis" text="Advanced statistics & models" />
           <Benefit icon="target" title="Most Likely Outcome" text="Understand the modeled edge" />
@@ -60,9 +62,28 @@ export function PredictionStageSelector() {
   );
 }
 
+export function PredictionStages() {
+  const stages = [
+    ["01", "prematch", "Prematch", "Before kickoff", "Initial model analysis using available pre-game evidence."],
+    ["02", "live", "Live", "During the match", "Updated intelligence using the developing match state."],
+    ["03", "halftime", "Halftime", "At half-time", "Second-half analysis incorporating first-half evidence."],
+  ];
+  return <section className="story-section" aria-labelledby="stages-title"><div className="story-heading"><p className="section-kicker">Choose your intelligence</p><h2 id="stages-title">Prediction Stages</h2></div><div className="stage-story-grid">{stages.map(([number, className, title, timing, text]) => <article className={className} key={title}><span>{number}</span><h3>{title}</h3><strong>{timing}</strong><p>{text}</p></article>)}</div><p className="story-note">Each stage is a separate prediction product because new match information changes the model&apos;s analysis.</p></section>;
+}
+
+export function HowItWorks() {
+  const steps = ["Choose a Match", "Choose Prediction Stage", "Unlock Securely", "View Prediction Intelligence"];
+  return <section id="how-it-works" className="story-section how-flow" aria-labelledby="flow-title"><div className="story-heading"><p className="section-kicker">Simple access</p><h2 id="flow-title">How It Works</h2></div><ol>{steps.map((step, index) => <li key={step}><span>{index + 1}</span><strong>{step}</strong>{index < steps.length - 1 ? <b aria-hidden="true">→</b> : null}</li>)}</ol></section>;
+}
+
+export function WhatYouGet() {
+  const items = ["Most likely outcome", "Outcome probabilities", "Confidence level", "Key factors and evidence", "Stage-specific analysis", "Prediction timeline where available"];
+  return <section className="story-section value-market" aria-labelledby="get-title"><div className="story-heading"><p className="section-kicker">Inside an unlocked prediction</p><h2 id="get-title">What You Get</h2></div><ul>{items.map((item) => <li key={item}><span aria-hidden="true">✓</span>{item}</li>)}</ul></section>;
+}
+
 export function HowToReadPrediction() {
   return (
-    <section id="how-it-works" className="info-card how-to-read" aria-labelledby="read-title">
+    <section className="info-card how-to-read" aria-labelledby="read-title">
       <p className="section-kicker">Probability explained</p>
       <h2 id="read-title">How to Read This</h2>
       <dl>
@@ -98,10 +119,10 @@ export function WhyPredictiveCompass() {
 
 export function PredictionEmptyState({ live = false }: { live?: boolean }) {
   return (
-    <div className="empty-state">
+    <div className={`empty-state ${live ? "live-empty" : ""}`}>
       <span className="empty-icon" aria-hidden="true">⌁</span>
-      <h3>{live ? "No matches are live right now." : "No prediction offers available right now."}</h3>
-      <p>{live ? "Live intelligence will appear here when an eligible match gets underway." : "New prediction opportunities will appear here as fixtures become eligible."}</p>
+      <h3>{live ? "No live prediction opportunities right now." : "No prediction-ready fixtures are available right now."}</h3>
+      <p>{live ? "Live intelligence will appear here when an eligible match gets underway." : "New matches will appear here automatically when upcoming fixtures become eligible for analysis."}</p>
     </div>
   );
 }
@@ -128,6 +149,3 @@ function OfferCard({ offer, matchLabel, stage }: { offer: PredictionAccessOffer;
     </div>
   );
 }
-
-// Imported lazily through this local bridge to keep the offer markup reusable.
-import { CheckoutButton as CheckoutLauncher } from "./checkout-button";

@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 vi.mock("server-only", () => ({}));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
 
-import { PredictionCard, PredictionPreviewCard } from "../../app/predictions";
+import { fixtureDateLabel, KickoffSlotOffers, PredictionCard, PredictionPreviewCard, sortPredictionViews } from "../../app/predictions";
 import { OfferList, PredictionEmptyState } from "../../app/experience-components";
 import { toPredictionPreview } from "./preview";
 import type { FootballPrediction } from "./schema";
@@ -86,8 +86,8 @@ describe("customer prediction presentation", () => {
 
   it("renders a polished empty state without invented fixtures or prices", () => {
     const html = renderToStaticMarkup(<PredictionEmptyState />);
-    expect(html).toContain("No prediction offers available right now.");
-    expect(html).toContain("fixtures become eligible");
+    expect(html).toContain("No prediction-ready fixtures are available right now.");
+    expect(html).toContain("upcoming fixtures become eligible");
     expect(html).not.toMatch(/GH[₵¢]\s*\d|Arsenal|Chelsea/);
   });
 
@@ -109,5 +109,26 @@ describe("customer prediction presentation", () => {
     expect(html).toContain("Confidence indicates");
     expect(html).toContain("It is not a guarantee");
     expect(html).not.toMatch(/Guaranteed win|Sure prediction|100% accurate|Can.t lose|Certain outcome/i);
+  });
+
+  it("orders real upcoming fixtures chronologically and groups dates for customers", () => {
+    const later = { ...prediction, prediction_id: "later", kickoff_at: "2026-09-03T19:00:00.000Z" };
+    const earlier = { ...prediction, prediction_id: "earlier", kickoff_at: "2026-09-02T14:00:00.000Z" };
+    expect(sortPredictionViews([later, earlier]).map((item) => item.prediction_id)).toEqual(["earlier", "later"]);
+    expect(fixtureDateLabel(earlier.kickoff_at, new Date("2026-09-02T08:00:00.000Z"))).toBe("Today");
+    expect(fixtureDateLabel(later.kickoff_at, new Date("2026-09-02T08:00:00.000Z"))).toBe("Tomorrow");
+  });
+
+  it("renders a kickoff slot only from complete real product membership", () => {
+    const offer = { productId: "22222222-2222-2222-2222-222222222222", name: "14:00 Prematch Slot", scopeType: "kickoff_slot" as const, priceAmount: 20, currency: "GHS", matchCount: 2 };
+    const first = toPredictionPreview(prediction, [offer]);
+    const second = toPredictionPreview({ ...prediction, match_id: "fm_abcdef0123456789abcdef0123456789", prediction_id: "pred-002", home_team: "Liverpool", away_team: "Everton" }, [offer]);
+    const complete = renderToStaticMarkup(<KickoffSlotOffers predictions={[first, second]} />);
+    const incomplete = renderToStaticMarkup(<KickoffSlotOffers predictions={[first]} />);
+    expect(complete).toContain("Kickoff Slot Offers");
+    expect(complete).toContain("Aston Villa");
+    expect(complete).toContain("Liverpool");
+    expect(complete).toContain("GHS 20.00");
+    expect(incomplete).toBe("");
   });
 });
