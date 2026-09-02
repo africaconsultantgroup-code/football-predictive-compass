@@ -11,6 +11,7 @@ import { getCustomerAccess } from "../lib/auth/access";
 import { toPredictionPreview, type FootballPredictionPreview } from "../lib/predictive-compass/preview";
 import { createCustomerAuthServerClient } from "../lib/supabase/auth-server";
 import { getPredictionOffers, hasPredictionAccess } from "../lib/auth/match-access";
+import { CheckoutButton } from "./checkout-button";
 
 function kickoffLabel(kickoffAt: string | null) {
   if (!kickoffAt) return "Kickoff time to be confirmed";
@@ -95,7 +96,7 @@ export function PredictionPreviewCard({ prediction }: { prediction: FootballPred
         <p className="text-sm font-semibold text-emerald-300">Prediction available</p>
         <p className="mt-2 text-sm text-slate-400">Purchase this prediction stage to unlock the full intelligence.</p>
         <span className="mt-4 inline-flex rounded-full border border-white/15 px-3 py-1.5 text-xs font-semibold text-slate-300">Locked · Match access required</span>
-        {prediction.offers.length ? <div className="mt-5 space-y-2">{prediction.offers.map((offer) => <div className="rounded-xl border border-white/10 px-3 py-2 text-left text-xs text-slate-300" key={offer.productId}><span className="font-semibold text-white">{offer.scopeType === "kickoff_slot" ? `Unlock all ${offer.matchCount} matches at this kickoff` : "Unlock this match"}</span><span className="block text-slate-400">{offer.priceAmount === null ? "Price coming soon" : `${offer.currency} ${offer.priceAmount.toFixed(2)}`}</span></div>)}</div> : null}
+        {prediction.offers.length ? <div className="mt-5 space-y-2">{prediction.offers.map((offer) => <div className="rounded-xl border border-white/10 px-3 py-2 text-left text-xs text-slate-300" key={offer.productId}><span className="font-semibold text-white">{offer.scopeType === "kickoff_slot" ? `Unlock all ${offer.matchCount} matches at this kickoff` : "Unlock this match"}</span><span className="block text-slate-400">{offer.priceAmount === null ? "Price coming soon" : `${offer.currency} ${offer.priceAmount.toFixed(2)}`}</span>{offer.priceAmount !== null ? <CheckoutButton productId={offer.productId} /> : null}</div>)}</div> : null}
       </div>
     </article>
   );
