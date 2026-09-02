@@ -42,6 +42,7 @@ describe("customer prediction presentation", () => {
     expect(html).toContain("Built from match data");
     expect(html).not.toContain(">LIVE<");
     expect(html).not.toContain("Updating with match data");
+    expect(html).not.toContain("Predictions are probability-based and may change as the match unfolds.");
   });
 
   it.each([

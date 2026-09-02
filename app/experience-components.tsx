@@ -22,7 +22,6 @@ export function FootballHero() {
           <Benefit icon="target" title="Most Likely Outcome" text="Understand the modeled edge" />
           <Benefit icon="signal" title="Probability Guidance" text="Confidence, not certainty" />
         </div>
-        <PredictionDisclaimer compact />
       </div>
       <div className="stadium-visual" aria-label="Football intelligence visualization">
         <div className="stadium-glow" />
