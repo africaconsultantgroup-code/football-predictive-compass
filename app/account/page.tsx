@@ -7,6 +7,8 @@ import { createCustomerAuthServerClient } from "../../lib/supabase/auth-server";
 import { getCustomerAccess, type CustomerAccess } from "../../lib/auth/access";
 import { getActivePredictionGrants, type PredictionAccessSummary } from "../../lib/auth/match-access";
 import { getRecentPayments, type RecentPayment } from "../../lib/payments/service";
+import Link from "next/link";
+import { BrandMark, PredictionDisclaimer } from "../experience-components";
 
 export const dynamic = "force-dynamic";
 
@@ -26,24 +28,24 @@ export function AccountDetails({
   const planName = access.subscription?.name ?? "No active plan";
   const accessLabel = access.subscription?.name ?? "Free / Preview";
   return (
-    <main className="min-h-screen bg-slate-950 px-6 py-16 text-white">
-      <section className="mx-auto max-w-2xl rounded-3xl border border-white/10 bg-white/[0.04] p-8 shadow-2xl shadow-black/20">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-300">Football Predictive Compass</p>
-        <h1 className="mt-3 text-3xl font-semibold">Customer Account</h1>
+    <main className="account-shell">
+      <nav className="account-nav"><Link href="/" className="brand"><BrandMark /><span><strong>Football</strong> Predictive Compass</span></Link><Link href="/">← Back to predictions</Link></nav>
+      <section className="account-card">
+        <div className="account-heading"><div><p className="section-kicker">Personal intelligence hub</p><h1>Customer Account</h1><p>Manage your profile and review prediction access.</p></div><span className="account-status"><i />Registered</span></div>
+        <div className="account-identity">
         <p className="mt-8 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Name</p>
         <p className="mt-2 text-slate-200">{displayName ?? "Not provided"}</p>
         <p className="mt-6 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Email</p>
         <p className="mt-2 text-slate-200">{user.email ?? "Email unavailable"}</p>
-        <p className="mt-6 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Account status</p>
-        <p className="mt-2 text-slate-200">Registered</p>
         <p className="mt-6 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Subscription</p>
         <p className="mt-2 text-slate-200">{planName}</p>
         <p className="mt-6 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Access</p>
         <p className="mt-2 text-slate-200">{accessLabel}</p>
-        {access.subscription?.endsAt ? <><p className="mt-6 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Access until</p><time className="mt-2 block text-slate-200" dateTime={access.subscription.endsAt}>{new Intl.DateTimeFormat("en-GB", { dateStyle: "long" }).format(new Date(access.subscription.endsAt))}</time></> : null}
-        <div className="mt-8 border-t border-white/10 pt-6"><h2 className="text-lg font-semibold">Prediction Access</h2>{predictionAccess.length ? <ul className="mt-4 space-y-3">{predictionAccess.map((grant) => <li className="rounded-xl bg-white/[0.04] p-4" key={grant.productId}><p className="font-semibold text-white">{grant.name}</p><p className="mt-1 text-sm capitalize text-slate-300">{grant.stage} · {grant.scopeType === "kickoff_slot" ? `${grant.matchCount} matches` : "Single match"}</p><p className="mt-1 text-sm text-emerald-300">Unlocked</p></li>)}</ul> : <p className="mt-3 text-sm text-slate-400">No purchased prediction access.</p>}</div>
-        <div className="mt-8 border-t border-white/10 pt-6"><h2 className="text-lg font-semibold">Recent Purchases</h2>{recentPayments.length ? <ul className="mt-4 space-y-3">{recentPayments.map((payment) => <li className="rounded-xl bg-white/[0.04] p-4" key={payment.id}><p className="font-semibold text-white">{payment.name}</p><p className="mt-1 text-sm capitalize text-slate-300">{payment.stage} · {payment.currency} {Number(payment.amount).toFixed(2)}</p><p className="mt-1 text-sm capitalize text-slate-400">{payment.status} · {new Intl.DateTimeFormat("en-GB", { dateStyle: "medium" }).format(new Date(payment.createdAt))}</p></li>)}</ul> : <p className="mt-3 text-sm text-slate-400">No purchases yet.</p>}</div>
+        {access.subscription?.endsAt ? <><p className="mt-6 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Access until</p><time className="mt-2 block text-slate-200" dateTime={access.subscription.endsAt}>{new Intl.DateTimeFormat("en-GB", { dateStyle: "long" }).format(new Date(access.subscription.endsAt))}</time></> : null}</div>
+        <div className="account-section"><div className="account-section-title"><div><p className="section-kicker">Your intelligence</p><h2>Prediction Access</h2></div><span>{predictionAccess.length} active</span></div>{predictionAccess.length ? <ul className="grant-grid">{predictionAccess.map((grant) => <li key={grant.productId}><span className={`stage-badge ${grant.stage}`}>{grant.stage}</span><p>{grant.name}</p><small>{grant.scopeType === "kickoff_slot" ? `${grant.matchCount} matches · Kickoff Slot` : "Single match"}</small><strong>✓ Unlocked</strong></li>)}</ul> : <div className="account-empty"><p>No purchased prediction access.</p><Link href="/#predictions">Explore available predictions →</Link></div>}</div>
+        <div className="account-section"><div className="account-section-title"><div><p className="section-kicker">Payment activity</p><h2>Recent Purchases</h2></div></div>{recentPayments.length ? <ul className="purchase-list">{recentPayments.map((payment) => <li key={payment.id}><div><strong>{payment.name}</strong><span className="capitalize">{payment.stage} · {new Intl.DateTimeFormat("en-GB", { dateStyle: "medium" }).format(new Date(payment.createdAt))}</span></div><div><b>{payment.currency} {Number(payment.amount).toFixed(2)}</b><span className="capitalize">{payment.status}</span></div></li>)}</ul> : <div className="account-empty"><p>No purchases yet.</p></div>}</div>
         <ProfileForm displayName={displayName} />
+        <PredictionDisclaimer />
         <form action={logoutAction} className="mt-10">
           <button className="rounded-xl border border-white/15 px-5 py-3 text-sm font-semibold transition hover:border-emerald-300/50 hover:bg-emerald-300/10" type="submit">Log out</button>
         </form>

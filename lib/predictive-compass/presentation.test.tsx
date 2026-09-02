@@ -2,8 +2,10 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
 
 import { PredictionCard, PredictionPreviewCard } from "../../app/predictions";
+import { OfferList, PredictionEmptyState } from "../../app/experience-components";
 import { toPredictionPreview } from "./preview";
 import type { FootballPrediction } from "./schema";
 import { formatPredictedOutcome } from "./presentation";
@@ -80,5 +82,32 @@ describe("customer prediction presentation", () => {
     expect(html).toContain("Locked · Match access required");
     expect(html).not.toContain("Arsenal Win");
     expect(html).not.toContain("42%");
+  });
+
+  it("renders a polished empty state without invented fixtures or prices", () => {
+    const html = renderToStaticMarkup(<PredictionEmptyState />);
+    expect(html).toContain("No prediction offers available right now.");
+    expect(html).toContain("fixtures become eligible");
+    expect(html).not.toMatch(/GH[₵¢]\s*\d|Arsenal|Chelsea/);
+  });
+
+  it("renders database-backed match and kickoff-slot prices and membership", () => {
+    const html = renderToStaticMarkup(<OfferList matchLabel="Aston Villa vs Arsenal" stage="Prematch" offers={[
+      { productId: "11111111-1111-1111-1111-111111111111", name: "Villa v Arsenal Prematch", scopeType: "match", priceAmount: 5, currency: "GHS", matchCount: 1 },
+      { productId: "22222222-2222-2222-2222-222222222222", name: "19:00 Prematch Slot", scopeType: "kickoff_slot", priceAmount: 12, currency: "GHS", matchCount: 3 },
+    ]} />);
+    expect(html).toContain("GHS 5.00");
+    expect(html).toContain("GHS 12.00");
+    expect(html).toContain("Includes all 3 matches in this kickoff.");
+    expect(html).toContain("Unlock Match");
+    expect(html).toContain("Unlock Slot");
+  });
+
+  it("keeps probability and responsibility language visible on unlocked intelligence", () => {
+    const html = renderToStaticMarkup(<PredictionCard prediction={prediction} />);
+    expect(html).toContain("Chances / Model Probability");
+    expect(html).toContain("Confidence indicates");
+    expect(html).toContain("It is not a guarantee");
+    expect(html).not.toMatch(/Guaranteed win|Sure prediction|100% accurate|Can.t lose|Certain outcome/i);
   });
 });

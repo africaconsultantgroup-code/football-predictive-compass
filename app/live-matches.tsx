@@ -26,6 +26,7 @@ import {
   shouldLoadHistory,
 } from "../lib/predictive-compass/live-state";
 import { CheckoutButton } from "./checkout-button";
+import { PredictionDisclaimer, PredictionEmptyState } from "./experience-components";
 
 function scoreLabel(match: FootballLiveMatchView) {
   if (!match.current_score) return `${match.home_team} vs ${match.away_team}`;
@@ -38,7 +39,7 @@ function predictionScoreLabel(match: FootballLiveMatch) {
   return `${match.home_team} ${score.home} \u2013 ${score.away} ${match.away_team}`;
 }
 
-function PredictionTimeline({ match }: { match: FootballLiveMatch }) {
+export function PredictionTimeline({ match }: { match: FootballLiveMatch }) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [history, setHistory] = useState<FootballPredictionHistory | null>(null);
@@ -74,36 +75,36 @@ function PredictionTimeline({ match }: { match: FootballLiveMatch }) {
   const entries = history ? chronologicalHistory(history.history) : [];
 
   return (
-    <div className="mt-5 border-t border-white/10 pt-5">
+    <div id="timeline" className="prediction-timeline">
       <button
-        className="text-sm font-semibold text-emerald-300 transition-colors hover:text-emerald-200"
+        className="timeline-toggle"
         onClick={toggle}
         type="button"
         aria-expanded={open}
       >
-        {open ? "Hide Prediction Timeline" : "View Prediction Changes"}
+        <span aria-hidden="true">↻</span>{open ? "Hide Prediction Timeline" : "View Prediction Timeline"}<b aria-hidden="true">{open ? "−" : "+"}</b>
       </button>
       {open ? (
         <div className="mt-4">
-          {loading ? <p className="text-sm text-slate-400">Loading prediction timeline…</p> : null}
+          {loading ? <p className="timeline-message">Loading prediction timeline…</p> : null}
           {failed ? <p className="text-sm text-amber-200">Prediction timeline is temporarily unavailable.</p> : null}
-          {history && entries.length === 0 ? <p className="text-sm text-slate-400">No prediction changes are available yet.</p> : null}
+          {history && entries.length === 0 ? <p className="timeline-message">No prediction changes are available yet.</p> : null}
           {entries.length ? (
-            <ol className="space-y-4 border-l border-emerald-300/25 pl-4">
+            <ol className="timeline-list">
               {entries.map((entry, index) => {
                 const minute = formatMatchMinute(entry.minute, null);
                 if ("locked" in entry) {
-                  return <li key={`${entry.generated_at ?? "entry"}-${index}`} className="relative"><span className="absolute -left-[1.18rem] top-1.5 size-2 rounded-full bg-slate-500" /><p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">{minute ?? formatFootballStage(entry.stage)}</p><p className="mt-1 text-sm font-medium text-slate-400">Locked · Purchase this stage to unlock</p></li>;
+                  return <li key={`${entry.generated_at ?? "entry"}-${index}`} className="timeline-entry locked"><span className="timeline-node" /><div><p>{minute ?? formatFootballStage(entry.stage)}</p><strong>◇ Locked</strong><small>Purchase this stage to unlock</small></div></li>;
                 }
                 const event = formatChangeReason(entry.change_reason);
                 const heading = minute ?? formatFootballStage(entry.stage);
                 return (
-                  <li key={`${entry.generated_at ?? "entry"}-${index}`} className="relative">
-                    <span className="absolute -left-[1.18rem] top-1.5 size-2 rounded-full bg-emerald-300" />
-                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
+                  <li key={`${entry.generated_at ?? "entry"}-${index}`} className="timeline-entry unlocked">
+                    <span className="timeline-node" />
+                    <div><p>
                       {heading}{event && event !== heading ? ` \u00b7 ${event}` : ""}
                     </p>
-                    <p className="mt-1 text-sm font-medium text-white">
+                    <strong>
                       {formatPredictedOutcome({
                         predicted_outcome: entry.predicted_outcome,
                         home_team: match.home_team,
@@ -117,8 +118,8 @@ function PredictionTimeline({ match }: { match: FootballLiveMatch }) {
                             ? entry.probabilities.away_win
                             : entry.probabilities.draw,
                       )}
-                    </p>
-                    <p className="mt-1 text-xs leading-5 text-slate-500">{entry.change_description}</p>
+                    </strong>
+                    <small>{entry.change_description}</small></div>
                   </li>
                 );
               })}
@@ -135,7 +136,7 @@ export function LiveMatchCard({ match }: { match: FootballLiveMatchView }) {
     const minute = formatMatchMinute(match.minute, match.added_time);
     const active = isActivelyLive(match.stage);
     return (
-      <article className="rounded-2xl border border-emerald-300/20 bg-slate-950/70 p-5 shadow-xl shadow-emerald-950/20 sm:p-6">
+      <article className="prediction-card live-card locked-card">
         <div className="flex items-start justify-between gap-4 border-b border-white/10 pb-5">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-300">{match.competition}</p>
@@ -148,7 +149,7 @@ export function LiveMatchCard({ match }: { match: FootballLiveMatchView }) {
           <p className="text-sm font-semibold text-emerald-300">{match.prediction_available ? "Live prediction available" : "Live prediction is being prepared"}</p>
           <p className="mt-2 text-sm text-slate-400">Live intelligence and prediction timelines require Full Access.</p>
           <span className="mt-4 inline-flex rounded-full border border-white/15 px-3 py-1.5 text-xs font-semibold text-slate-300">Locked · Match access required</span>
-          {match.offers.length ? <div className="mt-5 space-y-2">{match.offers.map((offer) => <div className="rounded-xl border border-white/10 px-3 py-2 text-left text-xs text-slate-300" key={offer.productId}><span className="font-semibold text-white">{offer.scopeType === "kickoff_slot" ? `Unlock all ${offer.matchCount} matches at this kickoff` : "Unlock this match"}</span><span className="block text-slate-400">{offer.priceAmount === null ? "Price coming soon" : `${offer.currency} ${offer.priceAmount.toFixed(2)}`}</span>{offer.priceAmount !== null ? <CheckoutButton productId={offer.productId} /> : null}</div>)}</div> : null}
+          {match.offers.length ? <div className="offer-list">{match.offers.map((offer) => <div className={`offer-card ${offer.scopeType === "kickoff_slot" ? "slot-offer" : "match-offer"}`} key={offer.productId}><span className="offer-stage">{match.stage === "HALFTIME" ? "Halftime" : "Live"}</span><strong>{offer.name}</strong><p>{offer.scopeType === "kickoff_slot" ? `Includes all ${offer.matchCount} matches in this kickoff.` : `${match.home_team} vs ${match.away_team}`}</p><div className="offer-action"><span className="offer-price">{offer.priceAmount === null ? "Price coming soon" : `${offer.currency} ${offer.priceAmount.toFixed(2)}`}</span>{offer.priceAmount !== null ? <CheckoutButton offer={offer} matchLabel={`${match.home_team} vs ${match.away_team}`} stage={match.stage === "HALFTIME" ? "Halftime" : "Live"} /> : null}</div></div>)}</div> : null}
         </div>
       </article>
     );
@@ -159,7 +160,7 @@ export function LiveMatchCard({ match }: { match: FootballLiveMatchView }) {
   const outlookLabel = match.stage === "HALFTIME" ? "Second-half outlook" : "Our prediction";
 
   return (
-    <article className="rounded-2xl border border-emerald-300/20 bg-slate-950/70 p-5 shadow-xl shadow-emerald-950/20 sm:p-6">
+    <article className="prediction-card live-card unlocked-card">
       <div className="flex items-start justify-between gap-4 border-b border-white/10 pb-5">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-300">{match.competition}</p>
@@ -211,6 +212,7 @@ export function LiveMatchCard({ match }: { match: FootballLiveMatchView }) {
         <span>Last updated</span><span>{minute ?? (match.updated_at ? new Date(match.updated_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "Recently")}</span>
       </div>
       <PredictionTimeline match={match} />
+      <PredictionDisclaimer />
     </article>
   );
 }
@@ -266,15 +268,15 @@ export default function LiveMatches() {
   }, []);
 
   return (
-    <section id="live-matches" aria-labelledby="live-matches-title" className="mt-20 rounded-3xl border border-emerald-300/15 bg-emerald-300/[0.035] p-6 shadow-2xl shadow-black/20 sm:p-8 lg:mt-28 lg:p-10">
+    <section id="live-matches" aria-labelledby="live-matches-title" className="prediction-section live-section">
       <div className="flex items-center justify-between border-b border-white/10 pb-6">
         <div><p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-300">Match centre</p><h2 id="live-matches-title" className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">Live Matches</h2></div>
         <button className="rounded-full border border-white/15 px-3 py-1.5 text-xs font-medium text-slate-300 transition-colors hover:border-emerald-300/50 hover:text-white" type="button" onClick={() => { if (!controllerRef.current) { if (timeoutRef.current) clearTimeout(timeoutRef.current); refreshRef.current?.(); } }}>Refresh</button>
       </div>
       {state.updateDelayed ? <p className="mt-5 rounded-xl bg-amber-300/10 px-4 py-3 text-sm text-amber-100" role="status">Live update temporarily delayed.</p> : null}
       {!state.hasLoaded ? <div className="flex min-h-48 items-center justify-center text-sm text-slate-400" role="status"><span className="mr-3 size-2 animate-pulse rounded-full bg-emerald-300" />Checking live matches…</div> : null}
-      {state.hasLoaded && !state.matches.length ? <div className="flex min-h-48 items-center justify-center text-center text-slate-400">No matches are live right now.</div> : null}
-      {state.matches.length ? <div className="grid gap-5 pt-6 lg:grid-cols-2">{state.matches.map((match) => <LiveMatchCard key={match.match_id} match={match} />)}</div> : null}
+      {state.hasLoaded && !state.matches.length ? <PredictionEmptyState live /> : null}
+      {state.matches.length ? <div className="prediction-grid">{state.matches.map((match) => <LiveMatchCard key={match.match_id} match={match} />)}</div> : null}
     </section>
   );
 }
