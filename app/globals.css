@@ -115,3 +115,157 @@ button, input { font: inherit; }
 html {
   scroll-behavior: smooth;
 }
+
+/* Approved Lovable visual system. These rules intentionally sit last so the
+   production components keep their data and authorization behavior while
+   adopting the reference application's presentation. */
+:root {
+  --background: #101722;
+  --foreground: #f5f8f6;
+  --surface: #121c29;
+  --surface-raised: #1a2635;
+  --line: rgba(244, 250, 247, .11);
+  --muted: #9ca9b6;
+  --green: #4ee08a;
+  --blue: #67b6ff;
+  --amber: #f0bd59;
+  --radius: 8px;
+}
+
+body { background: var(--background); font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif; }
+.site-shell { background: var(--background); overflow: clip; }
+.site-main { width: 100%; max-width: none; padding: 0; }
+.site-header { border-color: var(--line); background: rgba(16,23,34,.9); }
+.top-nav { width: min(1180px, calc(100% - 32px)); height: 72px; padding: 0; }
+.brand { gap: 12px; font-size: 14px; font-weight: 750; }
+.brand span { display: grid; }
+.brand b { line-height: 1; }
+.brand strong { margin-top: 4px; font-size: 10px; }
+.brand-mark { width: 32px; height: 32px; border-radius: 50%; box-shadow: inset 0 0 0 6px rgba(78,224,138,.08); }
+.brand-mark::before, .brand-mark span { display: none; }
+.brand-mark::after { width: 7px; height: 7px; border: 0; border-radius: 50%; transform: none; box-shadow: 0 0 16px rgba(78,224,138,.8); }
+.nav-links { gap: 3px; }
+.nav-links a, .login-link { padding: 10px 12px; border-radius: 6px; font-size: 13px; font-weight: 700; }
+.nav-links a:hover { background: var(--surface-raised); }
+.nav-button { border: 0; border-radius: 6px; background: var(--green); color: #07150d; }
+
+.hero-grid { position: relative; min-height: 0; padding: 96px max(16px, calc((100vw - 1180px)/2)) 72px; display: block; border-bottom: 1px solid var(--line); overflow: hidden; }
+.hero-grid::before { content: ""; position: absolute; inset: 0; opacity: .2; background-image: linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px); background-size: 56px 56px; mask-image: linear-gradient(to bottom,black,transparent 92%); }
+.hero-grid::after { content: ""; position: absolute; right: -8%; bottom: -64%; width: 68%; height: 92%; border: 1px solid rgba(78,224,138,.22); border-radius: 50% 50% 0 0; background: radial-gradient(ellipse at 50% 100%,rgba(78,224,138,.18),transparent 58%); transform: perspective(500px) rotateX(58deg); }
+.hero-copy { position: relative; z-index: 2; max-width: 760px; }
+.hero-copy .stage-badge { display: inline-flex; width: auto; padding: 7px 10px; border-radius: 999px; background: rgba(78,224,138,.1); color: var(--green); font-size: 10px; letter-spacing: .09em; }
+.hero-copy h1 { margin-top: 26px; max-width: 650px; font-size: clamp(52px,7vw,76px); font-weight: 850; line-height: .98; letter-spacing: -.045em; }
+.hero-intro { max-width: 620px; margin-top: 25px; font-size: 17px; line-height: 1.7; }
+.hero-actions { margin-top: 28px; }
+.hero-actions a { min-height: 46px; border-radius: 6px; padding: 0 18px; font-size: 12px; }
+.benefit-grid { max-width: 850px; margin-top: 40px; border: 1px solid var(--line); border-radius: var(--radius); background: rgba(18,28,41,.88); }
+.benefit-card { min-height: 74px; border: 0; border-radius: 0; background: transparent; }
+.benefit-card + .benefit-card { border-left: 1px solid var(--line); }
+.benefit-icon { width: 24px; height: 24px; border: 0; background: rgba(78,224,138,.12); }
+.hero-disclaimer { margin-top: 18px; color: var(--muted); font-size: 11px; }
+.stadium-visual { display: none; }
+
+.home-section { padding: 58px max(16px, calc((100vw - 1180px)/2)); scroll-margin-top: 72px; }
+.home-section + .home-section, .prediction-section + .prediction-section { margin-top: 0; }
+.surface-section { border-block: 1px solid var(--line); background: var(--surface); }
+.section-header { padding: 0 0 22px; align-items: end; }
+.section-header h2, .story-heading h2, .value-section h2, .info-card h2 { margin-top: 8px; font-size: clamp(26px,3vw,38px); letter-spacing: -.035em; }
+.section-header > div > p:last-child, .story-heading > p:last-child { margin-top: 8px; color: var(--muted); font-size: 14px; }
+.section-link { color: var(--green); font-size: 12px; font-weight: 800; text-decoration: none; }
+.prediction-section { border: 0; border-radius: 0; background: transparent; }
+.offer-tabs { display: none; }
+.fixture-groups > section { border-top: 0; }
+.date-divider { padding: 20px 0 12px; }
+.date-divider:first-child { padding-top: 0; }
+.prediction-grid { grid-template-columns: repeat(3,minmax(0,1fr)); gap: 13px; padding: 0; }
+.prediction-card { border-radius: var(--radius); background: #151f2c; box-shadow: 0 18px 45px rgba(0,0,0,.16); }
+.fixture-header { padding: 17px; }
+.fixture-header h3 { min-height: 48px; margin-top: 18px; display: grid; grid-template-columns: 1fr; gap: 4px; font-size: 15px; text-align: center; }
+.fixture-header h3 span { font-size: 9px; }
+.fixture-header p { color: var(--muted); }
+.fixture-header time { text-align: center; }
+.locked-state, .unlock-state, .stage-badge { border-radius: 999px; }
+.locked-preview { margin: 14px; padding: 15px; align-items: flex-start; }
+.locked-preview p { font-size: 11px; }
+.offer-list { padding: 0 14px 14px; }
+.offer-card { border-radius: var(--radius); }
+.unlock-button { border-radius: 6px; }
+.unlocked-card { grid-column: span 2; }
+.outcome-panel { background: linear-gradient(120deg,#172b26,rgba(78,224,138,.08)); }
+.outcome-panel strong { font-size: 28px; }
+.probability-track { height: 8px; }
+
+.slot-market { margin-bottom: 28px; padding: 0; border: 0; background: transparent; }
+.slot-grid { gap: 14px; }
+.kickoff-slot-card { position: relative; border-color: rgba(78,224,138,.28); border-radius: var(--radius); background: linear-gradient(110deg,var(--surface-raised),rgba(78,224,138,.06)); }
+.kickoff-slot-card::before { content:""; position:absolute; inset:0 auto 0 0; width:3px; background:var(--green); }
+.kickoff-slot-card header div span { color: var(--foreground); font-size: 34px; }
+.kickoff-slot-card header b { color: var(--green); background: rgba(78,224,138,.1); }
+
+.live-section { border: 0; border-radius: 0; background: transparent; }
+.live-section > div:first-child { padding: 0 0 22px !important; }
+.live-section .prediction-grid { padding: 0; grid-template-columns: repeat(2,minmax(0,1fr)); }
+.live-card { border-top: 2px solid var(--blue); }
+.live-card .stage-badge, .timeline-toggle { color: var(--blue); }
+.live-card:has(.stage-badge.halftime), .live-card.halftime { border-top-color: var(--amber); }
+
+.story-section, .value-section { margin: 0; padding: 0; border: 0; border-radius: 0; background: transparent; }
+.stage-story-grid { gap: 16px; }
+.stage-story-grid article { min-height: 210px; border-radius: var(--radius); background: var(--background); }
+.stage-story-grid article.prematch { border-top: 2px solid var(--green); }
+.stage-story-grid article.live { border-top: 2px solid var(--blue); }
+.stage-story-grid article.halftime { border-top: 2px solid var(--amber); }
+.stage-story-grid h3 { font-size: 20px; }
+.how-flow { display: grid; grid-template-columns: .75fr 1.25fr; gap: 48px; }
+.how-flow ol { margin: 0; grid-template-columns: repeat(2,1fr); }
+.how-flow li { min-height: 94px; border-radius: var(--radius); background: var(--surface); }
+.how-flow li span { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; background: rgba(78,224,138,.1); }
+.how-flow li b { display: none; }
+.value-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.value-pair > * { padding: 26px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--background); }
+.value-market { display: block; }
+.value-market ul { margin-top: 22px; }
+.how-to-read dl { margin-top: 22px; }
+.value-section { display: grid; grid-template-columns: .75fr 1.25fr; }
+.payment-trust { margin-top: 24px; border-radius: var(--radius); background: var(--surface); }
+
+.site-footer { width: 100%; padding: 48px max(16px,calc((100vw - 1180px)/2)) 28px; display: grid; grid-template-columns: 1fr auto; gap: 36px; background: var(--surface); }
+.site-footer > div:first-child { max-width: 460px; }
+.site-footer > div:first-child > p { margin-top: 18px; line-height: 1.7; }
+.site-footer nav { display: grid; grid-template-columns: repeat(2,auto); gap: 14px 34px; }
+.site-footer nav a { color: var(--foreground); text-decoration: none; }
+.footer-base { grid-column: 1/-1; padding-top: 20px; display: flex; justify-content: space-between; border-top: 1px solid var(--line); }
+
+.account-shell { background: var(--background); }
+.account-nav { width: min(1180px,100%); }
+.account-card { border-radius: var(--radius); background: var(--surface); }
+.summary-grid > div, .identity-grid > div, .grant-grid li, .purchase-list, .profile-editor { border-radius: var(--radius); }
+.purchase-dialog { border-radius: var(--radius); background: var(--surface); }
+
+@media (max-width: 900px) {
+  .prediction-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .unlocked-card { grid-column: span 2; }
+  .how-flow, .value-section { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 760px) {
+  .top-nav { width: calc(100% - 28px); padding: 0; }
+  .top-nav > .brand span { display: grid; }
+  .hero-grid { padding-block: 64px 48px; }
+  .hero-grid::after { display: none; }
+  .hero-copy h1 { font-size: clamp(44px,14vw,62px); }
+  .benefit-grid { grid-template-columns: 1fr; }
+  .benefit-card + .benefit-card { border-left: 0; border-top: 1px solid var(--line); }
+  .home-section { padding-block: 42px; }
+  .prediction-grid, .live-section .prediction-grid { grid-template-columns: 1fr; }
+  .unlocked-card { grid-column: auto; }
+  .section-header { align-items: flex-start; }
+  .value-pair { grid-template-columns: 1fr; }
+  .site-footer { grid-template-columns: 1fr; }
+  .site-footer nav, .footer-base { grid-column: 1; }
+  .footer-base { flex-direction: column; gap: 8px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; animation: none !important; }
+}

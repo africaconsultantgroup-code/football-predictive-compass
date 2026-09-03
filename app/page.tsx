@@ -8,7 +8,6 @@ import {
   HowToReadPrediction,
   PaymentTrustCard,
   PredictionStages,
-  PredictionStageSelector,
   WhatYouGet,
   WhyPredictiveCompass,
 } from "./experience-components";
@@ -24,24 +23,17 @@ export default async function Home() {
 
       <main className="site-main">
         <FootballHero />
-        <section className="intelligence-layout" aria-label="Football prediction intelligence">
-          <PredictionStageSelector />
-          <div className="prediction-stream">
-            <section id="upcoming-matches" className="prediction-section" aria-labelledby="predictions-title">
-              <div className="section-header"><div><p className="section-kicker">Next fixtures</p><h2 id="predictions-title">Upcoming Matches</h2><p>Explore real upcoming fixtures and available prediction access.</p></div><span className="availability-pill"><span className="status-dot" />Real-time availability</span></div>
-              <div className="offer-tabs" role="navigation" aria-label="Prediction offer stages"><a className="active" href="#predictions">All Offers</a><a href="#prematch">Prematch</a><a href="#live-matches">Live</a><a href="#live-matches">Halftime</a></div>
-              <div id="predictions"><div id="prematch"><Suspense fallback={<PredictionsLoading />}><PredictionsContent /></Suspense></div></div>
-            </section>
-            <LiveMatches />
-          </div>
-          <aside className="insight-rail"><HowToReadPrediction /><PaymentTrustCard /></aside>
+        <section id="upcoming-matches" className="home-section" aria-labelledby="predictions-title">
+          <div className="section-header"><div><p className="section-kicker">Match intelligence</p><h2 id="predictions-title">Today&apos;s Predictions</h2><p>Browse prediction-ready fixtures ordered by kickoff time.</p></div><a className="section-link" href="#predictions">View all <span aria-hidden="true">→</span></a></div>
+          <div id="predictions"><div id="prematch"><Suspense fallback={<PredictionsLoading />}><PredictionsContent /></Suspense></div></div>
         </section>
-        <PredictionStages />
-        <HowItWorks />
-        <WhatYouGet />
-        <WhyPredictiveCompass />
+        <LiveMatches />
+        <section className="home-section surface-section"><PredictionStages /></section>
+        <section className="home-section split-story"><HowItWorks /></section>
+        <section className="home-section surface-section"><div className="value-pair"><WhatYouGet /><HowToReadPrediction /></div></section>
+        <section className="home-section"><WhyPredictiveCompass /><PaymentTrustCard /></section>
       </main>
-      <footer className="site-footer"><div className="brand"><BrandMark /><span><strong>Football</strong> Predictive Compass</span></div><p>Premium football intelligence for fans.</p><p>Predictions are probability-based, not guaranteed outcomes.</p></footer>
+      <footer className="site-footer"><div><div className="brand"><BrandMark /><span><b>Football Predictive</b><strong>Compass</strong></span></div><p>Predictive Compass provides probability-based football intelligence. Predictions are not guarantees of match outcomes.</p></div><nav aria-label="Footer navigation"><a href="#upcoming-matches">Predictions</a><a href="#live-matches">Live</a><a href="#how-it-works">How It Works</a><a href="/account">Account</a></nav><div className="footer-base"><span>© 2026 Football Predictive Compass</span><span>Confidence, not certainty.</span></div></footer>
     </div>
   );
 }

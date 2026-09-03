@@ -13,15 +13,16 @@ export function FootballHero() {
   return (
     <section className="hero-grid" aria-labelledby="hero-title">
       <div className="hero-copy">
-        <p className="eyebrow"><span className="status-dot" />Data-driven football insights</p>
+        <p className="stage-badge prematch">Data-driven football intelligence</p>
         <h1 id="hero-title">Smarter Football<br /><span>Predictions</span></h1>
-        <p className="hero-intro">See upcoming matches, explore model-generated probabilities and unlock the prediction stage you need.</p>
+        <p className="hero-intro">Explore upcoming matches, unlock model-generated probabilities and follow how predictions evolve as the match develops.</p>
         <div className="hero-actions"><a className="hero-primary" href="#upcoming-matches">View Upcoming Predictions <span aria-hidden="true">↓</span></a><a className="hero-secondary" href="#how-it-works">How It Works</a></div>
         <div className="benefit-grid">
           <Benefit icon="chart" title="Data-Backed Analysis" text="Advanced statistics & models" />
           <Benefit icon="target" title="Most Likely Outcome" text="Understand the modeled edge" />
           <Benefit icon="signal" title="Probability Guidance" text="Confidence, not certainty" />
         </div>
+        <p className="hero-disclaimer">Predictions are probability-based insights, not guaranteed outcomes.</p>
       </div>
       <div className="stadium-visual" aria-label="Football intelligence visualization">
         <div className="stadium-glow" />
@@ -67,7 +68,7 @@ export function PredictionStages() {
     ["02", "live", "Live", "During the match", "Updated intelligence using the developing match state."],
     ["03", "halftime", "Halftime", "At half-time", "Second-half analysis incorporating first-half evidence."],
   ];
-  return <section className="story-section" aria-labelledby="stages-title"><div className="story-heading"><p className="section-kicker">Choose your intelligence</p><h2 id="stages-title">Prediction Stages</h2></div><div className="stage-story-grid">{stages.map(([number, className, title, timing, text]) => <article className={className} key={title}><span>{number}</span><h3>{title}</h3><strong>{timing}</strong><p>{text}</p></article>)}</div><p className="story-note">Each stage is a separate prediction product because new match information changes the model&apos;s analysis.</p></section>;
+  return <section className="story-section" aria-labelledby="stages-title"><div className="story-heading"><p className="section-kicker">The match evolves</p><h2 id="stages-title">Prediction Stages</h2><p>Each stage uses the information available at that moment, so every view answers a different question.</p></div><div className="stage-story-grid">{stages.map(([number, className, title, timing, text]) => <article className={className} key={title}><span>{number}</span><h3>{title}</h3><strong>{timing}</strong><p>{text}</p></article>)}</div></section>;
 }
 
 export function HowItWorks() {
