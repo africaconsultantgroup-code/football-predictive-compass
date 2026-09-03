@@ -8,6 +8,7 @@ import {
   footballPredictionSchema,
   parseUpcomingFootballPredictions,
 } from "./schema";
+import { syncLivePredictionProducts, syncUpcomingPredictionProducts } from "../payments/product-sync";
 
 const DEFAULT_TIMEOUT_MS = 8_000;
 
@@ -93,11 +94,13 @@ export function createFootballCoreClient({
           from: start.toISOString().slice(0, 10),
           to: end.toISOString().slice(0, 10),
         });
-        return parseUpcomingFootballPredictions(
+        const predictions = parseUpcomingFootballPredictions(
           await request(
             `api/v1/domains/football/predictions/upcoming?${parameters}`,
           ),
         );
+        await syncUpcomingPredictionProducts(predictions).catch(() => undefined);
+        return predictions;
       } catch (error) {
         if (error instanceof CoreClientError) throw error;
         throw new CoreClientError("malformed");
@@ -119,9 +122,11 @@ export function createFootballCoreClient({
 
     async getLiveFootballMatches() {
       try {
-        return footballLiveMatchListSchema.parse(
+        const matches = footballLiveMatchListSchema.parse(
           await request("api/v1/domains/football/matches/live"),
         );
+        await syncLivePredictionProducts(matches.matches).catch(() => undefined);
+        return matches;
       } catch (error) {
         if (error instanceof CoreClientError) throw error;
         throw new CoreClientError("malformed");
