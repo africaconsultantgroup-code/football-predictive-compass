@@ -10,7 +10,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 const product: PaymentProduct = {
   id: "11111111-1111-1111-1111-111111111111", scope_type: "match", prediction_stage: "prematch",
-  price_amount: "5.00", currency: "GHS", is_active: true, sales_open_at: null,
+  price_amount: "20.00", currency: "GHS", is_active: true, sales_open_at: null,
   sales_close_at: "2026-09-03T14:00:00.000Z",
   prediction_access_product_matches: [{ match_id: `fm_${"a".repeat(32)}`, kickoff_at: "2026-09-03T14:00:00.000Z" }],
 };
@@ -33,6 +33,7 @@ describe("Paystack payment security", () => {
     const now = new Date("2026-09-02T12:00:00.000Z");
     expect(validatePaymentProduct(product, now)).toBe(true);
     expect(validatePaymentProduct({ ...product, price_amount: null }, now)).toBe(false);
+    expect(validatePaymentProduct({ ...product, price_amount: "19.99" }, now)).toBe(false);
     expect(validatePaymentProduct({ ...product, is_active: false }, now)).toBe(false);
     expect(validatePaymentProduct({ ...product, sales_close_at: "2026-09-02T11:00:00.000Z" }, now)).toBe(false);
     expect(validatePaymentProduct(null, now)).toBe(false);
@@ -64,7 +65,7 @@ describe("Paystack payment security", () => {
   });
 
   it("creates the exact product grant once and is safe on callback/webhook retry", async () => {
-    const payment = { id: "payment", user_id: "user", product_id: product.id, provider_reference: "ref", amount: "5.00", currency: "GHS", status: "pending", grant_id: null };
+    const payment = { id: "payment", user_id: "user", product_id: product.id, provider_reference: "ref", amount: "20.00", currency: "GHS", status: "pending", grant_id: null };
     const grants: Array<{ id: string; user_id: string; product_id: string }> = [];
     const admin = {
       from(table: string) {
@@ -84,7 +85,7 @@ describe("Paystack payment security", () => {
         throw new Error("unexpected table");
       },
     } as unknown as SupabaseClient;
-    const transaction = { status: "success", reference: "ref", amount: 500, currency: "GHS", paid_at: "2026-09-02T12:00:00.000Z", metadata: { payment_id: "payment", user_id: "user", product_id: product.id } };
+    const transaction = { status: "success", reference: "ref", amount: 2000, currency: "GHS", paid_at: "2026-09-02T12:00:00.000Z", metadata: { payment_id: "payment", user_id: "user", product_id: product.id } };
     const paystack = { verify: vi.fn().mockResolvedValue(transaction) } as unknown as ReturnType<typeof createPaystackClient>;
     await expect(verifyAndFulfillPayment({ admin, paystack, reference: "ref", now: new Date("2026-09-02T12:00:00.000Z") })).resolves.toEqual({ status: "successful" });
     await expect(verifyAndFulfillPayment({ admin, paystack, reference: "ref", now: new Date("2026-09-02T12:00:00.000Z") })).resolves.toEqual({ status: "successful" });
@@ -93,12 +94,12 @@ describe("Paystack payment security", () => {
   });
 
   it.each([
-    ["failed", 500, "GHS", "failed"],
-    ["abandoned", 500, "GHS", "abandoned"],
-    ["success", 501, "GHS", "mismatch"],
-    ["success", 500, "NGN", "mismatch"],
+    ["failed", 2000, "GHS", "failed"],
+    ["abandoned", 2000, "GHS", "abandoned"],
+    ["success", 2001, "GHS", "mismatch"],
+    ["success", 2000, "NGN", "mismatch"],
   ])("does not grant for provider state %s, amount %s, currency %s", async (providerStatus, amount, currency, expected) => {
-    const payment = { id: "payment", user_id: "user", product_id: product.id, provider_reference: "ref", amount: "5.00", currency: "GHS", status: "pending", grant_id: null };
+    const payment = { id: "payment", user_id: "user", product_id: product.id, provider_reference: "ref", amount: "20.00", currency: "GHS", status: "pending", grant_id: null };
     const grantUpsert = vi.fn();
     const admin = { from: (table: string) => table === "prediction_payments" ? {
       select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: payment, error: null }) }) }),
