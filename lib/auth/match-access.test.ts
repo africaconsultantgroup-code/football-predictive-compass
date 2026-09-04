@@ -49,4 +49,12 @@ describe("match prediction access", () => {
     expect(sql).not.toMatch(/grant (insert|update|delete).*prediction_access_(grants|products|product_matches).*authenticated/i);
     expect(sql).toContain("using ((select auth.uid()) = user_id)");
   });
+  it("lets anonymous customers read sellable offers without granting access to payment or grant rows", () => {
+    const sql = readFileSync("supabase/migrations/20260904090823_fix_customer_product_offer_rls.sql", "utf8");
+    expect(sql).toContain("private.customer_can_view_prediction_product");
+    expect(sql).toContain("grant execute on function private.customer_can_view_prediction_product(uuid) to anon, authenticated");
+    expect(sql).not.toMatch(/grant select on table public\.prediction_(access_grants|payments) to anon/i);
+    expect(sql).toContain("grant_record.user_id = (select auth.uid())");
+    expect(sql).toContain("payment.user_id = (select auth.uid())");
+  });
 });
