@@ -58,6 +58,12 @@ describe("automatic prediction product synchronization", () => {
     expect(planPredictionProducts(records)[0].syncKey).toBe(products[0].syncKey);
   });
 
+  it("does not create another product when Core publishes a new prediction version", () => {
+    const oldVersion = eligibleUpcomingPredictions([upcoming({ prediction_id: "version-1" })]).eligible;
+    const newVersion = eligibleUpcomingPredictions([upcoming({ prediction_id: "version-2" })]).eligible;
+    expect(planPredictionProducts(oldVersion)[0].syncKey).toBe(planPredictionProducts(newVersion)[0].syncKey);
+  });
+
   it("skips missing canonical identity, invalid kickoff, non-prematch, and unavailable records", () => {
     const result = eligibleUpcomingPredictions([
       upcoming({ match_id: null }), upcoming({ kickoff_at: null }), upcoming({ stage: "FINAL" }),

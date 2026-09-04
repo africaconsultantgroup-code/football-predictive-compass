@@ -72,6 +72,25 @@ describe("Football Core client", () => {
     expect(JSON.stringify(result)).not.toContain(apiKey);
   });
 
+  it("requests Prematch freshness by canonical match on the server boundary", async () => {
+    const { client, fetchMock } = clientWithResponse(200, {
+      match_id: prediction.match_id,
+      prediction,
+      freshness_status: "stale",
+      refresh_status: "queued",
+      maximum_age_seconds: 600,
+      snapshot_age_seconds: 900,
+      internal_queue_id: "must-not-leak",
+    });
+    const result = await client.requestPrematchFreshness(prediction.match_id);
+    const [url, init] = fetchMock.mock.calls[0];
+
+    expect(String(url)).toBe(`https://core.example.test/api/v1/domains/football/matches/${prediction.match_id}/prematch/freshness`);
+    expect(init?.method).toBe("POST");
+    expect(new Headers(init?.headers).get("x-api-key")).toBe(apiKey);
+    expect(result).not.toHaveProperty("internal_queue_id");
+  });
+
   it("accepts an empty upcoming response", async () => {
     const { client } = clientWithResponse(200, { predictions: [] });
     await expect(client.getUpcomingFootballPredictions()).resolves.toEqual([]);

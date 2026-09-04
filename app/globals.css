@@ -241,6 +241,17 @@ body { background: var(--background); font-family: var(--font-geist-sans), ui-sa
 .account-card { border-radius: var(--radius); background: var(--surface); }
 .summary-grid > div, .identity-grid > div, .grant-grid li, .purchase-list, .profile-editor { border-radius: var(--radius); }
 .purchase-dialog { border-radius: var(--radius); background: var(--surface); }
+.match-detail-link { display: flex; align-items: center; justify-content: space-between; margin: 0 14px 14px; padding: 11px 13px; border: 1px solid var(--line); border-radius: 9px; color: var(--green); font-size: 10px; font-weight: 800; text-decoration: none; }
+.match-page { max-width: 880px; padding-top: 38px; padding-bottom: 80px; }
+.back-link { display: inline-block; margin-bottom: 24px; color: var(--muted); font-size: 11px; text-decoration: none; }
+.match-intelligence-header { margin-bottom: 18px; padding: 26px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+.match-intelligence-header h1 { display: flex; align-items: center; gap: 13px; margin-top: 8px; font-size: clamp(24px,5vw,38px); }
+.match-intelligence-header h1 span { color: var(--muted); font-size: 11px; text-transform: uppercase; }
+.match-intelligence-header > p:last-of-type { margin-top: 8px; color: var(--muted); font-size: 11px; }
+.freshness-banner { display: grid; gap: 5px; margin-top: 20px; padding: 14px; border: 1px solid rgba(78,224,138,.2); border-radius: 10px; background: rgba(78,224,138,.05); }
+.freshness-banner strong { color: var(--green); font-size: 11px; }
+.freshness-banner span, .freshness-banner time { color: var(--muted); font-size: 10px; line-height: 1.5; }
+.living-access-card { padding-top: 18px; }
 
 @media (max-width: 900px) {
   .prediction-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }

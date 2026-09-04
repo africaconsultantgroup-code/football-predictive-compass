@@ -1,4 +1,5 @@
 import { connection } from "next/server";
+import Link from "next/link";
 
 import { getCustomerAccess } from "../lib/auth/access";
 import { getPredictionOffers, hasPredictionAccess } from "../lib/auth/match-access";
@@ -67,6 +68,7 @@ export function PredictionCard({ prediction }: { prediction: FootballPrediction 
       {prediction.customer_summary ? <p className="prediction-summary">{prediction.customer_summary}</p> : null}
       {factors.length ? <ul className="factor-list">{factors.map((factor) => <li key={factor}><span aria-hidden="true">✓</span>{factor}</li>)}</ul> : null}
       <PredictionDisclaimer />
+      {prediction.match_id ? <Link className="match-detail-link" href={`/matches/${prediction.match_id}`}>Open living Prematch intelligence <span aria-hidden="true">→</span></Link> : null}
     </article>
   );
 }
@@ -78,6 +80,7 @@ export function PredictionPreviewCard({ prediction }: { prediction: FootballPred
       <header className="fixture-header"><div><span className="stage-badge prematch">Prematch · Available</span><p>{prediction.competition}</p><h3>{prediction.home_team}<span>vs</span>{prediction.away_team}</h3><time dateTime={prediction.kickoff_at ?? undefined}>{kickoffLabel(prediction.kickoff_at)}</time></div><span className="locked-state">◈ Locked</span></header>
       <div className="locked-preview"><span className="lock-icon" aria-hidden="true">◇</span><div><strong>Prediction available</strong><p>Unlock this stage to view the modeled outcome, probabilities, confidence and key match factors.</p><small>Locked · Match access required</small></div></div>
       <OfferList offers={prediction.offers} matchLabel={label} stage="Prematch" />
+      {prediction.match_id ? <Link className="match-detail-link" href={`/matches/${prediction.match_id}`}>View match access <span aria-hidden="true">→</span></Link> : null}
     </article>
   );
 }

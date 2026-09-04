@@ -58,10 +58,24 @@ export const footballPredictionSchema = z
     customer_key_factors: z.array(z.string().min(1)).max(3),
     generated_at: z.string().datetime({ offset: true }).nullable(),
     updated_at: z.string().datetime({ offset: true }).nullable(),
+    evidence_cutoff_at: z.string().datetime({ offset: true }).nullable().optional(),
+    last_intelligence_refresh_at: z.string().datetime({ offset: true }).nullable().optional(),
+    refresh_reason: z.string().nullable().optional(),
   })
   .strip();
 
 export type FootballPrediction = z.infer<typeof footballPredictionSchema>;
+
+export const footballPrematchFreshnessSchema = z.object({
+  match_id: footballMatchIdSchema,
+  prediction: footballPredictionSchema,
+  freshness_status: z.enum(["fresh", "stale", "frozen", "unavailable"]),
+  refresh_status: z.enum(["not_required", "queued", "in_progress", "completed", "failed", "blocked"]),
+  maximum_age_seconds: z.number().int().nonnegative().nullable(),
+  snapshot_age_seconds: z.number().int().nonnegative().nullable(),
+}).strip();
+
+export type FootballPrematchFreshness = z.infer<typeof footballPrematchFreshnessSchema>;
 
 export const footballLiveMatchSchema = z
   .object({

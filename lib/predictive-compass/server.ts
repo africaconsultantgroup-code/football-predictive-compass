@@ -4,6 +4,7 @@ import {
   footballLiveMatchListSchema,
   footballMatchIdSchema,
   footballMatchPredictionSchema,
+  footballPrematchFreshnessSchema,
   footballPredictionHistorySchema,
   footballPredictionSchema,
   parseUpcomingFootballPredictions,
@@ -54,12 +55,13 @@ export function createFootballCoreClient({
   fetch: fetchImplementation = fetch,
   timeoutMs = DEFAULT_TIMEOUT_MS,
 }: CoreClientOptions) {
-  const request = async (path: string) => {
+  const request = async (path: string, method: "GET" | "POST" = "GET") => {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
       const response = await fetchImplementation(new URL(path, `${baseUrl.replace(/\/$/, "")}/`), {
+        method,
         headers: {
           Accept: "application/json",
           "x-api-key": apiKey,
@@ -112,6 +114,22 @@ export function createFootballCoreClient({
         return footballPredictionSchema.parse(
           await request(
             `api/v1/domains/football/predictions/${encodeURIComponent(predictionId)}`,
+          ),
+        );
+      } catch (error) {
+        if (error instanceof CoreClientError) throw error;
+        throw new CoreClientError("malformed");
+      }
+    },
+
+    async requestPrematchFreshness(matchId: string) {
+      const validMatchId = footballMatchIdSchema.safeParse(matchId);
+      if (!validMatchId.success) throw new CoreClientError("malformed");
+      try {
+        return footballPrematchFreshnessSchema.parse(
+          await request(
+            `api/v1/domains/football/matches/${encodeURIComponent(validMatchId.data)}/prematch/freshness`,
+            "POST",
           ),
         );
       } catch (error) {
@@ -182,6 +200,10 @@ export async function getUpcomingFootballPredictions() {
 
 export async function getFootballPrediction(predictionId: string) {
   return getConfiguredClient().getFootballPrediction(predictionId);
+}
+
+export async function requestPrematchFreshness(matchId: string) {
+  return getConfiguredClient().requestPrematchFreshness(matchId);
 }
 
 export async function getLiveFootballMatches() {

@@ -5,7 +5,8 @@ import { commercialStage, hasPredictionAccess } from "@/lib/auth/match-access";
 import { getCurrentUser } from "@/lib/auth/session";
 import { createPaystackClient, PaystackConfigurationError } from "@/lib/payments/paystack";
 import { initializePredictionPayment } from "@/lib/payments/service";
-import { getLiveFootballMatches } from "@/lib/predictive-compass/server";
+import { isDeliverablePrematch } from "@/lib/predictive-compass/prematch";
+import { getLiveFootballMatches, requestPrematchFreshness } from "@/lib/predictive-compass/server";
 import { createCustomerAuthServerClient } from "@/lib/supabase/auth-server";
 import { getServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -30,7 +31,12 @@ export async function POST(request: Request) {
         hasPredictionAccess({ access, supabase: customerClient, matchId: match.match_id, stage: product.prediction_stage }),
       ))).every(Boolean),
       lifecycleAllows: async (product) => {
-        if (product.prediction_stage === "prematch") return true;
+        if (product.prediction_stage === "prematch") {
+          const readiness = await Promise.all(product.prediction_access_product_matches.map((member) =>
+            requestPrematchFreshness(member.match_id),
+          ));
+          return readiness.every((result) => isDeliverablePrematch(result));
+        }
         const live = await getLiveFootballMatches();
         return product.prediction_access_product_matches.every((member) => {
           const match = live.matches.find((candidate) => candidate.match_id === member.match_id);
