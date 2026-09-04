@@ -4,8 +4,9 @@ import { describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
-import { amountToSubunits, createPaystackClient, getPaystackSecretKey, PaystackConfigurationError, processPaystackWebhook, verifyPaystackSignature } from "./paystack";
-import { validatePaymentProduct, verifiedTransactionMatches, verifyAndFulfillPayment, type PaymentProduct } from "./service";
+import { parseCheckoutRequest } from "./checkout";
+import { amountToSubunits, createPaystackClient, getPaystackConfig, getTrustedSiteOrigin, PaystackConfigurationError, processPaystackWebhook, verifyPaystackSignature } from "./paystack";
+import { initializePredictionPayment, validatePaymentProduct, verifiedTransactionMatches, verifyAndFulfillPayment, type PaymentProduct } from "./service";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 const product: PaymentProduct = {
@@ -16,11 +17,26 @@ const product: PaymentProduct = {
 };
 
 describe("Paystack payment security", () => {
-  it.each([["5.00", "500"], ["0.10", "10"], ["125", "12500"]])("converts %s to exact subunits", (amount, expected) => expect(amountToSubunits(amount)).toBe(expected));
-  it("requires a test secret and never accepts a live key", () => {
-    expect(() => getPaystackSecretKey({ PAYSTACK_SECRET_KEY: "" })).toThrow(PaystackConfigurationError);
-    expect(() => getPaystackSecretKey({ PAYSTACK_SECRET_KEY: "sk_live_private" })).toThrow(PaystackConfigurationError);
-    expect(getPaystackSecretKey({ PAYSTACK_SECRET_KEY: "sk_test_private" })).toBe("sk_test_private");
+  it.each([["5.00", "500"], ["0.10", "10"], ["20.00", "2000"], ["125", "12500"]])("converts %s to exact subunits", (amount, expected) => expect(amountToSubunits(amount)).toBe(expected));
+  it("accepts only secrets matching the explicit Paystack mode", () => {
+    expect(getPaystackConfig({ PAYSTACK_MODE: "live", PAYSTACK_SECRET_KEY: "sk_live_private" })).toMatchObject({ mode: "live" });
+    expect(getPaystackConfig({ PAYSTACK_MODE: "test", PAYSTACK_SECRET_KEY: "sk_test_private" })).toMatchObject({ mode: "test" });
+    expect(() => getPaystackConfig({ PAYSTACK_MODE: "live", PAYSTACK_SECRET_KEY: "sk_test_private" })).toThrow(PaystackConfigurationError);
+    expect(() => getPaystackConfig({ PAYSTACK_MODE: "test", PAYSTACK_SECRET_KEY: "sk_live_private" })).toThrow(PaystackConfigurationError);
+    expect(() => getPaystackConfig({ PAYSTACK_SECRET_KEY: "sk_live_private" })).toThrow(PaystackConfigurationError);
+    expect(() => getPaystackConfig({ PAYSTACK_MODE: "live" })).toThrow(PaystackConfigurationError);
+  });
+  it("uses a validated production site origin and rejects preview-style fallbacks", () => {
+    expect(getTrustedSiteOrigin({ NODE_ENV: "production", SITE_ORIGIN: "https://sportspredictcompass.app" })).toBe("https://sportspredictcompass.app");
+    expect(getTrustedSiteOrigin({ NODE_ENV: "development" })).toBe("http://localhost:3000");
+    expect(() => getTrustedSiteOrigin({ NODE_ENV: "production" })).toThrow(PaystackConfigurationError);
+    expect(() => getTrustedSiteOrigin({ NODE_ENV: "production", SITE_ORIGIN: "http://sportspredictcompass.app" })).toThrow(PaystackConfigurationError);
+  });
+  it("rejects browser amount and currency manipulation", () => {
+    const productId = "11111111-1111-4111-8111-111111111111";
+    expect(parseCheckoutRequest({ product_id: productId }).success).toBe(true);
+    expect(parseCheckoutRequest({ product_id: productId, amount: 1 }).success).toBe(false);
+    expect(parseCheckoutRequest({ product_id: productId, currency: "NGN" }).success).toBe(false);
   });
   it("initializes only with backend amount and Ghana channels", async () => {
     const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(new Response(JSON.stringify({ status: true, data: { authorization_url: "https://checkout.paystack.com/safe", reference: "ref" } }), { status: 200 }));
@@ -28,6 +44,40 @@ describe("Paystack payment security", () => {
     const body = JSON.parse(String(fetchMock.mock.calls[0][1]?.body));
     expect(body).toMatchObject({ amount: "500", currency: "GHS", channels: ["card", "mobile_money"] });
     expect(JSON.stringify(body)).not.toContain("sk_test_private");
+    expect(body).not.toHaveProperty("card_number");
+    expect(body).not.toHaveProperty("cvv");
+    expect(body).not.toHaveProperty("pin");
+    expect(body).not.toHaveProperty("otp");
+  });
+  it("initializes GH₵20 from the database with the trusted production callback", async () => {
+    const initialize = vi.fn().mockResolvedValue({ authorization_url: "https://checkout.paystack.com/safe" });
+    const admin = {
+      from(table: string) {
+        if (table === "prediction_access_products") return { select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: product, error: null }) }) }) };
+        if (table === "prediction_payments") return {
+          insert: async () => ({ error: null }),
+          update: () => ({ eq: async () => ({ error: null }) }),
+        };
+        throw new Error("unexpected table");
+      },
+    } as unknown as SupabaseClient;
+    const result = await initializePredictionPayment({
+      admin,
+      paystack: { initialize } as unknown as ReturnType<typeof createPaystackClient>,
+      userId: "user-1",
+      email: "customer@example.com",
+      productId: product.id,
+      callbackOrigin: "https://sportspredictcompass.app",
+      now: new Date("2026-09-02T12:00:00.000Z"),
+      hasExistingAccess: async () => false,
+      lifecycleAllows: async () => true,
+    });
+    expect(result).toHaveProperty("authorizationUrl", "https://checkout.paystack.com/safe");
+    expect(initialize).toHaveBeenCalledWith(expect.objectContaining({
+      amount: "2000",
+      currency: "GHS",
+      callbackUrl: "https://sportspredictcompass.app/payments/paystack/callback",
+    }));
   });
   it("rejects unavailable, unpriced, and closed products", () => {
     const now = new Date("2026-09-02T12:00:00.000Z");
@@ -44,6 +94,9 @@ describe("Paystack payment security", () => {
     expect(verifiedTransactionMatches(payment, transaction)).toBe(true);
     expect(verifiedTransactionMatches(payment, { ...transaction, amount: 501 })).toBe(false);
     expect(verifiedTransactionMatches(payment, { ...transaction, currency: "NGN" })).toBe(false);
+    expect(verifiedTransactionMatches(payment, { ...transaction, metadata: { ...transaction.metadata, user_id: "other" } })).toBe(false);
+    expect(verifiedTransactionMatches(payment, { ...transaction, metadata: { ...transaction.metadata, product_id: "other" } })).toBe(false);
+    expect(verifiedTransactionMatches(payment, { ...transaction, metadata: { ...transaction.metadata, payment_id: "other" } })).toBe(false);
   });
   it("rejects invalid webhook signatures and processes a valid charge once per delivery", async () => {
     const secret = "sk_test_private";
@@ -62,6 +115,17 @@ describe("Paystack payment security", () => {
     expect(sql).not.toMatch(/grant (insert|update|delete).*prediction_payments.*authenticated/i);
     const grants = readFileSync("supabase/migrations/20260901201438_match_prediction_access.sql", "utf8");
     expect(grants).toContain("unique (user_id, product_id)");
+  });
+  it("keeps Paystack secrets server-only and the webhook signature-gated", () => {
+    const files = [
+      readFileSync("lib/payments/paystack.ts", "utf8"),
+      readFileSync("app/api/payments/paystack/initialize/route.ts", "utf8"),
+      readFileSync("app/api/webhooks/paystack/route.ts", "utf8"),
+    ].join("\n");
+    expect(files).not.toContain("NEXT_PUBLIC_PAYSTACK_SECRET");
+    expect(files).not.toMatch(/console\.(log|error|warn).*PAYSTACK_SECRET_KEY/);
+    expect(files).toContain('request.headers.get("x-paystack-signature")');
+    expect(files).toContain("verifyPaystackSignature");
   });
 
   it("creates the exact product grant once and is safe on callback/webhook retry", async () => {

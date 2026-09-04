@@ -4,12 +4,34 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 
 export class PaystackConfigurationError extends Error {}
 
-export function getPaystackSecretKey(environment: Record<string, string | undefined> = process.env) {
+export type PaystackMode = "test" | "live";
+
+export function getPaystackConfig(environment: Record<string, string | undefined> = process.env) {
+  const mode = environment.PAYSTACK_MODE;
   const key = environment.PAYSTACK_SECRET_KEY;
-  if (!key || !key.startsWith("sk_test_")) {
-    throw new PaystackConfigurationError("Paystack test configuration is unavailable.");
+  if (mode !== "test" && mode !== "live") {
+    throw new PaystackConfigurationError("Paystack mode is unavailable.");
   }
-  return key;
+  if (!key || !key.startsWith(`sk_${mode}_`)) {
+    throw new PaystackConfigurationError("Paystack credentials do not match the configured mode.");
+  }
+  return { mode, secretKey: key } as const;
+}
+
+export function getPaystackSecretKey(environment: Record<string, string | undefined> = process.env) {
+  return getPaystackConfig(environment).secretKey;
+}
+
+export function getTrustedSiteOrigin(environment: Record<string, string | undefined> = process.env) {
+  const configured = environment.SITE_ORIGIN;
+  if (!configured && environment.NODE_ENV !== "production") return "http://localhost:3000";
+  try {
+    const url = new URL(configured ?? "");
+    if (url.protocol !== "https:" || url.username || url.password || url.search || url.hash || url.pathname !== "/") throw new Error();
+    return url.origin;
+  } catch {
+    throw new PaystackConfigurationError("Trusted site origin is unavailable.");
+  }
 }
 
 export function amountToSubunits(amount: string | number) {

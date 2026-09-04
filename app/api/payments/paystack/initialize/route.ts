@@ -1,21 +1,18 @@
-import { z } from "zod";
-
 import { getCustomerAccess } from "@/lib/auth/access";
 import { commercialStage, hasPredictionAccess } from "@/lib/auth/match-access";
 import { getCurrentUser } from "@/lib/auth/session";
-import { createPaystackClient, PaystackConfigurationError } from "@/lib/payments/paystack";
+import { parseCheckoutRequest } from "@/lib/payments/checkout";
+import { createPaystackClient, getTrustedSiteOrigin, PaystackConfigurationError } from "@/lib/payments/paystack";
 import { initializePredictionPayment } from "@/lib/payments/service";
 import { isDeliverablePrematch } from "@/lib/predictive-compass/prematch";
 import { getLiveFootballMatches, requestPrematchFreshness } from "@/lib/predictive-compass/server";
 import { createCustomerAuthServerClient } from "@/lib/supabase/auth-server";
 import { getServerSupabaseClient } from "@/lib/supabase/server";
 
-const requestSchema = z.object({ product_id: z.string().uuid() }).strict();
-
 export async function POST(request: Request) {
   const user = await getCurrentUser();
   if (!user?.email) return Response.json({ error: "AUTHENTICATION_REQUIRED" }, { status: 401 });
-  const parsed = requestSchema.safeParse(await request.json().catch(() => null));
+  const parsed = parseCheckoutRequest(await request.json().catch(() => null));
   if (!parsed.success) return Response.json({ error: "INVALID_PRODUCT" }, { status: 400 });
 
   try {
@@ -26,7 +23,7 @@ export async function POST(request: Request) {
       userId: user.id,
       email: user.email,
       productId: parsed.data.product_id,
-      callbackOrigin: process.env.NODE_ENV === "production" ? "https://football-predictive-compass.vercel.app" : "http://localhost:3000",
+      callbackOrigin: getTrustedSiteOrigin(),
       hasExistingAccess: async (product) => (await Promise.all(product.prediction_access_product_matches.map((match) =>
         hasPredictionAccess({ access, supabase: customerClient, matchId: match.match_id, stage: product.prediction_stage }),
       ))).every(Boolean),
