@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { getCustomerAccess } from "../lib/auth/access";
 import { getPredictionOffers, hasPredictionAccess } from "../lib/auth/match-access";
+import { formatProductPrice } from "../lib/payments/format";
 import { toPredictionPreview, type FootballPredictionPreview } from "../lib/predictive-compass/preview";
 import { formatPredictedOutcome, formatProbability, formatReliability } from "../lib/predictive-compass/presentation";
 import type { FootballPrediction } from "../lib/predictive-compass/schema";
@@ -44,7 +45,7 @@ export function KickoffSlotOffers({ predictions }: { predictions: PredictionView
   }
   const completeSlots = [...slots.values()].filter(({ offer, matches }) => offer.matchCount >= 2 && matches.length === offer.matchCount);
   if (!completeSlots.length) return null;
-  return <section className="slot-market" aria-labelledby="slot-title"><div className="market-subheading"><div><p className="section-kicker">Multi-match access</p><h3 id="slot-title">Kickoff Slot Offers</h3></div><p>Unlock every listed match in one authoritative kickoff product.</p></div><div className="slot-grid">{completeSlots.map(({ offer, matches }) => <article className="kickoff-slot-card" key={offer.productId}><header><div><span>{matches[0].kickoff_at ? new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Africa/Accra" }).format(new Date(matches[0].kickoff_at)) : "TBC"}</span><strong>Kickoff Slot</strong></div><b>{offer.matchCount} Matches</b></header><ul>{matches.map((match) => <li key={match.match_id}>{match.home_team} <span>vs</span> {match.away_team}</li>)}</ul><div className="slot-action"><div><span>Prematch</span><strong>{offer.priceAmount === null ? "Pricing unavailable" : `${offer.currency} ${offer.priceAmount.toFixed(2)}`}</strong></div>{offer.priceAmount !== null ? <CheckoutButton offer={offer} matchLabel={`${offer.matchCount} match kickoff slot`} stage="Prematch" /> : <span className="coming-soon">Access coming soon</span>}</div></article>)}</div></section>;
+  return <section className="slot-market" aria-labelledby="slot-title"><div className="market-subheading"><div><p className="section-kicker">Multi-match access</p><h3 id="slot-title">Kickoff Slot Offers</h3></div><p>Unlock every listed match in one authoritative kickoff product.</p></div><div className="slot-grid">{completeSlots.map(({ offer, matches }) => <article className="kickoff-slot-card" key={offer.productId}><header><div><span>{matches[0].kickoff_at ? new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Africa/Accra" }).format(new Date(matches[0].kickoff_at)) : "TBC"}</span><strong>Kickoff Slot</strong></div><b>{offer.matchCount} Matches</b></header><ul>{matches.map((match) => <li key={match.match_id}>{match.home_team} <span>vs</span> {match.away_team}</li>)}</ul><div className="slot-action"><div><span>Prematch</span><strong>{offer.priceAmount === null ? "Pricing unavailable" : formatProductPrice(offer.priceAmount, offer.currency)}</strong></div>{offer.priceAmount !== null ? <CheckoutButton offer={offer} matchLabel={`${offer.matchCount} match kickoff slot`} stage="Prematch" /> : <span className="coming-soon">Access coming soon</span>}</div></article>)}</div></section>;
 }
 
 function kickoffLabel(kickoffAt: string | null) {
@@ -103,11 +104,11 @@ export async function PredictionsContent() {
   const { predictions, failed } = await loadPredictions();
   if (failed) return <div className="service-state" role="alert">Predictions are temporarily unavailable. Please try again shortly.</div>;
   if (!predictions.length) return <PredictionEmptyState />;
-  const visible = predictions.slice(0, 8);
+  const visible = predictions;
   const groups = new Map<string, PredictionView[]>();
   for (const prediction of visible) {
     const label = fixtureDateLabel(prediction.kickoff_at);
     groups.set(label, [...(groups.get(label) ?? []), prediction]);
   }
-  return <><KickoffSlotOffers predictions={visible} /><div className="fixture-groups">{[...groups].map(([label, fixtures]) => <section key={label} aria-label={`${label} fixtures`}><div className="date-divider"><span>{label}</span><b>{fixtures.length} {fixtures.length === 1 ? "fixture" : "fixtures"}</b></div><div className="prediction-grid">{fixtures.map((prediction) => "locked" in prediction ? <PredictionPreviewCard key={prediction.prediction_id} prediction={prediction as FootballPredictionPreview} /> : <PredictionCard key={prediction.prediction_id} prediction={prediction as FootballPrediction} />)}</div></section>)}</div>{predictions.length > visible.length ? <a className="view-all-link" href="#predictions">View All Predictions</a> : null}</>;
+  return <><KickoffSlotOffers predictions={visible} /><div className="fixture-groups">{[...groups].map(([label, fixtures]) => <section key={label} aria-label={`${label} fixtures`}><div className="date-divider"><span>{label}</span><b>{fixtures.length} {fixtures.length === 1 ? "fixture" : "fixtures"}</b></div><div className="prediction-grid">{fixtures.map((prediction) => "locked" in prediction ? <PredictionPreviewCard key={prediction.prediction_id} prediction={prediction as FootballPredictionPreview} /> : <PredictionCard key={prediction.prediction_id} prediction={prediction as FootballPrediction} />)}</div></section>)}</div></>;
 }

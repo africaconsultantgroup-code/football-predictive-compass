@@ -1,4 +1,5 @@
 import type { PredictionAccessOffer } from "../lib/auth/match-access";
+import { formatProductPrice } from "../lib/payments/format";
 import { CheckoutButton as CheckoutLauncher } from "./checkout-button";
 
 export function BrandMark() {
@@ -143,7 +144,7 @@ function OfferCard({ offer, matchLabel, stage }: { offer: PredictionAccessOffer;
       <strong>{offer.name}</strong>
       {isSlot ? <p>Includes all {offer.matchCount} matches in this kickoff.</p> : <p>{matchLabel}</p>}
       <div className="offer-action">
-        <span className="offer-price">{offer.priceAmount === null ? "Price coming soon" : `${offer.currency} ${offer.priceAmount.toFixed(2)}`}</span>
+        <span className="offer-price">{offer.priceAmount === null ? "Price coming soon" : formatProductPrice(offer.priceAmount, offer.currency)}</span>
         {offer.priceAmount !== null ? <CheckoutLauncher offer={offer} matchLabel={matchLabel} stage={stage} /> : null}
       </div>
     </div>

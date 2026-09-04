@@ -120,4 +120,10 @@ describe("automatic prediction product synchronization", () => {
     const migration = readFileSync("supabase/migrations/20260903120407_automatic_prediction_product_sync.sql", "utf8");
     expect(migration).toContain("prediction_access_products_sync_key_unique");
   });
+
+  it("does not truncate the commercially eligible homepage inventory", () => {
+    const source = readFileSync("app/predictions.tsx", "utf8");
+    expect(source).not.toMatch(/predictions\.slice\(0,\s*8\)/);
+    expect(source).toContain("const visible = predictions;");
+  });
 });

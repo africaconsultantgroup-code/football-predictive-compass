@@ -106,10 +106,10 @@ describe("customer prediction presentation", () => {
       { productId: "11111111-1111-1111-1111-111111111111", name: "Villa v Arsenal Prematch", scopeType: "match", priceAmount: 5, currency: "GHS", matchCount: 1 },
       { productId: "22222222-2222-2222-2222-222222222222", name: "19:00 Prematch Slot", scopeType: "kickoff_slot", priceAmount: 12, currency: "GHS", matchCount: 3 },
     ]} />);
-    expect(html).toContain("GHS 5.00");
-    expect(html).toContain("GHS 12.00");
+    expect(html).toContain("GH₵5.00");
+    expect(html).toContain("GH₵12.00");
     expect(html).toContain("Includes all 3 matches in this kickoff.");
-    expect(html).toContain("Unlock Match");
+    expect(html).toContain("Unlock Prematch Prediction");
     expect(html).toContain("Unlock Slot");
   });
 
@@ -138,7 +138,7 @@ describe("customer prediction presentation", () => {
     expect(complete).toContain("Kickoff Slot Offers");
     expect(complete).toContain("Aston Villa");
     expect(complete).toContain("Liverpool");
-    expect(complete).toContain("GHS 20.00");
+    expect(complete).toContain("GH₵20.00");
     expect(incomplete).toBe("");
   });
 });
