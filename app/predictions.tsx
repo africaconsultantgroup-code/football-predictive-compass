@@ -14,6 +14,8 @@ import { OfferList, PredictionDisclaimer, PredictionEmptyState } from "./experie
 
 type PredictionView = FootballPrediction | FootballPredictionPreview;
 
+export type UpcomingFilter = "all" | "today" | "tomorrow" | "week";
+
 export function sortPredictionViews(predictions: PredictionView[]) {
   return [...predictions].sort((a, b) => {
     if (!a.kickoff_at) return 1;
@@ -31,6 +33,28 @@ export function fixtureDateLabel(kickoffAt: string | null, now = new Date()) {
   if (day === today) return "Today";
   if (day === tomorrow) return "Tomorrow";
   return new Intl.DateTimeFormat("en-GB", { weekday: "long", day: "numeric", month: "long", timeZone: "Africa/Accra" }).format(date);
+}
+
+export function filterPredictionViews(predictions: PredictionView[], filter: UpcomingFilter, competition?: string, now = new Date()) {
+  return predictions.filter((prediction) => {
+    if (competition && prediction.competition !== competition) return false;
+    if (filter === "all") return true;
+    if (!prediction.kickoff_at) return false;
+    const kickoff = new Date(prediction.kickoff_at);
+    if (filter === "week") return kickoff >= now && kickoff <= new Date(now.getTime() + 7 * 86_400_000);
+    return fixtureDateLabel(prediction.kickoff_at, now) === (filter === "today" ? "Today" : "Tomorrow");
+  });
+}
+
+export function UpcomingFilters({ active, competition, competitions }: { active: UpcomingFilter; competition?: string; competitions: string[] }) {
+  const href = (filter: UpcomingFilter, selectedCompetition = competition) => {
+    const query = new URLSearchParams();
+    if (filter !== "all") query.set("filter", filter);
+    if (selectedCompetition) query.set("competition", selectedCompetition);
+    return `/matches${query.size ? `?${query}` : ""}`;
+  };
+  const allCompetitionsHref = active === "all" ? "/matches" : `/matches?filter=${active}`;
+  return <div className="market-filters"><nav aria-label="Date filters">{(["all", "today", "tomorrow", "week"] as const).map((filter) => <Link className={active === filter ? "active" : ""} href={href(filter)} key={filter}>{filter === "week" ? "This Week" : filter[0].toUpperCase() + filter.slice(1)}</Link>)}</nav>{competitions.length > 1 ? <div className="competition-filters"><Link className={!competition ? "active" : ""} href={allCompetitionsHref}>All competitions</Link>{competitions.map((item) => <Link className={competition === item ? "active" : ""} href={href(active, item)} key={item}>{item}</Link>)}</div> : null}</div>;
 }
 
 export function KickoffSlotOffers({ predictions }: { predictions: PredictionView[] }) {
@@ -99,16 +123,19 @@ async function loadPredictions() {
   } catch { return { predictions: [], failed: true } as const; }
 }
 
-export async function PredictionsContent() {
+export async function PredictionsContent({ limit, filter = "all", competition, showFilters = false, showSlots = true }: { limit?: number; filter?: UpcomingFilter; competition?: string; showFilters?: boolean; showSlots?: boolean } = {}) {
   await connection();
   const { predictions, failed } = await loadPredictions();
   if (failed) return <div className="service-state" role="alert">Predictions are temporarily unavailable. Please try again shortly.</div>;
   if (!predictions.length) return <PredictionEmptyState />;
-  const visible = predictions;
+  const competitions = [...new Set(predictions.map((prediction) => prediction.competition))].sort();
+  const filtered = filterPredictionViews(predictions, filter, competition);
+  const visible = typeof limit === "number" ? filtered.slice(0, limit) : filtered;
+  if (!visible.length) return <>{showFilters ? <UpcomingFilters active={filter} competition={competition} competitions={competitions} /> : null}<PredictionEmptyState /></>;
   const groups = new Map<string, PredictionView[]>();
   for (const prediction of visible) {
     const label = fixtureDateLabel(prediction.kickoff_at);
     groups.set(label, [...(groups.get(label) ?? []), prediction]);
   }
-  return <><KickoffSlotOffers predictions={visible} /><div className="fixture-groups">{[...groups].map(([label, fixtures]) => <section key={label} aria-label={`${label} fixtures`}><div className="date-divider"><span>{label}</span><b>{fixtures.length} {fixtures.length === 1 ? "fixture" : "fixtures"}</b></div><div className="prediction-grid">{fixtures.map((prediction) => "locked" in prediction ? <PredictionPreviewCard key={prediction.prediction_id} prediction={prediction as FootballPredictionPreview} /> : <PredictionCard key={prediction.prediction_id} prediction={prediction as FootballPrediction} />)}</div></section>)}</div></>;
+  return <>{showFilters ? <UpcomingFilters active={filter} competition={competition} competitions={competitions} /> : null}{showSlots ? <KickoffSlotOffers predictions={filtered} /> : null}<div className="fixture-groups">{[...groups].map(([label, fixtures]) => <section key={label} aria-label={`${label} fixtures`}><div className="date-divider"><span>{label}</span><b>{fixtures.length} {fixtures.length === 1 ? "fixture" : "fixtures"}</b></div><div className="prediction-grid">{fixtures.map((prediction) => "locked" in prediction ? <PredictionPreviewCard key={prediction.prediction_id} prediction={prediction as FootballPredictionPreview} /> : <PredictionCard key={prediction.prediction_id} prediction={prediction as FootballPrediction} />)}</div></section>)}</div></>;
 }

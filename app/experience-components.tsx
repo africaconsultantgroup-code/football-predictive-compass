@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import type { PredictionAccessOffer } from "../lib/auth/match-access";
 import { formatProductPrice } from "../lib/payments/format";
 import { CheckoutButton as CheckoutLauncher } from "./checkout-button";
@@ -15,9 +17,9 @@ export function FootballHero() {
     <section className="hero-grid" aria-labelledby="hero-title">
       <div className="hero-copy">
         <p className="stage-badge prematch">Data-driven football intelligence</p>
-        <h1 id="hero-title">Smarter Football<br /><span>Predictions</span></h1>
-        <p className="hero-intro">Explore upcoming matches, unlock model-generated probabilities and follow how predictions evolve as the match develops.</p>
-        <div className="hero-actions"><a className="hero-primary" href="#upcoming-matches">View Upcoming Predictions <span aria-hidden="true">↓</span></a><a className="hero-secondary" href="#how-it-works">How It Works</a></div>
+        <h1 id="hero-title">Football intelligence<br /><span>that evolves with the game.</span></h1>
+        <p className="hero-intro">Choose the stage that matters, unlock probability-led analysis, and return as new match information becomes available.</p>
+        <div className="hero-actions"><Link className="hero-primary" href="/matches">View Upcoming Matches <span aria-hidden="true">→</span></Link><Link className="hero-secondary" href="/live">Live Intelligence</Link></div>
         <div className="benefit-grid">
           <Benefit icon="chart" title="Data-Backed Analysis" text="Advanced statistics & models" />
           <Benefit icon="target" title="Most Likely Outcome" text="Understand the modeled edge" />

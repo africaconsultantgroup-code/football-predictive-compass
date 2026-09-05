@@ -4,7 +4,7 @@ import { connection } from "next/server";
 
 import { OfferList } from "@/app/experience-components";
 import { PredictionCard } from "@/app/predictions";
-import { SiteNavigation } from "@/app/site-navigation";
+import { CustomerShell } from "@/app/customer-shell";
 import { getCustomerAccess } from "@/lib/auth/access";
 import { getPredictionOffers, hasPredictionAccess } from "@/lib/auth/match-access";
 import { paidPrematchSnapshot, toPrematchReadiness, type PrematchReadiness } from "@/lib/predictive-compass/prematch";
@@ -63,14 +63,14 @@ export default async function MatchPage({ params }: { params: Promise<{ matchId:
   }
 
   if (!pageData) {
-    return <div className="site-shell"><SiteNavigation authenticated={false} /><main className="site-main match-page"><Link className="back-link" href="/#upcoming-matches">← Back to upcoming matches</Link><div className="service-state" role="alert">Prematch intelligence is temporarily unavailable. No payment can be started until a valid snapshot is ready.</div></main></div>;
+    return <CustomerShell authenticated={false}><div className="match-page"><Link className="back-link" href="/matches">← Upcoming Matches</Link><div className="service-state" role="alert">Prematch intelligence is temporarily unavailable. No payment can be started until a valid snapshot is ready.</div></div></CustomerShell>;
   }
 
   const { readiness, access, unlocked, prediction, offers } = pageData;
   const label = `${readiness.home_team} vs ${readiness.away_team}`;
-  return <div className="site-shell"><SiteNavigation authenticated={Boolean(access.customer)} /><main className="site-main match-page">
-    <Link className="back-link" href="/#upcoming-matches">← Back to upcoming matches</Link>
+  return <CustomerShell authenticated={Boolean(access.customer)}><div className="match-page">
+    <nav className="match-breadcrumb" aria-label="Breadcrumb"><Link href="/matches">Upcoming Matches</Link><span aria-hidden="true">›</span><span>{label}</span></nav>
     <section className="match-intelligence-header"><p className="section-kicker">Living Prematch intelligence</p><h1>{readiness.home_team}<span>vs</span>{readiness.away_team}</h1><p>{readiness.competition} · {formatKickoff(readiness.kickoff_at)}</p><div className={`freshness-banner ${readiness.refresh_status}`} role="status"><strong>{readiness.freshness_status === "fresh" ? "Latest snapshot ready" : "Intelligence status checked"}</strong><span>{readinessMessage(readiness.refresh_status)}</span>{readiness.updated_at ? <time dateTime={readiness.updated_at}>Last intelligence update {new Intl.DateTimeFormat("en-GB", { dateStyle: "medium", timeStyle: "short", timeZone: "Africa/Accra" }).format(new Date(readiness.updated_at))}</time> : null}</div></section>
     {prediction ? <PredictionCard prediction={prediction} /> : unlocked ? <div className="service-state" role="alert">No valid Prematch snapshot is currently available. Your match access remains active and no new purchase is required.</div> : <section className="prediction-card locked-card living-access-card"><div className="locked-preview"><span className="lock-icon" aria-hidden="true">◇</span><div><strong>Prematch Prediction Available</strong><p>One match purchase unlocks the newest validated snapshot and its updates until kickoff.</p><small>Access follows this match, not a prediction version.</small></div></div>{readiness.deliverable ? <OfferList offers={offers} matchLabel={label} stage="Prematch" /> : <p className="offer-unavailable">Checkout is unavailable because a valid Prematch snapshot is not ready for delivery.</p>}</section>}
-  </main></div>;
+  </div></CustomerShell>;
 }

@@ -4,8 +4,9 @@ import { describe, expect, it, vi } from "vitest";
 vi.mock("server-only", () => ({}));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
 
-import { fixtureDateLabel, KickoffSlotOffers, PredictionCard, PredictionPreviewCard, sortPredictionViews } from "../../app/predictions";
+import { filterPredictionViews, fixtureDateLabel, KickoffSlotOffers, PredictionCard, PredictionPreviewCard, sortPredictionViews } from "../../app/predictions";
 import { FootballHero, OfferList, PredictionEmptyState } from "../../app/experience-components";
+import { customerNavigation, SiteNavigation } from "../../app/site-navigation";
 import { toPredictionPreview } from "./preview";
 import type { FootballPrediction } from "./schema";
 import { formatPredictedOutcome } from "./presentation";
@@ -35,6 +36,21 @@ const prediction: FootballPrediction = {
 };
 
 describe("customer prediction presentation", () => {
+  it("exposes the complete customer information architecture without admin navigation", () => {
+    expect(customerNavigation.map(([label]) => label)).toEqual(["Home", "Upcoming", "Live", "Halftime", "My Predictions", "How It Works", "Account"]);
+    const html = renderToStaticMarkup(<SiteNavigation authenticated={false} />);
+    for (const [, href] of customerNavigation) expect(html).toContain(`href="${href}"`);
+    expect(html).not.toMatch(/admin/i);
+  });
+
+  it("filters upcoming fixtures by customer date and competition controls", () => {
+    const now = new Date("2026-09-05T08:00:00.000Z");
+    const fixtures = [prediction, { ...prediction, prediction_id: "pred-002", competition: "Championship", kickoff_at: "2026-09-05T19:00:00.000Z" }, { ...prediction, prediction_id: "pred-003", kickoff_at: "2026-09-06T19:00:00.000Z" }];
+    expect(filterPredictionViews(fixtures, "today", undefined, now)).toHaveLength(1);
+    expect(filterPredictionViews(fixtures, "tomorrow", undefined, now)).toHaveLength(1);
+    expect(filterPredictionViews(fixtures, "all", "Championship", now)).toHaveLength(1);
+  });
+
   it("uses truthful static hero messaging instead of simulated live state", () => {
     const html = renderToStaticMarkup(<FootballHero />);
     expect(html).toContain("Football intelligence");

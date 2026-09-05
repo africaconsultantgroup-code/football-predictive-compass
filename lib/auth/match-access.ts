@@ -78,6 +78,7 @@ export type PredictionAccessSummary = {
   scopeType: "match" | "kickoff_slot";
   matchCount: number;
   expiresAt: string | null;
+  matches: { matchId: string; kickoffAt: string }[];
 };
 
 export type PredictionAccessOffer = {
@@ -125,17 +126,18 @@ export async function getActivePredictionGrants(
 ): Promise<PredictionAccessSummary[]> {
   const { data, error } = await supabase
     .from("prediction_access_grants")
-    .select("expires_at, prediction_access_products!inner(id, name, scope_type, prediction_stage, is_active, prediction_access_product_matches(match_id))")
+    .select("expires_at, prediction_access_products!inner(id, name, scope_type, prediction_stage, is_active, prediction_access_product_matches(match_id, kickoff_at))")
     .eq("user_id", userId)
     .eq("prediction_access_products.is_active", true)
     .or(`expires_at.is.null,expires_at.gt.${now.toISOString()}`);
   if (error || !data) return [];
-  return (data as unknown as Array<{ expires_at: string | null; prediction_access_products: { id: string; name: string; scope_type: "match" | "kickoff_slot"; prediction_stage: CommercialPredictionStage; prediction_access_product_matches: { match_id: string }[] } }>).map((grant) => ({
+  return (data as unknown as Array<{ expires_at: string | null; prediction_access_products: { id: string; name: string; scope_type: "match" | "kickoff_slot"; prediction_stage: CommercialPredictionStage; prediction_access_product_matches: { match_id: string; kickoff_at: string }[] } }>).map((grant) => ({
     productId: grant.prediction_access_products.id,
     name: grant.prediction_access_products.name,
     stage: grant.prediction_access_products.prediction_stage,
     scopeType: grant.prediction_access_products.scope_type,
     matchCount: grant.prediction_access_products.prediction_access_product_matches.length,
+    matches: grant.prediction_access_products.prediction_access_product_matches.map((match) => ({ matchId: match.match_id, kickoffAt: match.kickoff_at })),
     expiresAt: grant.expires_at,
   }));
 }

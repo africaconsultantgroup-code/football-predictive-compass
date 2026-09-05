@@ -124,6 +124,7 @@ describe("automatic prediction product synchronization", () => {
   it("does not truncate the commercially eligible homepage inventory", () => {
     const source = readFileSync("app/predictions.tsx", "utf8");
     expect(source).not.toMatch(/predictions\.slice\(0,\s*8\)/);
-    expect(source).toContain("const visible = predictions;");
+    expect(source).toContain('const visible = typeof limit === "number" ? filtered.slice(0, limit) : filtered;');
+    expect(readFileSync("app/matches/page.tsx", "utf8")).not.toContain("limit=");
   });
 });

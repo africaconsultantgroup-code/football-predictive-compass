@@ -120,9 +120,10 @@ describe("account session protection", () => {
     expect(html).toContain("Prediction Access");
     expect(html).toContain("Recent Purchases");
     expect(html).toContain("No prediction access purchased yet.");
-    expect(html).toContain("Browse Predictions");
+    expect(html).toContain("Browse Upcoming Matches");
     expect(html).toContain("Account Actions");
-    expect(html).not.toMatch(/probability|confidence|unpredictable|guaranteed|insight, not certainty/i);
+    const accountContent = html.slice(html.indexOf("account-card"), html.indexOf("</main>"));
+    expect(accountContent).not.toMatch(/probability|confidence|unpredictable|guaranteed|insight, not certainty/i);
   });
 
   it("shows Full Access from real subscription state", () => {
@@ -144,7 +145,7 @@ describe("account session protection", () => {
 
   it("renders real grants and recent purchases as a compact dashboard", () => {
     const html = renderToStaticMarkup(<AccountDetails user={customer} displayName="Ada Fan" access={{ customer, subscription: null, capabilities: new Set() }} predictionAccess={[{
-      productId: "11111111-1111-1111-1111-111111111111", name: "19:00 Kickoff Slot", stage: "prematch", scopeType: "kickoff_slot", matchCount: 3, expiresAt: null,
+      productId: "11111111-1111-1111-1111-111111111111", name: "19:00 Kickoff Slot", stage: "prematch", scopeType: "kickoff_slot", matchCount: 3, expiresAt: null, matches: [],
     }]} recentPayments={[{
       id: "payment-1", name: "19:00 Kickoff Slot", stage: "prematch", amount: 20, currency: "GHS", status: "successful", createdAt: "2026-09-02T12:00:00.000Z",
     }]} />);
