@@ -17,7 +17,7 @@ const product: PaymentProduct = {
 };
 
 describe("Paystack payment security", () => {
-  it.each([["5.00", "500"], ["0.10", "10"], ["20.00", "2000"], ["125", "12500"]])("converts %s to exact subunits", (amount, expected) => expect(amountToSubunits(amount)).toBe(expected));
+  it.each([["10.00", "1000"], ["12.50", "1250"], ["15.00", "1500"], ["17.50", "1750"], ["22.50", "2250"], ["27.50", "2750"]])("converts %s to exact subunits", (amount, expected) => expect(amountToSubunits(amount)).toBe(expected));
   it("accepts only secrets matching the explicit Paystack mode", () => {
     expect(getPaystackConfig({ PAYSTACK_MODE: "live", PAYSTACK_SECRET_KEY: "sk_live_private" })).toMatchObject({ mode: "live" });
     expect(getPaystackConfig({ PAYSTACK_MODE: "test", PAYSTACK_SECRET_KEY: "sk_test_private" })).toMatchObject({ mode: "test" });
@@ -49,11 +49,11 @@ describe("Paystack payment security", () => {
     expect(body).not.toHaveProperty("pin");
     expect(body).not.toHaveProperty("otp");
   });
-  it("initializes GH₵20 from the database with the trusted production callback", async () => {
+  it("initializes GH₵10 from the database with the trusted production callback", async () => {
     const initialize = vi.fn().mockResolvedValue({ authorization_url: "https://checkout.paystack.com/safe" });
     const admin = {
       from(table: string) {
-        if (table === "prediction_access_products") return { select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: product, error: null }) }) }) };
+        if (table === "prediction_access_products") return { select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: { ...product, price_amount: "10.00" }, error: null }) }) }) };
         if (table === "prediction_payments") return {
           insert: async () => ({ error: null }),
           update: () => ({ eq: async () => ({ error: null }) }),
@@ -74,7 +74,7 @@ describe("Paystack payment security", () => {
     });
     expect(result).toHaveProperty("authorizationUrl", "https://checkout.paystack.com/safe");
     expect(initialize).toHaveBeenCalledWith(expect.objectContaining({
-      amount: "2000",
+      amount: "1000",
       currency: "GHS",
       callbackUrl: "https://sportspredictcompass.app/payments/paystack/callback",
     }));
@@ -83,7 +83,8 @@ describe("Paystack payment security", () => {
     const now = new Date("2026-09-02T12:00:00.000Z");
     expect(validatePaymentProduct(product, now)).toBe(true);
     expect(validatePaymentProduct({ ...product, price_amount: null }, now)).toBe(false);
-    expect(validatePaymentProduct({ ...product, price_amount: "19.99" }, now)).toBe(false);
+    expect(validatePaymentProduct({ ...product, price_amount: "9.99" }, now)).toBe(false);
+    expect(validatePaymentProduct({ ...product, price_amount: "10.00" }, now)).toBe(true);
     expect(validatePaymentProduct({ ...product, is_active: false }, now)).toBe(false);
     expect(validatePaymentProduct({ ...product, sales_close_at: "2026-09-02T11:00:00.000Z" }, now)).toBe(false);
     expect(validatePaymentProduct(null, now)).toBe(false);

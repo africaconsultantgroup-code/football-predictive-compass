@@ -19,7 +19,7 @@ export type PaymentProduct = {
 
 export function validatePaymentProduct(product: PaymentProduct | null, now = new Date()) {
   if (!product || !product.is_active || product.price_amount === null || product.currency !== "GHS") return false;
-  if (!Number.isFinite(Number(product.price_amount)) || Number(product.price_amount) < 20) return false;
+  if (!Number.isFinite(Number(product.price_amount)) || Number(product.price_amount) < 10) return false;
   const matches = product.prediction_access_product_matches;
   if (product.scope_type === "match" ? matches.length !== 1 : matches.length < 2) return false;
   if (product.scope_type === "kickoff_slot" && new Set(matches.map((match) => match.kickoff_at)).size !== 1) return false;
