@@ -13,6 +13,9 @@ export function scoreStrength(probability:number,highest:number){if(!Number.isFi
 export function outcomeForScore(score:FootballScore){return score.home===score.away?"draw":score.home>score.away?"home_win":"away_win"}
 export function evaluateOutcome(predicted:string|undefined,actual:FootballScore):StageReview["outcomeResult"]{return !predicted?"NOT APPLICABLE":predicted===outcomeForScore(actual)?"CORRECT":"INCORRECT"}
 export function evaluateExact(predicted:FootballScore|null|undefined,actual:FootballScore):StageReview["exactResult"]{return !predicted?"NOT APPLICABLE":predicted.home===actual.home&&predicted.away===actual.away?"CORRECT":"INCORRECT"}
+export function evaluateMarketSuggestion(suggestion:string|null|undefined,actual:FootballScore):StageReview["outcomeResult"]{if(!suggestion)return "NOT APPLICABLE";const outcome=outcomeForScore(actual);const accepted:Record<string,string[]>={home_win:["home_win"],away_win:["away_win"],draw:["draw"],home_or_draw:["home_win","draw"],away_or_draw:["away_win","draw"],home_or_away:["home_win","away_win"]};return accepted[suggestion]?.includes(outcome)?"CORRECT":"INCORRECT"}
+export function evaluateScoreRanking(scorelines:FootballScore[],actual:FootballScore){const index=scorelines.findIndex(score=>score.home===actual.home&&score.away===actual.away);const rank=index<0?null:index+1;return {rank,exactHit:rank===1,top3:rank!==null&&rank<=3,top5:rank!==null&&rank<=5}}
+export function isAuthoritativeFinal(match:{stage:string;status:string;current_score:FootballScore|null}){return match.stage==="FINAL"&&Boolean(match.current_score)&&/(FINAL|FINISH|FULL.?TIME)/i.test(match.status)}
 export function safeReportFilename(report:Pick<PostMatchReport,"homeTeam"|"awayTeam"|"kickoffAt">){const clean=(s:string)=>s.normalize("NFKD").replace(/[^a-zA-Z0-9]+/g,"-").replace(/^-|-$/g,"")||"Team";return `Predictive-Compass-${clean(report.homeTeam)}-v-${clean(report.awayTeam)}-${(report.kickoffAt||new Date().toISOString()).slice(0,10)}.pdf`}
 
 function choose(history:FootballPredictionHistoryEntry[],stage:StageReview["stage"]){const candidates=stage==="LIVE"?history.filter(x=>x.stage==="FIRST_HALF_LIVE"):history.filter(x=>x.stage===stage);return candidates.at(-1)||null}
@@ -33,7 +36,7 @@ export async function listPurchasedMatches(userId:string){
   return Promise.all([...map.values()].map(async item=>{
     try{
       const current=await getLiveFootballPrediction(item.matchId);
-      return {...item,purchasedStages:[...item.purchasedStages],competition:current.competition,homeTeam:current.home_team,awayTeam:current.away_team,status:current.status,isFinal:current.stage==="FINAL"&&Boolean(current.current_score)&&/(FINAL|FINISH|FULL.?TIME)/i.test(current.status),finalScore:current.current_score};
+      return {...item,purchasedStages:[...item.purchasedStages],competition:current.competition,homeTeam:current.home_team,awayTeam:current.away_team,status:current.status,isFinal:isAuthoritativeFinal(current),finalScore:current.current_score};
     }catch{
       return {...item,purchasedStages:[...item.purchasedStages],competition:"",homeTeam:"",awayTeam:"",status:"Unavailable",isFinal:false,finalScore:null};
     }

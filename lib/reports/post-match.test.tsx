@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it, vi } from "vitest";
 vi.mock("server-only",()=>({}));
-import { evaluateExact, evaluateOutcome, safeReportFilename, scoreStrength, type PostMatchReport } from "./post-match";
+import { evaluateExact, evaluateMarketSuggestion, evaluateOutcome, evaluateScoreRanking, isAuthoritativeFinal, safeReportFilename, scoreStrength, type PostMatchReport } from "./post-match";
 import { renderPostMatchPdf } from "./post-match-pdf";
 
 const snapshot={stage:"PREMATCH" as const,minute:null,current_score:null,predicted_outcome:"home_win" as const,predicted_score:{home:2,away:1},probabilities:{home_win:55,draw:25,away_win:20},reliability:{score:70,label:"High" as const},generated_at:"2026-09-05T10:00:00.000Z",change_reason:"update" as const,change_description:"Stored historical snapshot"};
@@ -10,6 +10,9 @@ const report:PostMatchReport={reportId:"PCR-2026-ABC12345",matchId:`fm_${"a".rep
 describe("post-match report calculations",()=>{
   it("normalizes Score Strength without changing true probability",()=>{expect(scoreStrength(16,16)).toBe(100);expect(scoreStrength(13,16)).toBe(81);expect(scoreStrength(11,16)).toBe(69);expect(13).toBe(13)});
   it("evaluates outcome and exact score separately",()=>{expect(evaluateOutcome("home_win",{home:2,away:1})).toBe("CORRECT");expect(evaluateOutcome("draw",{home:2,away:1})).toBe("INCORRECT");expect(evaluateExact({home:2,away:1},{home:2,away:1})).toBe("CORRECT");expect(evaluateExact({home:1,away:0},{home:2,away:1})).toBe("INCORRECT")});
+  it("evaluates stored market suggestions without inventing one",()=>{expect(evaluateMarketSuggestion("home_or_draw",{home:2,away:1})).toBe("CORRECT");expect(evaluateMarketSuggestion("away_win",{home:2,away:1})).toBe("INCORRECT");expect(evaluateMarketSuggestion(null,{home:2,away:1})).toBe("NOT APPLICABLE")});
+  it("reports exact, Top 3 and Top 5 score ranks independently",()=>{const scores=[{home:1,away:0},{home:2,away:1},{home:2,away:0},{home:1,away:1},{home:3,away:1}];expect(evaluateScoreRanking(scores,{home:2,away:1})).toEqual({rank:2,exactHit:false,top3:true,top5:true});expect(evaluateScoreRanking(scores,{home:4,away:0})).toEqual({rank:null,exactHit:false,top3:false,top5:false})});
+  it("only accepts an authoritative final state",()=>{expect(isAuthoritativeFinal({stage:"FINAL",status:"FINAL",current_score:{home:2,away:1}})).toBe(true);expect(isAuthoritativeFinal({stage:"HALFTIME",status:"HALFTIME",current_score:{home:1,away:0}})).toBe(false);expect(isAuthoritativeFinal({stage:"FINAL",status:"FINAL",current_score:null})).toBe(false)});
   it("creates a filesystem-safe customer filename",()=>expect(safeReportFilename({...report,homeTeam:"Arsenal / FC",awayTeam:"Chelsea:*"})).toBe("Predictive-Compass-Arsenal-FC-v-Chelsea-2026-09-05.pdf"));
   it("renders a real server PDF with unavailable stages stated truthfully",async()=>{const pdf=await renderPostMatchPdf(report);expect(pdf.subarray(0,4).toString()).toBe("%PDF");expect(pdf.length).toBeGreaterThan(3000)});
 });
