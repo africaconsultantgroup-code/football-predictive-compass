@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 vi.mock("server-only", () => ({}));
 
 import {
+  ensureProduct,
   eligibleLivePredictions,
   eligibleUpcomingPredictions,
   planPredictionProducts,
@@ -86,6 +87,46 @@ describe("automatic prediction product synchronization", () => {
     expect(eligibleLivePredictions([live({ stage: "PREMATCH" })])).toMatchObject({ eligible: [], skipped: 1 });
   });
 
+  it("reactivates the existing live product when second-half live returns", async () => {
+    const updates: Array<Record<string, unknown>> = [];
+    const admin = {
+      from(table: string) {
+        expect(table).toBe("prediction_access_products");
+        return {
+          select() {
+            return {
+              eq() {
+                return {
+                  maybeSingle: async () => ({
+                    data: { id: "live-product", price_amount: 25, is_active: false },
+                    error: null,
+                  }),
+                };
+              },
+            };
+          },
+          update(values: Record<string, unknown>) {
+            updates.push(values);
+            return { eq: async () => ({ error: null }) };
+          },
+        };
+      },
+    };
+    const spec = planPredictionProducts([
+      eligible(matchId("a"), "live"),
+    ])[0];
+    const report = { created: 0, existing: 0, priced: 0, deactivated: 0, skipped: 0 };
+
+    await ensureProduct(admin as never, spec, report);
+
+    expect(report.existing).toBe(1);
+    expect(updates).toEqual([{
+      is_active: true,
+      sales_open_at: spec.salesOpenAt,
+      sales_close_at: spec.salesCloseAt,
+    }]);
+  });
+
   it("creates a slot only for at least two matches at the exact same UTC kickoff", () => {
     const two = planPredictionProducts([eligible(matchId("a")), eligible(matchId("b"))]);
     expect(two.filter((product) => product.scopeType === "kickoff_slot")).toHaveLength(1);
@@ -107,6 +148,7 @@ describe("automatic prediction product synchronization", () => {
   it("preserves purchased membership and historical rows while deactivating stale offers", () => {
     const source = readFileSync("lib/payments/product-sync.ts", "utf8");
     expect(source).toContain("if (lookup.data.price_amount !== null) return");
+    expect(source).toContain("is_active: true");
     expect(source).toContain("update({ is_active: false })");
     expect(source).not.toMatch(/\.delete\(/);
     expect(source).not.toMatch(/prediction_id.*syncKey/);

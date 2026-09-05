@@ -120,18 +120,18 @@ export function planPredictionProducts(predictions: EligiblePrediction[], now = 
   return products;
 }
 
-async function ensureProduct(admin: SupabaseClient, spec: ProductSpec, report: ProductSyncReport) {
+export async function ensureProduct(admin: SupabaseClient, spec: ProductSpec, report: ProductSyncReport) {
   let lookup = await admin.from("prediction_access_products")
-    .select("id, price_amount").eq("sync_key", spec.syncKey).maybeSingle();
+    .select("id, price_amount, is_active").eq("sync_key", spec.syncKey).maybeSingle();
   if (!lookup.data) {
     const inserted = await admin.from("prediction_access_products").insert({
       sync_key: spec.syncKey, scope_type: spec.scopeType, prediction_stage: spec.stage,
       name: spec.name, price_amount: null, currency: "GHS", is_active: true,
       sales_open_at: spec.salesOpenAt, sales_close_at: spec.salesCloseAt,
-    }).select("id, price_amount").single();
+    }).select("id, price_amount, is_active").single();
     if (inserted.error) {
       lookup = await admin.from("prediction_access_products")
-        .select("id, price_amount").eq("sync_key", spec.syncKey).maybeSingle();
+        .select("id, price_amount, is_active").eq("sync_key", spec.syncKey).maybeSingle();
     } else {
       lookup = inserted;
       report.created += 1;
@@ -140,6 +140,14 @@ async function ensureProduct(admin: SupabaseClient, spec: ProductSpec, report: P
     report.existing += 1;
   }
   if (!lookup.data) throw new Error("Prediction product synchronization failed.");
+  if (!lookup.data.is_active) {
+    const reactivated = await admin.from("prediction_access_products").update({
+      is_active: true,
+      sales_open_at: spec.salesOpenAt,
+      sales_close_at: spec.salesCloseAt,
+    }).eq("id", lookup.data.id);
+    if (reactivated.error) throw new Error("Prediction product reactivation failed.");
+  }
   if (lookup.data.price_amount !== null) return;
 
   const membership = await admin.from("prediction_access_product_matches")
