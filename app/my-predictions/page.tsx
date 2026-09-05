@@ -1,32 +1,10 @@
 import Link from "next/link";
-
 import { getCustomerAccess } from "@/lib/auth/access";
-import { getActivePredictionGrants, type PredictionAccessSummary } from "@/lib/auth/match-access";
 import { requireUser } from "@/lib/auth/session";
-import { getRecentPayments } from "@/lib/payments/service";
-import { createCustomerAuthServerClient } from "@/lib/supabase/auth-server";
+import { listPurchasedMatches } from "@/lib/reports/post-match";
 import { CustomerShell, EmptyState, PageHeader } from "../customer-shell";
+import { formatProductPrice } from "@/lib/payments/format";
 
-function grantHref(grant: PredictionAccessSummary) {
-  const matchId = grant.matches[0]?.matchId;
-  if (!matchId) return "/my-predictions";
-  return grant.stage === "prematch" ? `/matches/${matchId}` : `/${grant.stage}#${matchId}`;
-}
-
-function AccessSection({ title, grants }: { title: string; grants: PredictionAccessSummary[] }) {
-  if (!grants.length) return null;
-  return <section className="owned-section"><div className="section-title"><h2>{title}</h2><span>{grants.length}</span></div><div className="owned-grid">{grants.map((grant) => <article className={`owned-card ${grant.stage}`} key={grant.productId}><span className={`stage-badge ${grant.stage}`}>{grant.stage}</span><h3>{grant.name}</h3><p>{grant.scopeType === "kickoff_slot" ? `${grant.matchCount} match package` : "Single match access"}</p><strong>✓ Unlocked</strong><Link href={grantHref(grant)}>View Prediction →</Link></article>)}</div></section>;
-}
-
-export default async function MyPredictionsPage() {
-  const user = await requireUser();
-  const client = await createCustomerAuthServerClient();
-  const [access, grants, payments] = await Promise.all([getCustomerAccess(), getActivePredictionGrants(client, user.id), getRecentPayments(client, user.id)]);
-  const prematch = grants.filter((grant) => grant.stage === "prematch");
-  const live = grants.filter((grant) => grant.stage === "live");
-  const halftime = grants.filter((grant) => grant.stage === "halftime");
-  const past = payments.filter((payment) => payment.status === "successful");
-  return <CustomerShell authenticated={Boolean(access.customer)}><PageHeader eyebrow="Your intelligence" title="My Predictions" description="Return to predictions you have unlocked across every match stage." />
-    {!grants.length && !payments.length ? <EmptyState title="You haven't unlocked a prediction yet." description="Choose an upcoming match to access its latest Prematch intelligence." href="/matches" action="Explore Upcoming Matches" /> : <><AccessSection title="Active Prematch" grants={prematch} /><AccessSection title="Live Access" grants={live} /><AccessSection title="Halftime Access" grants={halftime} />{past.length ? <section className="owned-section"><div className="section-title"><h2>Past Purchases</h2><span>{past.length}</span></div><div className="purchase-archive">{past.map((payment) => <article key={payment.id}><span className={`stage-badge ${payment.stage}`}>{payment.stage}</span><h3>{payment.name}</h3><p>{new Intl.DateTimeFormat("en-GB", { dateStyle: "medium" }).format(new Date(payment.createdAt))} · {payment.currency} {Number(payment.amount).toFixed(2)}</p><strong>{payment.status}</strong></article>)}</div></section> : null}</>}
-  </CustomerShell>;
-}
+export const dynamic="force-dynamic";
+function activeHref(matchId:string,stages:string[]){if(stages.includes("prematch"))return `/matches/${matchId}`;if(stages.includes("live"))return `/live#${matchId}`;return `/halftime#${matchId}`}
+export default async function MyPredictionsPage(){const user=await requireUser();const [access,matches]=await Promise.all([getCustomerAccess(),listPurchasedMatches(user.id)]);const active=matches.filter(x=>!x.isFinal),completed=matches.filter(x=>x.isFinal);return <CustomerShell authenticated={Boolean(access.customer)}><PageHeader eyebrow="Your intelligence" title="My Predictions" description="Active access and completed prediction journeys, retained under your match purchases."/>{!matches.length?<EmptyState title="You haven't unlocked a prediction yet." description="Choose an upcoming match to access its latest Prematch intelligence." href="/matches" action="Explore Upcoming Matches"/>:<><section className="owned-section"><div className="section-title"><h2>Active</h2><span>{active.length}</span></div>{active.length?<div className="owned-grid">{active.map(x=><article className="owned-card prematch" key={x.matchId}><span className="stage-badge prematch">{x.purchasedStages.join(" · ")}</span><h3>{x.homeTeam&&x.awayTeam?`${x.homeTeam} vs ${x.awayTeam}`:x.matchId}</h3><p>{new Date(x.kickoffAt).toLocaleString("en-GB")} · {x.status}</p><strong>✓ Unlocked</strong><Link href={activeHref(x.matchId,x.purchasedStages)}>View Prediction →</Link></article>)}</div>:<EmptyState title="No active predictions." description="Purchased matches appear here until Core verifies the final result."/>}</section><section className="owned-section"><div className="section-title"><h2>Completed</h2><span>{completed.length}</span></div>{completed.length?<div className="completed-grid">{completed.map(x=><article className="completed-card" key={x.matchId}><p>{x.competition}</p><h3>{x.homeTeam} <span>{x.finalScore?.home} - {x.finalScore?.away}</span> {x.awayTeam}</h3><time>{new Date(x.kickoffAt).toLocaleString("en-GB")}</time><b>FINAL · Prediction Review Available</b>{x.amount!==null&&x.currency?<small>Purchased for {formatProductPrice(x.amount,x.currency)}</small>:null}<div><Link href={`/my-predictions/${x.matchId}/report`}>View Report</Link><a href={`/api/reports/matches/${x.matchId}/pdf`}>Download PDF</a></div></article>)}</div>:<EmptyState title="No completed predictions yet." description="Reports appear here after an eligible purchased match is officially FINAL."/>}</section></>}</CustomerShell>}

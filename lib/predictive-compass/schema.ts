@@ -209,6 +209,7 @@ export const footballPredictionHistorySchema = z
   }));
 
 export type FootballStage = z.infer<typeof footballStageSchema>;
+export type FootballScore = z.infer<typeof footballScoreSchema>;
 export type FootballLivePrediction = z.infer<typeof footballLivePredictionSchema>;
 export type FootballLiveMatch = z.infer<typeof footballLiveMatchSchema>;
 export type FootballLiveMatchPreview = z.infer<typeof footballLiveMatchPreviewSchema>;

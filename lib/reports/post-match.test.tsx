@@ -1,0 +1,21 @@
+import { readFileSync } from "node:fs";
+import { describe, expect, it, vi } from "vitest";
+vi.mock("server-only",()=>({}));
+import { evaluateExact, evaluateOutcome, safeReportFilename, scoreStrength, type PostMatchReport } from "./post-match";
+import { renderPostMatchPdf } from "./post-match-pdf";
+
+const snapshot={stage:"PREMATCH" as const,minute:null,current_score:null,predicted_outcome:"home_win" as const,predicted_score:{home:2,away:1},probabilities:{home_win:55,draw:25,away_win:20},reliability:{score:70,label:"High" as const},generated_at:"2026-09-05T10:00:00.000Z",change_reason:"update" as const,change_description:"Stored historical snapshot"};
+const report:PostMatchReport={reportId:"PCR-2026-ABC12345",matchId:`fm_${"a".repeat(32)}`,competition:"Premier League",homeTeam:"Arsenal",awayTeam:"Chelsea",kickoffAt:"2026-09-05T14:00:00.000Z",finalScore:{home:2,away:1},finalStatus:"FINAL",generatedAt:"2026-09-05T17:00:00.000Z",purchase:{amount:20,currency:"GHS",stages:["prematch"]},reviews:[{stage:"PREMATCH",snapshot,outcomeResult:"CORRECT",exactResult:"CORRECT",scoreStrength:100,actualRank:1,marketResult:"NOT APPLICABLE"},{stage:"LIVE",snapshot:null,outcomeResult:"NOT APPLICABLE",exactResult:"NOT APPLICABLE",scoreStrength:null,actualRank:null,marketResult:"NOT APPLICABLE"},{stage:"HALFTIME",snapshot:null,outcomeResult:"NOT APPLICABLE",exactResult:"NOT APPLICABLE",scoreStrength:null,actualRank:null,marketResult:"NOT APPLICABLE"}],snapshotTimestamps:[snapshot.generated_at],summary:"Stored facts only."};
+
+describe("post-match report calculations",()=>{
+  it("normalizes Score Strength without changing true probability",()=>{expect(scoreStrength(16,16)).toBe(100);expect(scoreStrength(13,16)).toBe(81);expect(scoreStrength(11,16)).toBe(69);expect(13).toBe(13)});
+  it("evaluates outcome and exact score separately",()=>{expect(evaluateOutcome("home_win",{home:2,away:1})).toBe("CORRECT");expect(evaluateOutcome("draw",{home:2,away:1})).toBe("INCORRECT");expect(evaluateExact({home:2,away:1},{home:2,away:1})).toBe("CORRECT");expect(evaluateExact({home:1,away:0},{home:2,away:1})).toBe("INCORRECT")});
+  it("creates a filesystem-safe customer filename",()=>expect(safeReportFilename({...report,homeTeam:"Arsenal / FC",awayTeam:"Chelsea:*"})).toBe("Predictive-Compass-Arsenal-FC-v-Chelsea-2026-09-05.pdf"));
+  it("renders a real server PDF with unavailable stages stated truthfully",async()=>{const pdf=await renderPostMatchPdf(report);expect(pdf.subarray(0,4).toString()).toBe("%PDF");expect(pdf.length).toBeGreaterThan(3000)});
+});
+
+describe("post-match report security",()=>{
+  it("requires authentication, canonical identity, purchase authorization and FINAL status",()=>{const route=readFileSync("app/api/reports/matches/[matchId]/pdf/route.ts","utf8"),service=readFileSync("lib/reports/post-match.ts","utf8");expect(route).toContain("if(!user)");expect(route).toContain("footballMatchIdSchema.safeParse");expect(service).toContain("hasPurchasedMatch(userId,matchId)");expect(service).toContain('current.stage!=="FINAL"');expect(service).not.toMatch(/\.from\([^)]*\)\s*\.\s*(insert|upsert|update|delete)\s*\(/)});
+  it("returns protected PDF headers and contains no secrets",()=>{const route=readFileSync("app/api/reports/matches/[matchId]/pdf/route.ts","utf8");expect(route).toContain('"content-type":"application/pdf"');expect(route).toContain('"cache-control":"private, no-store"');expect(route).not.toMatch(/PAYSTACK_SECRET|SUPABASE_SECRET|FOOTBALL_API_KEY/)});
+  it("preserves historical purchase snapshots and missing-data language",()=>{const service=readFileSync("lib/reports/post-match.ts","utf8"),view=readFileSync("app/my-predictions/[matchId]/report/report-view.tsx","utf8");expect(service).toContain('from("prediction_payments")');expect(service).toContain('.eq("status","successful")');expect(view).toContain("Historical snapshot unavailable")});
+});
