@@ -22,7 +22,7 @@ export function evaluateScoreRanking(scorelines:FootballScore[],actual:FootballS
 export function isAuthoritativeFinal(match:{stage:string;status:string;current_score:FootballScore|null}){return match.stage==="FINAL"&&Boolean(match.current_score)&&/(FINAL|FINISH|FULL.?TIME)/i.test(match.status)}
 export function safeReportFilename(report:Pick<PostMatchReport,"homeTeam"|"awayTeam"|"kickoffAt">){const clean=(value:string)=>value.normalize("NFKD").replace(/[^a-zA-Z0-9]+/g,"-").replace(/^-|-$/g,"")||"Team";return `Predictive-Compass-${clean(report.homeTeam)}-v-${clean(report.awayTeam)}-${(report.kickoffAt||new Date().toISOString()).slice(0,10)}.pdf`}
 
-function choose(history:FootballPredictionHistoryEntry[],stage:StageReview["stage"]){const candidates=stage==="LIVE"?history.filter(entry=>entry.stage==="FIRST_HALF_LIVE"):history.filter(entry=>entry.stage===stage);return candidates.at(-1)||null}
+function choose(history:FootballPredictionHistoryEntry[],stage:StageReview["stage"]){const candidates=stage==="LIVE"?history.filter(entry=>entry.stage==="FIRST_HALF_LIVE"||entry.stage==="SECOND_HALF_LIVE"):history.filter(entry=>entry.stage===stage);return candidates.at(-1)||null}
 function successfulPayment(value:PaymentSnapshot|PaymentSnapshot[]|null){const payments=Array.isArray(value)?value:value?[value]:[];return payments.find(payment=>payment.status==="successful")||null}
 
 export async function listCustomerMatches(userId:string,now=new Date()){
