@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 vi.mock("server-only", () => ({}));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
 
-import { filterPredictionViews, fixtureDateLabel, KickoffSlotOffers, PredictionCard, PredictionPreviewCard, sortPredictionViews } from "../../app/predictions";
+import { CUSTOMER_COMPETITIONS, filterPredictionViews, fixtureDateLabel, KickoffSlotOffers, PredictionCard, PredictionPreviewCard, sortPredictionViews } from "../../app/predictions";
 import { FootballHero, OfferList, PredictionEmptyState } from "../../app/experience-components";
 import { customerNavigation, SiteNavigation } from "../../app/site-navigation";
 import { toPredictionPreview } from "./preview";
@@ -34,6 +34,10 @@ const prediction: FootballPrediction = {
   generated_at: "2026-09-01T10:00:00.000Z",
   updated_at: "2026-09-01T10:05:00.000Z",
 };
+
+it("offers Premier League and Champions League in the existing competition flow", () => {
+  expect(CUSTOMER_COMPETITIONS).toEqual(["Premier League", "UEFA Champions League"]);
+});
 
 describe("customer prediction presentation", () => {
   it("exposes the complete customer information architecture without admin navigation", () => {

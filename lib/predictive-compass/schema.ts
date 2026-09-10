@@ -44,6 +44,8 @@ export const footballPredictionSchema = z
     match_id: footballMatchIdSchema.nullable(),
     prediction_id: z.string().min(1),
     competition: z.string().min(1),
+    competition_code: z.enum(["premier-league", "uefa-champions-league"]).optional(),
+    market_scope: z.literal("REGULATION_TIME_90_MINUTES").optional(),
     home_team: z.string().min(1),
     away_team: z.string().min(1),
     kickoff_at: z.string().datetime({ offset: true }).nullable(),

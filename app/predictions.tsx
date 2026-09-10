@@ -13,6 +13,7 @@ import { CheckoutButton } from "./checkout-button";
 import { OfferList, PredictionDisclaimer, PredictionEmptyState } from "./experience-components";
 
 type PredictionView = FootballPrediction | FootballPredictionPreview;
+export const CUSTOMER_COMPETITIONS = ["Premier League", "UEFA Champions League"] as const;
 
 export type UpcomingFilter = "all" | "today" | "tomorrow" | "week";
 
@@ -46,7 +47,7 @@ export function filterPredictionViews(predictions: PredictionView[], filter: Upc
   });
 }
 
-export function UpcomingFilters({ active, competition, competitions }: { active: UpcomingFilter; competition?: string; competitions: string[] }) {
+export function UpcomingFilters({ active, competition, competitions = [...CUSTOMER_COMPETITIONS] }: { active: UpcomingFilter; competition?: string; competitions?: string[] }) {
   const href = (filter: UpcomingFilter, selectedCompetition = competition) => {
     const query = new URLSearchParams();
     if (filter !== "all") query.set("filter", filter);
@@ -87,7 +88,7 @@ export function PredictionCard({ prediction }: { prediction: FootballPrediction 
   return (
     <article id={prediction.match_id ?? prediction.prediction_id} className="prediction-card unlocked-card">
       <header className="fixture-header"><div><span className="stage-badge prematch">Prematch · Unlocked</span><p>{prediction.competition}</p><h3>{prediction.home_team}<span>vs</span>{prediction.away_team}</h3><time dateTime={prediction.kickoff_at ?? undefined}>{kickoffLabel(prediction.kickoff_at)}</time></div><span className="unlock-state">✓ Unlocked</span></header>
-      <div className="outcome-panel"><p>Most likely outcome</p><strong>{formatPredictedOutcome(prediction)}</strong>{prediction.predicted_score ? <span>Modeled score · {prediction.predicted_score.home}–{prediction.predicted_score.away}</span> : null}</div>
+      <div className="outcome-panel"><p>Most likely outcome · 90 minutes</p><strong>{formatPredictedOutcome(prediction)}</strong>{prediction.predicted_score ? <span>Modeled score · {prediction.predicted_score.home}–{prediction.predicted_score.away}</span> : null}</div>
       <section className="probability-panel" aria-label="Model probabilities"><div className="card-label"><span>Chances / Model Probability</span><small>Higher = stronger likelihood</small></div><ProbabilityBars prediction={prediction} /></section>
       <section className="confidence-panel"><div><span>Confidence</span><strong>{formatReliability(prediction.reliability)}</strong></div><p>Confidence indicates how strongly the available evidence supports the model&apos;s preferred outcome. It is not a guarantee.</p></section>
       {prediction.customer_summary ? <p className="prediction-summary">{prediction.customer_summary}</p> : null}
@@ -128,7 +129,7 @@ export async function PredictionsContent({ limit, filter = "all", competition, s
   const { predictions, failed } = await loadPredictions();
   if (failed) return <div className="service-state" role="alert">Predictions are temporarily unavailable. Please try again shortly.</div>;
   if (!predictions.length) return <PredictionEmptyState />;
-  const competitions = [...new Set(predictions.map((prediction) => prediction.competition))].sort();
+  const competitions = [...CUSTOMER_COMPETITIONS];
   const filtered = filterPredictionViews(predictions, filter, competition);
   const visible = typeof limit === "number" ? filtered.slice(0, limit) : filtered;
   if (!visible.length) return <>{showFilters ? <UpcomingFilters active={filter} competition={competition} competitions={competitions} /> : null}<PredictionEmptyState /></>;
