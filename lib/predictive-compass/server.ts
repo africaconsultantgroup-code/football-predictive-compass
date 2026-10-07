@@ -1,4 +1,5 @@
 import "server-only";
+import { freePrematchSchema } from "./free";
 
 import {
   footballLiveMatchListSchema,
@@ -55,7 +56,7 @@ export function createFootballCoreClient({
   fetch: fetchImplementation = fetch,
   timeoutMs = DEFAULT_TIMEOUT_MS,
 }: CoreClientOptions) {
-  const request = async (path: string, method: "GET" | "POST" = "GET") => {
+  const request = async (path: string, method: "GET" | "POST" = "GET", allowNotFound = false) => {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
@@ -70,6 +71,7 @@ export function createFootballCoreClient({
         signal: controller.signal,
       });
 
+      if (allowNotFound && response.status === 404) return null;
       if (!response.ok) {
         throw new CoreClientError(mapStatus(response.status));
       }
@@ -87,7 +89,25 @@ export function createFootballCoreClient({
   };
 
   return {
-    async getUpcomingFootballPredictions() {
+    async getStoredFreePrematch(matchId: string) {
+      const id = footballMatchIdSchema.parse(matchId);
+      const value = await request(`api/v1/domains/football/matches/${id}/free`, "GET", true);
+      if (value === null) return null;
+      const free = freePrematchSchema.parse(value);
+      if (free.match_id !== id) throw new CoreClientError("malformed");
+      return free;
+    },
+    async getStoredFreeUpcoming() {
+      const start = new Date();
+      const end = new Date(start); end.setUTCDate(end.getUTCDate()+4);
+      const query = new URLSearchParams({ from: start.toISOString().slice(0,10), to: end.toISOString().slice(0,10) });
+      const value = await request(`api/v1/domains/football/free/upcoming?${query}`, "GET", true);
+      if (value === null) return [];
+      if (typeof value !== "object" || !Array.isArray(value.predictions)) throw new CoreClientError("malformed");
+      const predictions: unknown[] = value.predictions;
+      return predictions.map(item => freePrematchSchema.parse(item));
+    },
+    async getUpcomingFootballPredictions({ syncProducts = true }: { syncProducts?: boolean } = {}) {
       try {
         const start = new Date();
         const end = new Date(start);
@@ -101,7 +121,7 @@ export function createFootballCoreClient({
             `api/v1/domains/football/predictions/upcoming?${parameters}`,
           ),
         );
-        await syncUpcomingPredictionProducts(predictions).catch(() => undefined);
+        if (syncProducts) await syncUpcomingPredictionProducts(predictions).catch(() => undefined);
         return predictions;
       } catch (error) {
         if (error instanceof CoreClientError) throw error;
@@ -194,8 +214,15 @@ function getConfiguredClient() {
   return createFootballCoreClient({ baseUrl, apiKey });
 }
 
-export async function getUpcomingFootballPredictions() {
-  return getConfiguredClient().getUpcomingFootballPredictions();
+export async function getStoredFreePrematch(matchId: string) {
+  return getConfiguredClient().getStoredFreePrematch(matchId);
+}
+export async function getStoredFreeUpcoming() {
+  return getConfiguredClient().getStoredFreeUpcoming();
+}
+
+export async function getUpcomingFootballPredictions(options?: { syncProducts?: boolean }) {
+  return getConfiguredClient().getUpcomingFootballPredictions(options);
 }
 
 export async function getFootballPrediction(predictionId: string) {
