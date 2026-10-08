@@ -1,5 +1,6 @@
 import "server-only";
 import { freePrematchSchema } from "./free";
+import { toPremiumCustomerPrediction } from "./premium";
 
 import {
   footballLiveMatchListSchema,
@@ -89,6 +90,17 @@ export function createFootballCoreClient({
   };
 
   return {
+    async getPremiumFootballPrediction(predictionId: string, matchId: string) {
+      try {
+        const value = await request(`api/v1/domains/football/predictions/${encodeURIComponent(predictionId)}`);
+        const prediction = toPremiumCustomerPrediction(value);
+        if (value.prediction_id !== predictionId || prediction.match_id !== matchId) throw new CoreClientError("malformed");
+        return prediction;
+      } catch (error) {
+        if (error instanceof CoreClientError) throw error;
+        throw new CoreClientError("malformed");
+      }
+    },
     async getStoredFreePrematch(matchId: string) {
       const id = footballMatchIdSchema.parse(matchId);
       const value = await request(`api/v1/domains/football/matches/${id}/free`, "GET", true);
@@ -227,6 +239,10 @@ export async function getUpcomingFootballPredictions(options?: { syncProducts?: 
 
 export async function getFootballPrediction(predictionId: string) {
   return getConfiguredClient().getFootballPrediction(predictionId);
+}
+
+export async function getPremiumFootballPrediction(predictionId: string, matchId: string) {
+  return getConfiguredClient().getPremiumFootballPrediction(predictionId, matchId);
 }
 
 export async function requestPrematchFreshness(matchId: string) {

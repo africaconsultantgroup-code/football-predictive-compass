@@ -1,61 +1,70 @@
 import Link from "next/link";
 import type { FreePrematchPrediction } from "../../lib/predictive-compass/free";
-import { compareForecasts, premiumSummary, type ForecastComparisonData, type PremiumCustomerPrediction } from "../../lib/predictive-compass/premium";
-import { formatPredictedOutcome } from "../../lib/predictive-compass/presentation";
+import type { PremiumCustomerPrediction } from "../../lib/predictive-compass/premium";
+import type { PremiumIntelligence } from "../../lib/predictive-compass/premium-contract";
 import { OutcomeProbabilityBar } from "./match-components";
 import { FreeForecastCard } from "./free-detail";
 
-export function PremiumForecastHero({ prediction }: { prediction: PremiumCustomerPrediction | null }) {
+type SectionProps = { intelligence: PremiumIntelligence | null };
+function outcomeLabel(outcome: "home_win" | "draw" | "away_win", prediction: PremiumCustomerPrediction) {
+  return outcome === "draw" ? "Draw" : `${outcome === "home_win" ? prediction.home_team : prediction.away_team} Win`;
+}
+
+export function PremiumForecastHero({ prediction, updating = false }: { prediction: PremiumCustomerPrediction | null; updating?: boolean }) {
+  const forecast = prediction?.premium_intelligence.primary_forecast;
   return <section className="premium-forecast-hero" aria-label="Premium forecast"><div><span className="premium-badge">PREMIUM MATCH INTELLIGENCE</span><p>Most Likely Outcome</p>
-    {prediction ? <><h2>{formatPredictedOutcome(prediction)}</h2><strong className="premium-main-probability">{prediction.probabilities[prediction.predicted_outcome]}<span>%</span></strong><OutcomeProbabilityBar probabilities={prediction.probabilities} /></> : <div role="status"><h2>Premium forecast is being prepared.</h2><p>Your premium access remains active. No new purchase is required.</p></div>}
+    {forecast && prediction ? <><h2>{outcomeLabel(forecast.most_likely_outcome, prediction)}</h2><strong className="premium-main-probability">{forecast.probabilities[forecast.most_likely_outcome]}<span>%</span></strong><OutcomeProbabilityBar probabilities={forecast.probabilities} /></> : <div role="status"><h2>Premium forecast is being prepared.</h2><p>Your premium access remains active. No new purchase is required.</p></div>}
+    {updating ? <small role="status">A match-information check is underway.</small> : null}
     <small>Regulation time · 90 minutes. Probabilities are possibilities, not guarantees.</small></div><span className="premium-compass-mark" aria-hidden="true">✧</span></section>;
 }
 
-export function ForecastChange({ comparison }: { comparison: ForecastComparisonData }) {
-  const key = comparison.premium.predicted_outcome;
-  const delta = comparison.changes[key];
-  return <div className="premium-change"><strong>{comparison.leading_outcome_changed ? "Most likely outcome changed" : delta === 0 ? "Leading probability unchanged" : `${delta > 0 ? "+" : ""}${delta} percentage points`}</strong>
-    <p>{comparison.leading_outcome_changed ? `The leading outcome changed from ${formatPredictedOutcome(comparison.free)} to ${formatPredictedOutcome(comparison.premium)}.` : `Change in ${formatPredictedOutcome(comparison.premium)} probability.`}</p>
-    <dl>{([["Home", "home_win"], ["Draw", "draw"], ["Away", "away_win"]] as const).map(([label, key]) => <div key={key}><dt>{label}</dt><dd>{comparison.changes[key] > 0 ? "+" : ""}{comparison.changes[key]} pp</dd></div>)}</dl>
-  </div>;
+export function CompassPickCard({ intelligence }: SectionProps) {
+  const pick = intelligence?.availability.compass_pick === "available" ? intelligence.compass_pick : null;
+  return <section className={`premium-panel premium-pick${pick ? "" : " premium-unavailable"}`}><span className="premium-section-symbol" aria-hidden="true">✧</span><div><h2>Compass Pick</h2>{pick ? <><h3>{pick.selection}</h3><strong>{pick.model_probability}%</strong><p>{pick.market} · {pick.strength}</p><small>Predictive Compass&apos;s strongest current 1X2 outcome.</small></> : <p>Compass Pick is unavailable for this forecast.</p>}</div></section>;
 }
 
-export function ForecastComparison({ comparison }: { comparison: ForecastComparisonData | null }) {
-  if (!comparison) return null;
-  return <section className="premium-panel premium-comparison"><div className="premium-section-heading"><span>Two distinct forecasts</span><h2>What Changed</h2><p>Compare the stored early view with your premium forecast.</p></div><div className="premium-comparison-views">
-    <div><span>FREE FORECAST</span><h3>{formatPredictedOutcome(comparison.free)}</h3><strong>{comparison.free.probabilities[comparison.free.predicted_outcome]}%</strong></div><span className="premium-comparison-arrow" aria-hidden="true">→</span><div><span>PREMIUM FORECAST</span><h3>{formatPredictedOutcome(comparison.premium)}</h3><strong>{comparison.premium.probabilities[comparison.premium.predicted_outcome]}%</strong></div>
-  </div><ForecastChange comparison={comparison} /><small>A probability change does not establish which forecast will be more accurate.</small></section>;
+export function BookmakerComparisonCard({ intelligence }: SectionProps) {
+  const rows = intelligence?.availability.bookmaker_comparison === "available" ? intelligence.bookmaker_comparison : [];
+  return <section className={`premium-panel${rows.length ? "" : " premium-unavailable"}`}><h2>Bookmaker vs Compass</h2>{rows.length ? <div className="premium-intelligence-list">{rows.map((row, index) => <article key={index}><h3>{row.selection}</h3><dl className="premium-metrics"><div><dt>Bookmaker consensus fair odds</dt><dd>{row.bookmaker_consensus_fair_odds}</dd></div><div><dt>Bookmaker implied probability</dt><dd>{row.bookmaker_implied_probability}%</dd></div><div><dt>Compass probability</dt><dd>{row.compass_probability}%</dd></div><div><dt>Compass fair odds</dt><dd>{row.compass_fair_odds}</dd></div><div><dt>Probability difference</dt><dd>{row.probability_difference > 0 ? "+" : ""}{row.probability_difference} pp</dd></div></dl></article>)}</div> : <p>Bookmaker comparison is not available for this forecast.</p>}</section>;
 }
 
-export function CompassPickCard() {
-  return <section className="premium-panel premium-pick"><span className="premium-section-symbol" aria-hidden="true">✧</span><div><h2>Compass Pick</h2><p>Compass Pick not available yet</p><small>No approved recommendation is currently published for this match.</small></div></section>;
+export function MarketOpportunityList({ intelligence }: SectionProps) {
+  const rows = intelligence?.availability.market_opportunities === "available" ? intelligence.market_opportunities : [];
+  return <section className="premium-panel"><h2>Ranked 1X2 Opportunities</h2><small>Match Result · Regulation time only</small>{rows.length ? <ol className="premium-intelligence-list">{rows.map((row, index) => <li key={index} value={row.rank}><h3>{row.selection}</h3><p>{row.probability}% · {row.strength}{row.preferred ? " · Compass Pick" : ""}</p></li>)}</ol> : <p>Ranked opportunities are unavailable for this forecast.</p>}</section>;
 }
 
-export function IntelligenceReasonList() {
-  return <section className="premium-panel"><h2>Why the forecast changed</h2><p>Specific change reasons are not available for this forecast.</p><small>We only show a reason when supported by published match information.</small></section>;
+export function IntelligenceReasonList({ intelligence }: SectionProps) {
+  const rows = intelligence?.availability.intelligence_reasons === "available" ? intelligence.intelligence_reasons : [];
+  return <section className="premium-panel"><h2>Why Compass Thinks This</h2>{rows.length ? <div className="premium-intelligence-list">{rows.map((row, index) => <article key={index}><h3>{row.category}</h3><p>{row.summary}</p></article>)}</div> : <p>Intelligence reasons are unavailable for this forecast.</p>}</section>;
 }
 
-export function MarketOpportunityList() {
-  return <section className="premium-panel"><h2>Top Market Opportunities</h2><p>Ranked opportunities are not available yet.</p><small>No betting markets are inferred from the outcome probabilities shown above.</small></section>;
+export function RecommendationStrength({ intelligence }: SectionProps) {
+  const strength = intelligence?.recommendation_strength;
+  return <section className="premium-panel"><h2>Recommendation Strength</h2>{strength && strength.label !== "Unavailable" ? <><p>{strength.label}{strength.score !== null ? ` · ${strength.score}/100` : ""}</p><small>Recommendation strength is not certainty.</small></> : <p>Recommendation strength is unavailable for this forecast.</p>}</section>;
 }
 
-export function ScoreForecastCard() {
-  return <section className="premium-panel"><h2>Score Forecast</h2><p>Advanced score intelligence coming later.</p></section>;
+export function ScoreForecastCard({ prediction }: { prediction: PremiumCustomerPrediction | null }) {
+  const intelligence = prediction?.premium_intelligence;
+  const score = intelligence?.availability.score_forecast === "available" && intelligence.score_forecast.status === "available" ? intelligence.score_forecast : null;
+  return <section className="premium-panel"><h2>Most Likely Score</h2>{score?.most_likely_score && prediction ? <><p>{prediction.home_team} {score.most_likely_score.home}–{score.most_likely_score.away} {prediction.away_team}</p>{score.score_probability !== null ? <p>Exact-score probability: {score.score_probability}%</p> : null}{score.alternative_scorelines.length ? <p>Alternative scorelines: {score.alternative_scorelines.map(s => `${s.home}–${s.away}`).join(", ")}</p> : null}</> : <p>Score forecast is unavailable for this match.</p>}</section>;
+}
+
+export function ForecastComparison({ prediction }: { prediction: PremiumCustomerPrediction | null }) {
+  const intelligence = prediction?.premium_intelligence;
+  const change = intelligence?.forecast_change;
+  if (!prediction || intelligence?.availability.forecast_change !== "available" || !change?.available) return null;
+  return <section className="premium-panel premium-comparison"><h2>Forecast Change</h2><div className="premium-comparison-views"><div><span>FREE FORECAST</span><h3>{outcomeLabel(change.free_leading_outcome!, prediction)}</h3><strong>{change.free_probability}%</strong></div><span className="premium-comparison-arrow" aria-hidden="true">→</span><div><span>PREMIUM FORECAST</span><h3>{outcomeLabel(change.premium_leading_outcome!, prediction)}</h3><strong>{change.premium_probability}%</strong></div></div><p>{change.probability_point_change! > 0 ? "+" : ""}{change.probability_point_change} percentage points</p><p>{change.leading_outcome_changed ? "Most likely outcome changed" : "Most likely outcome unchanged"}</p>{change.reasons.map((reason, index) => <p key={index}>{reason}</p>)}<small>A probability change does not establish which forecast will be more accurate.</small></section>;
 }
 
 export function ForecastFreshness({ prediction, updating = false, now = new Date() }: { prediction: PremiumCustomerPrediction | null; updating?: boolean; now?: Date }) {
-  const time = prediction?.generated_at ?? prediction?.updated_at;
+  const time = prediction?.premium_intelligence.generated_at;
   const validTime = time && Date.parse(time) <= now.getTime();
-  return <section className="premium-panel premium-freshness"><h2>Forecast Freshness</h2>{validTime ? <p>Updated <time dateTime={time}>{new Intl.DateTimeFormat("en-GB", { dateStyle: "medium", timeStyle: "short", timeZone: "Africa/Accra" }).format(new Date(time))} GMT</time></p> : <p>Update time unavailable</p>}
-    <small>{!prediction ? "Your premium forecast is being prepared. Your access remains active." : updating ? "A match-information check is underway. The current stored forecast remains available." : "Your premium view uses the current available stored pre-match forecast."}</small></section>;
+  return <section className="premium-panel premium-freshness"><h2>Forecast Freshness</h2>{validTime ? <p>Updated <time dateTime={time}>{new Intl.DateTimeFormat("en-GB", { dateStyle: "medium", timeStyle: "short", timeZone: "Africa/Accra" }).format(new Date(time))} GMT</time></p> : <p>Update time unavailable</p>}<small>{!prediction ? "Your premium forecast is being prepared. Your access remains active." : updating ? "A match-information check is underway. The current stored forecast remains available." : "Your premium view uses the current available stored pre-match forecast."}</small></section>;
 }
 
 export function PremiumMatchExperience({ prediction, free, updating = false, now = new Date() }: { prediction: PremiumCustomerPrediction | null; free: FreePrematchPrediction | null; updating?: boolean; now?: Date }) {
-  const comparison = compareForecasts(free, prediction, now);
-  return <div className="premium-experience"><PremiumForecastHero prediction={prediction} /><ForecastComparison comparison={comparison} /><CompassPickCard /><IntelligenceReasonList />
-    <div className="premium-secondary-grid"><MarketOpportunityList /><ScoreForecastCard /></div>
-    {prediction ? <section className="premium-panel"><h2>Premium Intelligence Summary</h2><p>{premiumSummary(prediction)}</p></section> : null}
-    <ForecastFreshness prediction={prediction} updating={updating} now={now} />
+  const intelligence = prediction?.premium_intelligence ?? null;
+  return <div className="premium-experience"><PremiumForecastHero prediction={prediction} updating={updating} /><CompassPickCard intelligence={intelligence} /><BookmakerComparisonCard intelligence={intelligence} /><MarketOpportunityList intelligence={intelligence} /><IntelligenceReasonList intelligence={intelligence} /><RecommendationStrength intelligence={intelligence} /><ScoreForecastCard prediction={prediction} /><ForecastComparison prediction={prediction} /><ForecastFreshness prediction={prediction} updating={updating} now={now} />
     {free ? <section className="premium-free-reference" aria-label="Separate free forecast"><h2>Your Free Pre-Match View</h2><FreeForecastCard free={free} /></section> : null}
     <div className="premium-more"><Link href="/my-predictions">View My Predictions →</Link><p>Match reports remain available through your existing completed-match report experience.</p></div>
   </div>;

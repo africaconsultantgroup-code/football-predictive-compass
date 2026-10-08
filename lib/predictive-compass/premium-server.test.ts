@@ -1,26 +1,33 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 vi.mock("server-only", () => ({}));
-const mocks = vi.hoisted(() => ({ access: vi.fn(), grants: vi.fn(), client: vi.fn(), freshness: vi.fn(), upcoming: vi.fn() }));
+const mocks = vi.hoisted(() => ({ access: vi.fn(), grants: vi.fn(), client: vi.fn(), freshness: vi.fn(), upcoming: vi.fn(), premium: vi.fn() }));
 vi.mock("../auth/access", () => ({ getCustomerAccess: mocks.access }));
 vi.mock("../auth/match-access", () => ({ hasPredictionAccess: mocks.grants }));
 vi.mock("../supabase/auth-server", () => ({ createCustomerAuthServerClient: mocks.client }));
 vi.mock("./server", () => {
   class CoreClientError extends Error { constructor(readonly kind: string) { super(kind); } }
-  return { CoreClientError, requestPrematchFreshness: mocks.freshness, getUpcomingFootballPredictions: mocks.upcoming };
+  return { CoreClientError, requestPrematchFreshness: mocks.freshness, getUpcomingFootballPredictions: mocks.upcoming, getPremiumFootballPrediction: mocks.premium };
 });
 import { authorizePremiumMatch, loadPremiumMatch } from "./premium-server";
 import { CoreClientError } from "./server";
 import { hasSuccessfulPrematchPurchase } from "./premium-purchase";
+import { premiumIntelligenceFixture } from "./premium.fixture";
 
 const id = `fm_${"a".repeat(32)}`;
 const prediction = { match_id: id, prediction_id: "stored", competition: "Premier League", home_team: "Home", away_team: "Away", kickoff_at: "2026-10-10T14:00:00Z", stage: "PREMATCH", predicted_outcome: "home_win", probabilities: { home_win: 58, draw: 25, away_win: 17 }, predicted_score: null, reliability: { label: "Moderate", score: 65 }, verification_status: "verified", important_information_pending: false, customer_summary: "summary", customer_key_factors: [], generated_at: "2026-10-09T10:00:00Z", updated_at: null };
 const freshness = { match_id: id, prediction, freshness_status: "fresh", refresh_status: "not_required", maximum_age_seconds: 600, snapshot_age_seconds: 20 };
 
-beforeEach(() => { vi.clearAllMocks(); vi.useFakeTimers(); vi.setSystemTime(new Date("2026-10-09T12:00:00Z")); });
+beforeEach(() => { vi.clearAllMocks(); vi.useFakeTimers(); vi.setSystemTime(new Date("2026-10-09T12:00:00Z")); mocks.premium.mockResolvedValue({ premium_intelligence: premiumIntelligenceFixture }); });
 afterEach(() => vi.useRealTimers());
 
 describe("Existing premium access and snapshot policy", () => {
+  it("does not switch snapshots when the approved Premium contract is malformed", async () => {
+    mocks.freshness.mockResolvedValue(freshness);
+    mocks.premium.mockRejectedValueOnce(new CoreClientError("malformed"));
+    await expect(loadPremiumMatch(id)).rejects.toMatchObject({ kind: "malformed" });
+    expect(mocks.upcoming).not.toHaveBeenCalled();
+  });
   it("requires authentication before consulting grants", async () => {
     mocks.access.mockResolvedValue({ customer: null });
     expect(await authorizePremiumMatch(id)).toBe("anonymous");
@@ -37,13 +44,14 @@ describe("Existing premium access and snapshot policy", () => {
   });
   it("uses the current approved paid snapshot and no alternate source", async () => {
     mocks.freshness.mockResolvedValue(freshness);
-    expect((await loadPremiumMatch(id))?.probabilities).toEqual(prediction.probabilities);
+    expect((await loadPremiumMatch(id))?.premium_intelligence.primary_forecast.probabilities).toEqual(prediction.probabilities);
+    expect(mocks.premium).toHaveBeenCalledWith("stored", id);
     expect(mocks.upcoming).not.toHaveBeenCalled();
   });
   it("preserves the existing valid stored fallback after a freshness failure", async () => {
     mocks.freshness.mockRejectedValue(new CoreClientError("unavailable"));
     mocks.upcoming.mockResolvedValue([prediction]);
-    expect((await loadPremiumMatch(id))?.probabilities).toEqual(prediction.probabilities);
+    expect((await loadPremiumMatch(id))?.premium_intelligence.primary_forecast.probabilities).toEqual(prediction.probabilities);
     expect(mocks.upcoming).toHaveBeenCalledWith({ syncProducts: false });
   });
   it("does not substitute a free/live/different-match or expired snapshot", async () => {

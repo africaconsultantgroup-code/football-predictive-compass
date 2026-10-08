@@ -7,7 +7,6 @@ import { getFreePrematchPrediction } from "../../../lib/predictive-compass/free-
 import "../dashboard.css";
 import "../free-detail.css";
 import { PremiumMatchExperience } from "../premium-components";
-import { toPremiumCustomerPrediction } from "../../../lib/predictive-compass/premium";
 import { hasSuccessfulPrematchPurchase } from "../../../lib/predictive-compass/premium-purchase";
 import "../premium.css";
 import { CustomerShell } from "../../customer-shell";
@@ -15,7 +14,7 @@ import { getCustomerAccess } from "../../../lib/auth/access";
 import { getPredictionOffers, hasPredictionAccess } from "../../../lib/auth/match-access";
 import { paidPrematchSnapshot, toPrematchReadiness, type PrematchReadiness } from "../../../lib/predictive-compass/prematch";
 import { footballMatchIdSchema } from "../../../lib/predictive-compass/schema";
-import { CoreClientError, getUpcomingFootballPredictions, requestPrematchFreshness } from "../../../lib/predictive-compass/server";
+import { CoreClientError, getUpcomingFootballPredictions, requestPrematchFreshness, getPremiumFootballPrediction } from "../../../lib/predictive-compass/server";
 import { createCustomerAuthServerClient } from "../../../lib/supabase/auth-server";
 
 function formatKickoff(value: string | null) {
@@ -82,7 +81,7 @@ export default async function MatchPage({ params }: { params: Promise<{ matchId:
   const label = `${readiness.home_team} vs ${readiness.away_team}`;
   let premium = null;
   if (unlocked && prediction) {
-    try { premium = toPremiumCustomerPrediction(prediction); } catch { /* Preserve access; never relabel Free. */ }
+    try { premium = await getPremiumFootballPrediction(prediction.prediction_id, parsed.data); } catch { /* Preserve access; never relabel Free. */ }
   }
   const matchStatus = !readiness.kickoff_at ? "Kickoff to be confirmed" : new Date(readiness.kickoff_at) > new Date() ? "Upcoming · Pre-Match" : "Kickoff reached";
   return <CustomerShell authenticated={Boolean(access.customer)} theme="matches"><div className="match-page">

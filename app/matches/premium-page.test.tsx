@@ -4,7 +4,7 @@ vi.mock("server-only", () => ({}));
 vi.mock("next/server", () => ({ connection: async () => undefined }));
 vi.mock("next/navigation", () => ({ notFound: () => { throw new Error("not found"); }, useRouter: () => ({ push: vi.fn() }) }));
 vi.mock("../customer-shell", () => ({ CustomerShell: ({ children }: { children: React.ReactNode }) => children }));
-const mocks = vi.hoisted(() => ({ access: vi.fn(), grants: vi.fn(), client: vi.fn(), freshness: vi.fn(), upcoming: vi.fn(), free: vi.fn(), offers: vi.fn(), purchase: vi.fn() }));
+const mocks = vi.hoisted(() => ({ access: vi.fn(), grants: vi.fn(), client: vi.fn(), freshness: vi.fn(), upcoming: vi.fn(), free: vi.fn(), offers: vi.fn(), purchase: vi.fn(), premium: vi.fn() }));
 vi.mock("../../lib/auth/access", () => ({ getCustomerAccess: mocks.access }));
 vi.mock("../../lib/auth/match-access", () => ({ hasPredictionAccess: mocks.grants, getPredictionOffers: mocks.offers }));
 vi.mock("../../lib/supabase/auth-server", () => ({ createCustomerAuthServerClient: mocks.client }));
@@ -12,10 +12,12 @@ vi.mock("../../lib/predictive-compass/free-server", () => ({ getFreePrematchPred
 vi.mock("../../lib/predictive-compass/premium-purchase", () => ({ hasSuccessfulPrematchPurchase: mocks.purchase }));
 vi.mock("../../lib/predictive-compass/server", () => {
   class CoreClientError extends Error { constructor(readonly kind: string) { super(kind); } }
-  return { CoreClientError, requestPrematchFreshness: mocks.freshness, getUpcomingFootballPredictions: mocks.upcoming };
+  return { CoreClientError, requestPrematchFreshness: mocks.freshness, getUpcomingFootballPredictions: mocks.upcoming, getPremiumFootballPrediction: mocks.premium };
 });
 import MatchPage from "./[matchId]/page";
 import { CoreClientError } from "../../lib/predictive-compass/server";
+import { toPremiumCustomerPrediction } from "../../lib/predictive-compass/premium";
+import { premiumIntelligenceFixture } from "../../lib/predictive-compass/premium.fixture";
 
 const id = `fm_${"a".repeat(32)}`;
 const identity = { match_id: id, competition: "Premier League", home_team: "Home", away_team: "Away", kickoff_at: "2026-10-10T14:00:00Z" };
@@ -29,15 +31,24 @@ beforeEach(() => {
   mocks.access.mockResolvedValue({ customer: { id: "user" }, capabilities: new Set() });
   mocks.client.mockResolvedValue({}); mocks.grants.mockResolvedValue(true); mocks.purchase.mockResolvedValue(true);
   mocks.freshness.mockResolvedValue(freshness); mocks.free.mockResolvedValue(free); mocks.upcoming.mockResolvedValue([]);
+  mocks.premium.mockResolvedValue(toPremiumCustomerPrediction({ ...prediction, competition_code: "premier-league", market_scope: "REGULATION_TIME_90_MINUTES", evidence_cutoff_at: null, last_intelligence_refresh_at: null, refresh_reason: null, premium_intelligence: premiumIntelligenceFixture }));
   mocks.offers.mockResolvedValue([{ productId: "real", scopeType: "match", name: "Premium", priceAmount: 23, currency: "GHS", matchCount: 1 }]);
 });
 afterEach(() => vi.useRealTimers());
 
 describe("Actual match page premium branches", () => {
+  it("keeps active access and Free when the approved Premium contract cannot be read", async () => {
+    mocks.premium.mockRejectedValue(new CoreClientError("malformed"));
+    const markup = await html();
+    expect(markup).toContain("Purchased ✓"); expect(markup).toContain("No new purchase is required");
+    expect(markup).toContain("50%"); expect(markup).not.toContain("58%");
+    expect(mocks.offers).not.toHaveBeenCalled();
+  });
   it("renders purchased premium and separate free content without checkout or internal data", async () => {
     const markup = await html();
     expect(markup).toContain("Purchased ✓"); expect(markup).toContain("Premium Intelligence Unlocked");
-    expect(markup).toContain("58%"); expect(markup).toContain("50%"); expect(markup).toContain("What Changed");
+    expect(markup).toContain("58%"); expect(markup).toContain("50%"); expect(markup).not.toContain("Forecast Change");
+    expect(mocks.premium).toHaveBeenCalledWith("stored", id);
     expect(markup).not.toContain("private-raw"); expect(markup).not.toContain("unlock-button");
     expect(mocks.offers).not.toHaveBeenCalled();
   });
@@ -48,6 +59,7 @@ describe("Actual match page premium branches", () => {
     expect(markup).toContain("GH₵23.00"); expect(markup).toContain("Unlock Premium");
     expect(markup).not.toContain("PREMIUM MATCH INTELLIGENCE");
     expect(mocks.purchase).not.toHaveBeenCalled();
+    expect(mocks.premium).not.toHaveBeenCalled();
   });
   it("does not claim a subscription/grant is a purchase without payment evidence", async () => {
     mocks.purchase.mockResolvedValue(false);
