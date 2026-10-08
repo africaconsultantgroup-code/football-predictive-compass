@@ -12,12 +12,12 @@ import { createCustomerAuthServerClient } from "../lib/supabase/auth-server";
 import { CheckoutButton } from "./checkout-button";
 import { OfferList, PredictionDisclaimer, PredictionEmptyState } from "./experience-components";
 
-type PredictionView = FootballPrediction | FootballPredictionPreview;
+export type PredictionView = FootballPrediction | FootballPredictionPreview;
 export const CUSTOMER_COMPETITIONS = ["Premier League", "UEFA Champions League"] as const;
 
 export type UpcomingFilter = "all" | "today" | "tomorrow" | "week";
 
-export function sortPredictionViews(predictions: PredictionView[]) {
+export function sortPredictionViews<T extends Pick<PredictionView, "kickoff_at">>(predictions: T[]) {
   return [...predictions].sort((a, b) => {
     if (!a.kickoff_at) return 1;
     if (!b.kickoff_at) return -1;
@@ -36,7 +36,7 @@ export function fixtureDateLabel(kickoffAt: string | null, now = new Date()) {
   return new Intl.DateTimeFormat("en-GB", { weekday: "long", day: "numeric", month: "long", timeZone: "Africa/Accra" }).format(date);
 }
 
-export function filterPredictionViews(predictions: PredictionView[], filter: UpcomingFilter, competition?: string, now = new Date()) {
+export function filterPredictionViews<T extends Pick<PredictionView, "competition" | "kickoff_at">>(predictions: T[], filter: UpcomingFilter, competition?: string, now = new Date()) {
   return predictions.filter((prediction) => {
     if (competition && prediction.competition !== competition) return false;
     if (filter === "all") return true;
@@ -113,7 +113,7 @@ export function PredictionPreviewCard({ prediction }: { prediction: FootballPred
 
 export function PredictionsLoading() { return <div className="loading-state" role="status"><span className="status-dot" />Loading upcoming predictions…</div>; }
 
-async function loadPredictions() {
+export async function loadPredictions() {
   try {
     const [predictions, access, supabase] = await Promise.all([getUpcomingFootballPredictions(), getCustomerAccess(), createCustomerAuthServerClient()]);
     const views = await Promise.all(predictions.map(async (prediction) => {

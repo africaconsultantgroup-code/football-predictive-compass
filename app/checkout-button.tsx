@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import type { PredictionAccessOffer } from "../lib/auth/match-access";
 import { formatProductPrice } from "../lib/payments/format";
 
-export function CheckoutButton({ offer, matchLabel, stage }: { offer: PredictionAccessOffer; matchLabel: string; stage: string }) {
+export function CheckoutButton({ offer, matchLabel, stage, label }: { offer: PredictionAccessOffer; matchLabel: string; stage: string; label?: string }) {
   const [open, setOpen] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -24,7 +24,7 @@ export function CheckoutButton({ offer, matchLabel, stage }: { offer: Prediction
     finally { setLoading(false); }
   };
   return <>
-    <button className="unlock-button" onClick={() => setOpen(true)} type="button">{isSlot ? "Unlock Slot" : stage === "Prematch" ? "Unlock Prematch Prediction" : "Unlock Match"}<span aria-hidden="true">→</span></button>
+    <button className="unlock-button" onClick={() => setOpen(true)} type="button">{label ?? (isSlot ? "Unlock Slot" : stage === "Prematch" ? "Unlock Prematch Prediction" : "Unlock Match")}<span aria-hidden="true">→</span></button>
     {open ? <div className="purchase-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setOpen(false); }}>
       <section className="purchase-dialog" role="dialog" aria-modal="true" aria-labelledby={`purchase-${offer.productId}`}>
         <button className="dialog-close" type="button" aria-label="Close purchase summary" onClick={() => setOpen(false)}>×</button>
