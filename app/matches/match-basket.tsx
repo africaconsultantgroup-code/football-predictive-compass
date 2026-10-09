@@ -64,7 +64,7 @@ export function MatchBasket({ choices, children }: { choices: Choice[]; children
   }
   return <Selection.Provider value={{ choices, selected, toggle }}><div className="match-basket-layout">{children}<aside className="match-basket-panel">
     {message ? <p role="alert">{message}</p> : null}
-    {selected.length ? <><ul>{selected.map(id => <li key={id}>{choices.find(item => item.matchId === id)?.label ?? id}<button type="button" onClick={() => setSelected(items => items.filter(item => item !== id))} aria-label={`Remove ${choices.find(item => item.matchId === id)?.label ?? id}`}>Remove</button></li>)}</ul><button type="button" onClick={() => setSelected([])}>Clear selection</button></> : null}
+    {selected.length ? <><ul>{selected.map(id => <li key={id}>{choices.find(item => item.matchId === id)?.label ?? "Match details being prepared"}<button type="button" onClick={() => setSelected(items => items.filter(item => item !== id))} aria-label={`Remove ${choices.find(item => item.matchId === id)?.label ?? "Match details being prepared"}`}>Remove</button></li>)}</ul><button type="button" onClick={() => setSelected([])}>Clear selection</button></> : null}
     <BasketCheckout matchIds={selected} />
   </aside></div></Selection.Provider>;
 }

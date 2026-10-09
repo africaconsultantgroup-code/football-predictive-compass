@@ -18,7 +18,7 @@ export function FootballHero() {
       <div className="hero-copy">
         <p className="stage-badge prematch">Data-driven football intelligence</p>
         <h1 id="hero-title">Football intelligence<br /><span>that evolves with the game.</span></h1>
-        <p className="hero-intro">Choose the stage that matters, unlock probability-led analysis, and return as new match information becomes available.</p>
+        <p className="hero-intro">Start with a genuine Free forecast, unlock Premium Match Intelligence, and return as new match information becomes available.</p>
         <div className="hero-actions"><Link className="hero-primary" href="/matches">View Upcoming Matches <span aria-hidden="true">→</span></Link><Link className="hero-secondary" href="/live">Live Intelligence</Link></div>
         <div className="benefit-grid">
           <Benefit icon="chart" title="Data-Backed Analysis" text="Advanced statistics & models" />
@@ -53,14 +53,14 @@ export function PredictionDisclaimer({ compact = false }: { compact?: boolean })
   );
 }
 
-export function PredictionStageSelector({ pricingV2 = false }: { pricingV2?: boolean } = {}) {
+export function PredictionStageSelector({}: { pricingV2?: boolean } = {}) {
   return (
     <aside className="stage-selector" aria-label="Prediction stages">
       <div className="section-kicker">Prediction stages</div>
       <a className="stage-option prematch" href="#prematch"><span className="stage-symbol">01</span><span><strong>Prematch</strong><small>Before kickoff</small></span><b>View</b></a>
       <a className="stage-option live" href="#live-matches"><span className="stage-symbol">02</span><span><strong>Live</strong><small>During the match</small></span><b>View</b></a>
       <a className="stage-option halftime" href="#live-matches"><span className="stage-symbol">03</span><span><strong>Halftime</strong><small>At half-time</small></span><b>View</b></a>
-      <p className="stage-helper">{pricingV2 ? "One match purchase unlocks every available Premium stage and historical review. Select matches from the same Ghana day for automatic discounts." : "Each prediction stage is purchased separately because the model receives new information as the match develops."}</p>
+      <p className="stage-helper">One match purchase unlocks every available Premium stage and historical review. Select matches from the same Ghana day for automatic discounts.</p>
     </aside>
   );
 }
@@ -75,7 +75,7 @@ export function PredictionStages() {
 }
 
 export function HowItWorks() {
-  const steps = ["Choose a Match", "Choose Prediction Stage", "Unlock Securely", "View Prediction Intelligence"];
+  const steps = ["Choose a Match", "View Free Intelligence", "Unlock Premium Once", "View Prediction Intelligence"];
   return <section id="how-it-works" className="story-section how-flow" aria-labelledby="flow-title"><div className="story-heading"><p className="section-kicker">Simple access</p><h2 id="flow-title">How It Works</h2></div><ol>{steps.map((step, index) => <li key={step}><span>{index + 1}</span><strong>{step}</strong>{index < steps.length - 1 ? <b aria-hidden="true">→</b> : null}</li>)}</ol></section>;
 }
 

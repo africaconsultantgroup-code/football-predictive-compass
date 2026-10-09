@@ -2,7 +2,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
+vi.mock("next/navigation", () => ({ usePathname: () => "/", useRouter: () => ({ push: vi.fn() }) }));
 
 import { CUSTOMER_COMPETITIONS, filterPredictionViews, fixtureDateLabel, KickoffSlotOffers, PredictionCard, PredictionPreviewCard, sortPredictionViews } from "../../app/predictions";
 import { FootballHero, OfferList, PredictionEmptyState } from "../../app/experience-components";
@@ -41,7 +41,7 @@ it("offers Premier League and Champions League in the existing competition flow"
 
 describe("customer prediction presentation", () => {
   it("exposes the complete customer information architecture without admin navigation", () => {
-    expect(customerNavigation.map(([label]) => label)).toEqual(["Home", "Upcoming", "Live", "Halftime", "My Predictions", "How It Works", "Account"]);
+    expect(customerNavigation.map(([label]) => label)).toEqual(["Home", "Matches", "My Predictions", "Competitions", "How It Works", "Account"]);
     const html = renderToStaticMarkup(<SiteNavigation authenticated={false} />);
     for (const [, href] of customerNavigation) expect(html).toContain(`href="${href}"`);
     expect(html).not.toMatch(/admin/i);

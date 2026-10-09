@@ -17,7 +17,7 @@ export default function RegisterPage() {
         ]}
         submitLabel="Create account"
       />
-      <p className="mt-6 text-center text-sm text-slate-400">Already registered? <Link className="font-semibold text-emerald-300" href="/login">Log in</Link></p>
+      <p className="mt-6 text-center text-sm text-slate-600">Already registered? <Link className="font-semibold text-blue-700" href="/login">Log in</Link></p>
     </AuthShell>
   );
 }

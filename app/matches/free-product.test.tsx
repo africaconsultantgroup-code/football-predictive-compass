@@ -51,10 +51,10 @@ describe("Free pre-match product boundary", () => {
     expect(row).toContain("View Free Prediction");
     expect(detail).toContain("Home FC Win");
   });
-  it("shows unavailable safely and uses the actual premium offer and existing checkout", () => {
+  it("shows unavailable safely and uses Pricing V2 checkout", () => {
     const html = renderToStaticMarkup(<FreeMatchDetail free={unavailableFreePrematch(identity)} unlocked={false} offers={[offer]} deliverable />);
-    expect(html).toContain("Free prediction unavailable");
-    expect(html).toContain("GH₵23.00");
+    expect(html).toContain("Free prediction not available yet");
+    expect(html).toContain("GH₵8");
     expect(html).toContain("Unlock Premium");
     expect(html).not.toContain("58%");
     expect(html).not.toContain("GHS20");

@@ -1,3 +1,4 @@
+import LiveMatches from "../../live-matches";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
@@ -72,7 +73,7 @@ export default async function MatchPage({ params }: { params: Promise<{ matchId:
     const free = await getFreePrematchPrediction(parsed.data).catch(() => null);
     return <CustomerShell authenticated={authenticated} theme="matches"><div className="match-page"><Link className="back-link" href="/matches">← Upcoming Matches</Link>
       {free ? <><h1>{free.home_team} vs {free.away_team}</h1><p>{free.competition} · {formatKickoff(free.kickoff_at)}</p></> : null}
-      {premiumUnlocked ? <><div className="premium-access-state"><strong>Premium Intelligence Unlocked</strong>{purchased ? <span>Purchased ✓</span> : <span>Access active</span>}</div><PremiumMatchExperience prediction={null} free={free} /></> : <>{free ? <FreeMatchDetail free={free} unlocked={false} offers={[]} deliverable={false} /> : null}<div className="service-state" role="alert">Premium intelligence is temporarily unavailable. No payment can be started until a valid snapshot is ready.</div></>}
+      {premiumUnlocked ? <><div className="premium-access-state"><strong>Premium Intelligence Unlocked</strong>{purchased ? <span>Purchased ✓</span> : <span>Access active</span>}</div><LiveMatches matchId={parsed.data}><PremiumMatchExperience prediction={null} free={free} /></LiveMatches></> : <>{free ? <FreeMatchDetail free={free} unlocked={false} offers={[]} deliverable={false} /> : null}<div className="service-state" role="alert">Premium intelligence is temporarily unavailable. No payment can be started until a valid snapshot is ready.</div></>}
     </div></CustomerShell>;
 
   }
@@ -88,6 +89,6 @@ export default async function MatchPage({ params }: { params: Promise<{ matchId:
   return <CustomerShell authenticated={Boolean(access.customer)} theme="matches"><div className="match-page">
     <nav className="match-breadcrumb" aria-label="Breadcrumb"><Link href="/matches">Upcoming Matches</Link><span aria-hidden="true">›</span><span>{label}</span></nav>
     <section className="match-intelligence-header"><span className={unlocked ? "premium-badge" : "matches-summary-badge"}>{unlocked ? "PREMIUM MATCH INTELLIGENCE" : "FREE PRE-MATCH"}</span><h1>{readiness.home_team}<span>vs</span>{readiness.away_team}</h1><p>{readiness.competition} · {formatKickoff(readiness.kickoff_at)}</p><p>{matchStatus}</p>{unlocked ? <div className="premium-access-state"><strong>Premium Intelligence Unlocked</strong>{purchased ? <span>Purchased ✓</span> : <span>Access active</span>}</div> : null}</section>
-    {unlocked ? <PremiumMatchExperience prediction={premium} free={free} updating={["queued", "in_progress"].includes(readiness.refresh_status)} /> : free ? <FreeMatchDetail free={free} unlocked={false} offers={offers} deliverable={readiness.deliverable} pricingV2={matchPricingV2Enabled()} /> : null}
+    {unlocked ? <LiveMatches matchId={parsed.data}><PremiumMatchExperience prediction={premium} free={free} updating={["queued", "in_progress"].includes(readiness.refresh_status)} /></LiveMatches> : free ? <FreeMatchDetail free={free} unlocked={false} offers={offers} deliverable={readiness.deliverable} pricingV2={matchPricingV2Enabled()} /> : null}
   </div></CustomerShell>;
 }

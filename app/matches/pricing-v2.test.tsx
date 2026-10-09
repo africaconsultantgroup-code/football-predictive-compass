@@ -13,7 +13,7 @@ describe("V2 customer pricing presentation", () => {
   it("shows selection, competition, Ghana kickoff, separate Free state and standard price without old passes", () => {
     const prediction = { ...identity,prediction_id:"internal",stage:"PREMATCH",probabilities:{home_win:58,draw:25,away_win:17} } as FootballPrediction;
     const html = renderToStaticMarkup(<MatchBasket choices={[choice]}><MatchRow prediction={toPredictionPreview(prediction)} freePrediction={unavailableFreePrematch(identity)} pricingV2 /></MatchBasket>);
-    for (const expected of ["checkbox","EPL","18:00","GH₵8","Free prediction unavailable","Your Match Selection"]) expect(html).toContain(expected);
+    for (const expected of ["checkbox","EPL","18:00","GH₵8","Free prediction not available yet","Your Match Selection"]) expect(html).toContain(expected);
     for (const forbidden of ["58%","Matchday Pass","GHS 25","Full Match Intelligence"]) expect(html).not.toContain(forbidden);
   });
   it("marks owned matches Premium Unlocked and does not offer a checkbox", () => {

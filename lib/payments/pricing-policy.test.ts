@@ -94,9 +94,9 @@ describe("launch prediction pricing policy", () => {
     expect(finalizerSql.replace(/\r\n/g, "\n")).toContain("grant execute on function public.finalize_prediction_access_product(uuid)\nto service_role");
   });
 
-  it("renders explanatory stage prices from trusted database rules", () => {
+  it("renders explanatory basket prices from the shared Pricing V2 authority", () => {
     const page = readFileSync("app/how-it-works/page.tsx", "utf8");
-    expect(page).toContain("getActiveMatchPricingRules(getServerSupabaseClient())");
+    expect(page).toContain("MATCH_PRICING_POLICY.totals.map");
     expect(page).not.toMatch(/price:\s*(10|12\.5|15|20|25|30)/);
   });
 });

@@ -2,17 +2,18 @@ import { connection } from "next/server";
 import Link from "next/link";
 
 import { getCustomerAccess } from "../lib/auth/access";
-import { getPredictionOffers, hasPredictionAccess } from "../lib/auth/match-access";
+import { hasPredictionAccess } from "../lib/auth/match-access";
 import { formatProductPrice } from "../lib/payments/format";
 import { toPredictionPreview, type FootballPredictionPreview } from "../lib/predictive-compass/preview";
 import { formatPredictedOutcome, formatProbability, formatReliability } from "../lib/predictive-compass/presentation";
 import type { FootballPrediction } from "../lib/predictive-compass/schema";
 import { getUpcomingFootballPredictions } from "../lib/predictive-compass/server";
 import { createCustomerAuthServerClient } from "../lib/supabase/auth-server";
+import { canonicalCompetition, inventoryFailure, reportInventory } from "../lib/predictive-compass/inventory";
 import { CheckoutButton } from "./checkout-button";
 import { matchPricingV2Enabled } from "../lib/payments/pricing-version";
 import { SingleMatchCheckout } from "./matches/match-basket";
-import { OfferList, PredictionDisclaimer, PredictionEmptyState } from "./experience-components";
+import { PredictionDisclaimer, PredictionEmptyState } from "./experience-components";
 
 export type PredictionView = FootballPrediction | FootballPredictionPreview;
 export const CUSTOMER_COMPETITIONS = ["Premier League", "UEFA Champions League"] as const;
@@ -40,7 +41,7 @@ export function fixtureDateLabel(kickoffAt: string | null, now = new Date()) {
 
 export function filterPredictionViews<T extends Pick<PredictionView, "competition" | "kickoff_at">>(predictions: T[], filter: UpcomingFilter, competition?: string, now = new Date()) {
   return predictions.filter((prediction) => {
-    if (competition && prediction.competition !== competition) return false;
+    if (competition && canonicalCompetition(prediction.competition) !== canonicalCompetition(competition)) return false;
     if (filter === "all") return true;
     if (!prediction.kickoff_at) return false;
     const kickoff = new Date(prediction.kickoff_at);
@@ -107,27 +108,41 @@ export function PredictionPreviewCard({ prediction }: { prediction: FootballPred
   return (
     <article id={prediction.match_id ?? prediction.prediction_id} className="prediction-card locked-card">
       <header className="fixture-header"><div><span className="stage-badge prematch">Prematch · Available</span><p>{prediction.competition}</p><h3>{prediction.home_team}<span>vs</span>{prediction.away_team}</h3><time dateTime={prediction.kickoff_at ?? undefined}>{kickoffLabel(prediction.kickoff_at)}</time></div><span className="locked-state">◈ Locked</span></header>
-      <div className="locked-preview"><span className="lock-icon" aria-hidden="true">◇</span><div><strong>Prediction available</strong><p>Unlock this stage to view the modeled outcome, probabilities, confidence and key match factors.</p><small>Locked · Match access required</small></div></div>
-      {matchPricingV2Enabled() && prediction.match_id ? <SingleMatchCheckout matchId={prediction.match_id} label={label} /> : <OfferList offers={prediction.offers} matchLabel={label} stage="Prematch" />}
+      <div className="locked-preview"><span className="lock-icon" aria-hidden="true">◇</span><div><strong>Prediction available</strong><p>Unlock Premium Match Intelligence to view the modeled outcome, probabilities, confidence and key match factors.</p><small>Locked · Match access required</small></div></div>
+      {prediction.match_id ? <SingleMatchCheckout matchId={prediction.match_id} label={label} /> : <p>Premium purchase currently unavailable</p>}
       {prediction.match_id ? <Link className="match-detail-link" href={`/matches/${prediction.match_id}`}>View match access <span aria-hidden="true">→</span></Link> : null}
     </article>
   );
 }
 
-export function PredictionsLoading() { return <div className="loading-state" role="status"><span className="status-dot" />Loading upcoming predictions…</div>; }
+export function PredictionsLoading() { return <div className="inventory-loading" role="status"><p><span className="status-dot" /> Loading genuine match forecasts…</p><div className="inventory-skeleton" aria-hidden="true">{[0, 1, 2].map(index => <div key={index}><span /><span /><span /></div>)}</div></div>; }
 
 export async function loadPredictions() {
+  let predictions: FootballPrediction[];
   try {
-    const [predictions, access, supabase] = await Promise.all([getUpcomingFootballPredictions({ syncProducts: !matchPricingV2Enabled() }), getCustomerAccess(), createCustomerAuthServerClient()]);
-    const views = await Promise.all(predictions.map(async (prediction) => {
-      const unlocked = await hasPredictionAccess({ access, supabase, matchId: prediction.match_id, stage: "prematch" });
-      return unlocked ? prediction : toPredictionPreview(prediction, await getPredictionOffers(supabase, prediction.match_id, "prematch"));
+    predictions = (await getUpcomingFootballPredictions({ syncProducts: false })).map(item => ({ ...item, competition: canonicalCompetition(item.competition) }));
+  } catch (error) {
+    const diagnostic = inventoryFailure(error);
+    reportInventory("premium", diagnostic);
+    return { predictions: [], failed: true, diagnostic } as const;
+  }
+  const diagnostic = predictions.length ? "INVENTORY_AVAILABLE" : "CORE_EMPTY";
+  reportInventory("premium", diagnostic, predictions.length);
+  // Access is a separate boundary. A failed access check must never erase
+  // fixture identity or release Premium probabilities to an unpaid customer.
+  let views: PredictionView[] = predictions.map(item => toPredictionPreview(item, []));
+  try {
+    const [access, supabase] = await Promise.all([getCustomerAccess(), createCustomerAuthServerClient()]);
+    views = await Promise.all(predictions.map(async prediction => {
+      try {
+        return await hasPredictionAccess({ access, supabase, matchId: prediction.match_id, stage: "prematch" }) ? prediction : toPredictionPreview(prediction, []);
+      } catch { reportInventory("access", "ACCESS_CHECK_FAILED"); return toPredictionPreview(prediction, []); }
     }));
-    return { predictions: sortPredictionViews(views), failed: false } as const;
-  } catch { return { predictions: [], failed: true } as const; }
+  } catch { reportInventory("access", "ACCESS_CHECK_FAILED"); }
+  return { predictions: sortPredictionViews(views), failed: false, diagnostic } as const;
 }
 
-export async function PredictionsContent({ limit, filter = "all", competition, showFilters = false, showSlots = true }: { limit?: number; filter?: UpcomingFilter; competition?: string; showFilters?: boolean; showSlots?: boolean } = {}) {
+export async function PredictionsContent({ limit, filter = "all", competition, showFilters = false }: { limit?: number; filter?: UpcomingFilter; competition?: string; showFilters?: boolean; showSlots?: boolean } = {}) {
   await connection();
   const { predictions, failed } = await loadPredictions();
   if (failed) return <div className="service-state" role="alert">Predictions are temporarily unavailable. Please try again shortly.</div>;
@@ -141,5 +156,5 @@ export async function PredictionsContent({ limit, filter = "all", competition, s
     const label = fixtureDateLabel(prediction.kickoff_at);
     groups.set(label, [...(groups.get(label) ?? []), prediction]);
   }
-  return <>{showFilters ? <UpcomingFilters active={filter} competition={competition} competitions={competitions} /> : null}{showSlots ? <KickoffSlotOffers predictions={filtered} /> : null}<div className="fixture-groups">{[...groups].map(([label, fixtures]) => <section key={label} aria-label={`${label} fixtures`}><div className="date-divider"><span>{label}</span><b>{fixtures.length} {fixtures.length === 1 ? "fixture" : "fixtures"}</b></div><div className="prediction-grid">{fixtures.map((prediction) => "locked" in prediction ? <PredictionPreviewCard key={prediction.prediction_id} prediction={prediction as FootballPredictionPreview} /> : <PredictionCard key={prediction.prediction_id} prediction={prediction as FootballPrediction} />)}</div></section>)}</div></>;
+  return <>{showFilters ? <UpcomingFilters active={filter} competition={competition} competitions={competitions} /> : null}<div className="fixture-groups">{[...groups].map(([label, fixtures]) => <section key={label} aria-label={`${label} fixtures`}><div className="date-divider"><span>{label}</span><b>{fixtures.length} {fixtures.length === 1 ? "fixture" : "fixtures"}</b></div><div className="prediction-grid">{fixtures.map((prediction) => "locked" in prediction ? <PredictionPreviewCard key={prediction.prediction_id} prediction={prediction as FootballPredictionPreview} /> : <PredictionCard key={prediction.prediction_id} prediction={prediction as FootballPrediction} />)}</div></section>)}</div></>;
 }

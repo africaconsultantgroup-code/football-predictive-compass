@@ -9,6 +9,8 @@ import { matchPricingV2Enabled } from "../payments/pricing-version";
 import { getCustomerAccess } from "../auth/access";
 import { commercialStage, hasPredictionAccess } from "../auth/match-access";
 import { createCustomerAuthServerClient } from "../supabase/auth-server";
+import { loadFixtureIdentities, historicalFixtureIdentity } from "./fixture-identity";
+import { canonicalCompetition } from "../predictive-compass/inventory";
 
 export class ReportAccessError extends Error {
   constructor(public code: "not_final" | "unavailable") { super(code); }
@@ -40,10 +42,21 @@ export async function listCustomerMatches(userId:string,now=new Date()){
   const grants=grantResult.data as unknown as Array<{prediction_access_products:{prediction_stage:string;prediction_access_product_matches:{match_id:string;kickoff_at:string}[]};prediction_payments:PaymentSnapshot|PaymentSnapshot[]|null}>;
   const memberships=membershipResult.data as {match_id:string;kickoff_at:string}[];
   const matches=new Map<string,MatchSeed>();
+  const purchasedIdentities = new Map<string, { homeTeam: string; awayTeam: string; competition: string }>();
   if (matchPricingV2Enabled()) {
-    const owned = await admin.from("customer_match_entitlements").select("match_id,kickoff_at").eq("user_id", userId);
+    const owned = await admin.from("customer_match_entitlements").select("match_id,kickoff_at,match_basket_payments(match_basket_quotes(fixtures))").eq("user_id", userId);
     if (owned.error) throw new Error("Match ownership unavailable");
-    for (const item of owned.data ?? []) matches.set(item.match_id, { matchId: item.match_id, kickoffAt: item.kickoff_at, purchased: true, purchasedStages: new Set(["prematch", "live", "halftime"]), amount: null, currency: null });
+    for (const item of owned.data ?? []) {
+      matches.set(item.match_id, { matchId: item.match_id, kickoffAt: item.kickoff_at, purchased: true, purchasedStages: new Set(["prematch", "live", "halftime"]), amount: null, currency: null });
+      const payment = item.match_basket_payments as unknown as { match_basket_quotes: { fixtures: unknown } | null } | null;
+      const fixtures = payment?.match_basket_quotes?.fixtures;
+      if (Array.isArray(fixtures)) {
+        const fixture = fixtures.find(value => value && value.match_id === item.match_id && Date.parse(value.kickoff_at) === Date.parse(item.kickoff_at));
+        if (fixture && [fixture.home_team, fixture.away_team, fixture.competition].every(value => typeof value === "string" && value.trim())) {
+          purchasedIdentities.set(item.match_id, { homeTeam: fixture.home_team, awayTeam: fixture.away_team, competition: canonicalCompetition(fixture.competition) });
+        }
+      }
+    }
   }
   for(const membership of memberships)if(!matches.has(membership.match_id))matches.set(membership.match_id,{matchId:membership.match_id,kickoffAt:membership.kickoff_at,purchased:false,purchasedStages:new Set(),amount:null,currency:null});
   for(const grant of grants)for(const membership of grant.prediction_access_products.prediction_access_product_matches){
@@ -54,10 +67,17 @@ export async function listCustomerMatches(userId:string,now=new Date()){
     if(payment){item.amount=Number(payment.amount);item.currency=payment.currency}
     matches.set(membership.match_id,item);
   }
+  const unresolved: MatchSeed[] = [];
   const resolved=await Promise.all([...matches.values()].map(async item=>{
     try{const current=await getLiveFootballPrediction(item.matchId);return{...item,purchasedStages:[...item.purchasedStages],competition:current.competition,homeTeam:current.home_team,awayTeam:current.away_team,status:current.status,isFinal:isAuthoritativeFinal(current),finalScore:current.current_score}}
-    catch{return{...item,purchasedStages:[...item.purchasedStages],competition:"",homeTeam:"",awayTeam:"",status:"Unavailable",isFinal:false,finalScore:null}}
+    catch{unresolved.push(item);return{...item,purchasedStages:[...item.purchasedStages],competition:"",homeTeam:"",awayTeam:"",status:"Intelligence being prepared",isFinal:false,finalScore:null}}
   }));
+  if (unresolved.length) {
+    const identities = unresolved.some(item => !purchasedIdentities.has(item.matchId)) ? await loadFixtureIdentities() : new Map();
+    await Promise.all(resolved.filter(item => !item.homeTeam || !item.awayTeam).map(async item => {
+      Object.assign(item, purchasedIdentities.get(item.matchId) ?? identities.get(item.matchId) ?? await historicalFixtureIdentity(item.matchId));
+    }));
+  }
   return resolved.filter(match=>match.purchased||match.isFinal).sort((left,right)=>Date.parse(right.kickoffAt)-Date.parse(left.kickoffAt));
 }
 
