@@ -4,6 +4,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { getLiveFootballPrediction, getUpcomingFootballPredictions } from "../predictive-compass/server";
 import { BasketError, MATCH_PRICING_POLICY, revalidateQuote, validateBasket, type BasketFixture, type BasketQuote } from "./match-pricing";
 import type { createPaystackClient } from "./paystack";
+import { safePaystackCheckoutUrl } from "./checkout-link";
 
 type Provider = ReturnType<typeof createPaystackClient>;
 export type BasketPayment = { id: string; user_id: string; quote_id: string; provider_reference: string; status: string; authorization_url: string | null };
@@ -34,6 +35,14 @@ async function loadQuote(admin: SupabaseClient, quoteId: string, userId: string)
 }
 export async function initializeBasketPayment({ admin, paystack, quoteId, userId, email, callbackOrigin, catalog = loadBasketCatalog, now = new Date() }: { admin: SupabaseClient; paystack: Provider; quoteId: string; userId: string; email: string; callbackOrigin: string; catalog?: () => Promise<BasketFixture[]>; now?: Date }) {
   const quote = await loadQuote(admin, quoteId, userId);
+  const existing = await admin.from("match_basket_payments").select("id,user_id,quote_id,provider_reference,status,authorization_url").eq("quote_id", quoteId).eq("user_id", userId).maybeSingle();
+  if (existing.error) throw new BasketError("CHECKOUT_STATUS_UNAVAILABLE", 503);
+  if (existing.data) {
+    const payment = existing.data as BasketPayment;
+    const url = payment.status === "pending" ? safePaystackCheckoutUrl(payment.authorization_url) : null;
+    if (url) return { authorizationUrl: url, reference: payment.provider_reference };
+    throw new BasketError("CHECKOUT_VERIFICATION_REQUIRED", 409);
+  }
   const [fixtures, owned] = await Promise.all([catalog(), ownedMatchIds(admin, userId)]);
   revalidateQuote(quote, fixtures, owned, now);
   const id = randomUUID(), reference = `fpc-basket-${randomUUID()}`;
@@ -44,7 +53,8 @@ export async function initializeBasketPayment({ admin, paystack, quoteId, userId
   }
   const payment = accepted.data as BasketPayment;
   if (payment.id !== id) {
-    if (payment.status === "pending" && payment.authorization_url) return { authorizationUrl: payment.authorization_url, reference: payment.provider_reference };
+    const url = payment.status === "pending" ? safePaystackCheckoutUrl(payment.authorization_url) : null;
+    if (url) return { authorizationUrl: url, reference: payment.provider_reference };
     throw new BasketError("CHECKOUT_ALREADY_PENDING");
   }
   try {

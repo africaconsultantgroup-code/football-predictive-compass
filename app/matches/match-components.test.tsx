@@ -40,10 +40,11 @@ describe("Matches dashboard access and product boundaries", () => {
     expect(html).not.toContain("preview pricing");
   });
 
-  it("does not enable checkout for unsupported products or missing prices", () => {
-    const html = renderToStaticMarkup(<MatchRow prediction={toPredictionPreview(prediction)} />);
+  it("disables purchasing after kickoff instead of rendering a dead checkout link", () => {
+    const html = renderToStaticMarkup(<MatchRow prediction={toPredictionPreview({ ...prediction, kickoff_at: "2020-01-01T12:00:00Z" })} />);
     expect(html).not.toContain("Unlock Prematch Prediction");
-    expect(html).toContain("Premium purchase currently unavailable");
+    expect(html).toContain("Purchasing has closed for this match");
+    expect(html).toContain('disabled=""'); expect(html).not.toContain("Add to Basket");
     expect(html).not.toContain("Matchday Pass");
     expect(html).not.toContain("preview pricing");
   });

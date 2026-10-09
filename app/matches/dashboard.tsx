@@ -9,6 +9,8 @@ import { getCustomerAccess } from "../../lib/auth/access";
 import { createCustomerAuthServerClient } from "../../lib/supabase/auth-server";
 import { hasPredictionAccess } from "../../lib/auth/match-access";
 import { InventoryRetry } from "../inventory-retry";
+import { loadPendingMatchCheckouts } from "../../lib/payments/pending-checkout";
+import type { PendingMatchCheckout } from "../../lib/payments/checkout-link";
 
 export async function MatchesDashboard({ filter, competition }: { filter: UpcomingFilter; competition?: string }) {
   await connection();
@@ -20,10 +22,12 @@ export async function MatchesDashboard({ filter, competition }: { filter: Upcomi
   const rows: (PredictionView | FreePrematchPrediction)[] = [...predictions, ...freePredictions.filter(item => !premiumIds.has(item.match_id))];
   const visible = filterPredictionViews(sortPredictionViews(rows), filter, selected);
   const freeOwnership = new Map<string, boolean>();
+  let pendingCheckouts: PendingMatchCheckout[] = [];
   const freeOnly = visible.filter((item): item is FreePrematchPrediction => "tier" in item);
-  if (freeOnly.length) {
+  if (rows.length) {
     try {
       const [access, supabase] = await Promise.all([getCustomerAccess(), createCustomerAuthServerClient()]);
+      if (access.customer) pendingCheckouts = await loadPendingMatchCheckouts(supabase, access.customer.id).catch(() => []);
       await Promise.all(freeOnly.map(async item => {
         try { freeOwnership.set(item.match_id, await hasPredictionAccess({ access, supabase, matchId: item.match_id, stage: "prematch" })); }
         catch { reportInventory("access", "ACCESS_CHECK_FAILED"); }
@@ -32,7 +36,7 @@ export async function MatchesDashboard({ filter, competition }: { filter: Upcomi
   }
   if (rows.length && !visible.length) reportInventory("filter", "FILTERED_TO_ZERO", rows.length);
   const now = new Date();
-  const choices = predictions.filter(item => item.match_id && item.kickoff_at && item.stage === "PREMATCH" && Date.parse(item.kickoff_at) > now.getTime()).map(item => ({ matchId: item.match_id!, kickoffAt: item.kickoff_at!, label: `${item.competition}: ${item.home_team} vs ${item.away_team}`, owned: !("locked" in item) }));
+  const choices = predictions.filter(item => item.match_id && item.kickoff_at && item.stage === "PREMATCH" && Date.parse(item.kickoff_at) > now.getTime()).map(item => ({ matchId: item.match_id!, kickoffAt: item.kickoff_at!, label: `${item.competition}: ${item.home_team} vs ${item.away_team}`, owned: !("locked" in item), pendingCheckout: pendingCheckouts.find(pending => pending.matchIds.includes(item.match_id!)) }));
   const groups = new Map<string, typeof visible>();
   for (const prediction of visible) {
     const label = fixtureDateLabel(prediction.kickoff_at);

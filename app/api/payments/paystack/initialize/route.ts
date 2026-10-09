@@ -11,6 +11,7 @@ import { getServerSupabaseClient } from "@/lib/supabase/server";
 import { initializeBasketPayment } from "@/lib/payments/basket-service";
 import { BasketError, basketCheckoutSchema } from "@/lib/payments/match-pricing";
 import { matchPricingV2Enabled } from "@/lib/payments/pricing-version";
+import { loadPendingMatchCheckouts } from "@/lib/payments/pending-checkout";
 
 export async function POST(request: Request) {
   const user = await getCurrentUser();
@@ -23,6 +24,12 @@ export async function POST(request: Request) {
       const result = await initializeBasketPayment({ admin: getServerSupabaseClient(), paystack: createPaystackClient(), userId: user.id, email: user.email, quoteId: selected.data.quote_id, callbackOrigin: getTrustedSiteOrigin() });
       return Response.json({ authorization_url: result.authorizationUrl, reference: result.reference }, { headers: { "Cache-Control": "no-store" } });
     } catch (error) {
+      if (error instanceof BasketError && ["CHECKOUT_ALREADY_PENDING", "CHECKOUT_VERIFICATION_REQUIRED"].includes(error.code)) {
+        const pending = await loadPendingMatchCheckouts(getServerSupabaseClient(), user.id).catch(() => []);
+        // The accepted quote's overlapping reservation remains authoritative.
+        // Return recovery actions rather than initializing another transaction.
+        return Response.json({ error: error.code, pending_checkouts: pending }, { status: error.status, headers: { "Cache-Control": "private, no-store" } });
+      }
       return Response.json({ error: error instanceof BasketError ? error.code : error instanceof PaystackConfigurationError ? "PAYSTACK_CONFIGURATION_REQUIRED" : "CHECKOUT_UNAVAILABLE" }, { status: error instanceof BasketError ? error.status : 503, headers: { "Cache-Control": "no-store" } });
     }
   }
