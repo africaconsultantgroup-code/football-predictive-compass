@@ -91,7 +91,7 @@ describe("launch prediction pricing policy", () => {
       "utf8",
     );
     expect(finalizerSql).toContain("revoke execute on function public.finalize_prediction_access_product(uuid)");
-    expect(finalizerSql).toContain("grant execute on function public.finalize_prediction_access_product(uuid)\nto service_role");
+    expect(finalizerSql.replace(/\r\n/g, "\n")).toContain("grant execute on function public.finalize_prediction_access_product(uuid)\nto service_role");
   });
 
   it("renders explanatory stage prices from trusted database rules", () => {

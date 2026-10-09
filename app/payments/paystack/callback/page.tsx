@@ -10,7 +10,7 @@ export default async function PaystackCallback({ searchParams }: { searchParams:
   if (reference && /^[A-Za-z0-9.=-]+$/.test(reference)) {
     try {
       const result = await verifyAndFulfillPayment({ admin: getServerSupabaseClient(), paystack: createPaystackClient(), reference });
-      message = result.status === "successful" ? "Payment verified. Your prediction access is unlocked." : result.status === "grant_failed" ? "Payment received after access closed. Support review is required." : "Payment is not yet complete.";
+      message = result.status === "successful" ? "Payment verified. Your prediction access is unlocked." : result.status === "grant_failed" ? "Payment requires support review. No new payment is needed while this is reviewed." : "Payment is not yet complete.";
     } catch (error) {
       if (error instanceof PaystackConfigurationError) message = "Payment verification is not configured yet.";
     }

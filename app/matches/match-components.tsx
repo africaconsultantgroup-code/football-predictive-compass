@@ -6,6 +6,8 @@ import { formatFootballStage, formatPredictedOutcome, formatProbability } from "
 import type { FootballPrediction } from "../../lib/predictive-compass/schema";
 import { CheckoutButton } from "../checkout-button";
 import { CUSTOMER_COMPETITIONS, type PredictionView, type UpcomingFilter } from "../predictions";
+import { MatchSelection } from "./match-basket";
+import { MATCH_PRICING_POLICY, formatPesewas } from "../../lib/payments/match-pricing";
 
 function matchesHref(filter: UpcomingFilter, competition?: string) {
   const query = new URLSearchParams();
@@ -76,16 +78,16 @@ export function FreeOnlyMatchRow({ free }: { free: FreePrematchPrediction }) {
   </article>;
 }
 
-export function MatchRow({ prediction, freePrediction }: { prediction: PredictionView; freePrediction?: FreePrematchPrediction }) {
+export function MatchRow({ prediction, freePrediction, pricingV2 = false }: { prediction: PredictionView; freePrediction?: FreePrematchPrediction; pricingV2?: boolean }) {
   const locked = "locked" in prediction;
   const offers = locked ? prediction.offers.filter(offer => offer.scopeType === "match") : [];
   const href = prediction.match_id ? `/matches/${prediction.match_id}` : undefined;
   const label = `${prediction.home_team} vs ${prediction.away_team}`;
   const time = prediction.kickoff_at ? new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Africa/Accra" }).format(new Date(prediction.kickoff_at)) : "TBC";
   return <article className="matches-row" id={prediction.match_id ?? prediction.prediction_id} aria-label={label}>
-    <div className="matches-match"><div className="matches-row-stage">{formatFootballStage(prediction.stage)}{!locked ? <span>Access active</span> : null}</div><TeamIdentity name={prediction.home_team} /><span className="matches-versus">vs</span><TeamIdentity name={prediction.away_team} /></div>
+    <div className="matches-match">{pricingV2 ? <small>{prediction.competition}</small> : null}<div className="matches-row-stage">{formatFootballStage(prediction.stage)}{!locked ? <span>Access active</span> : null}</div><TeamIdentity name={prediction.home_team} /><span className="matches-versus">vs</span><TeamIdentity name={prediction.away_team} /></div>
     <div className="matches-kickoff"><span className="matches-mobile-label">Kickoff</span><time dateTime={prediction.kickoff_at ?? undefined}>{time}</time><small>GMT · Ghana time</small></div>
     <FreePredictionSummary prediction={prediction} freePrediction={freePrediction} />
-    <section className="matches-premium" aria-label="Premium options">{offers.length && prediction.stage !== "FINAL" ? offers.map(offer => <PremiumOption key={offer.productId} offer={offer} href={href} matchLabel={label} />) : <PremiumOption unlocked={!locked} completed={prediction.stage === "FINAL"} href={href} matchLabel={label} />}<PremiumOption fullMatch matchLabel={label} completed={prediction.stage === "FINAL"} /></section>
+    <section className="matches-premium" aria-label="Premium options">{pricingV2 ? <div className="matches-premium-option"><h3>Premium Match Intelligence</h3><p>{formatPesewas(MATCH_PRICING_POLICY.standardUnit)} · All available stages and historical review.</p>{prediction.match_id ? <MatchSelection matchId={prediction.match_id} /> : null}{!locked && href ? <Link href={href}>View Premium Intelligence →</Link> : null}</div> : <>{offers.length && prediction.stage !== "FINAL" ? offers.map(offer => <PremiumOption key={offer.productId} offer={offer} href={href} matchLabel={label} />) : <PremiumOption unlocked={!locked} completed={prediction.stage === "FINAL"} href={href} matchLabel={label} />}<PremiumOption fullMatch matchLabel={label} completed={prediction.stage === "FINAL"} /></>}</section>
   </article>;
 }

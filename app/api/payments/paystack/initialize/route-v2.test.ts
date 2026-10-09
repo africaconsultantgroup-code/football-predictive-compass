@@ -1,0 +1,26 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+vi.mock("server-only", () => ({}));
+const mocks = vi.hoisted(() => ({ user: vi.fn(), basket: vi.fn(), legacy: vi.fn() }));
+vi.mock("@/lib/auth/session", () => ({ getCurrentUser:mocks.user }));
+vi.mock("@/lib/auth/access", () => ({ getCustomerAccess:vi.fn() }));
+vi.mock("@/lib/auth/match-access", () => ({ commercialStage:vi.fn(),hasPredictionAccess:vi.fn() }));
+vi.mock("@/lib/payments/checkout", () => ({ parseCheckoutRequest:vi.fn() }));
+vi.mock("@/lib/payments/service", () => ({ initializePredictionPayment:mocks.legacy }));
+vi.mock("@/lib/payments/basket-service", () => ({ initializeBasketPayment:mocks.basket }));
+vi.mock("@/lib/payments/match-pricing", async () => import("../../../../../lib/payments/match-pricing"));
+vi.mock("@/lib/payments/pricing-version", async () => import("../../../../../lib/payments/pricing-version"));
+vi.mock("@/lib/payments/paystack", async () => ({ ...(await import("../../../../../lib/payments/paystack")),createPaystackClient:()=>({}),getTrustedSiteOrigin:()=>"https://example.test" }));
+vi.mock("@/lib/predictive-compass/prematch", () => ({ isDeliverablePrematch:vi.fn() }));
+vi.mock("@/lib/predictive-compass/server", () => ({ getLiveFootballMatches:vi.fn(),requestPrematchFreshness:vi.fn() }));
+vi.mock("@/lib/supabase/auth-server", () => ({ createCustomerAuthServerClient:vi.fn() }));
+vi.mock("@/lib/supabase/server", () => ({ getServerSupabaseClient:()=>({}) }));
+import { POST } from "./route";
+const id="11111111-1111-4111-8111-111111111111";
+const request=(body:unknown)=>new Request("https://example.test/api/payments/paystack/initialize",{method:"POST",body:JSON.stringify(body)});
+beforeEach(()=>{vi.clearAllMocks();vi.stubEnv("PREDICTIVE_CUSTOMER_PRICING_VERSION","v2");mocks.user.mockResolvedValue({id:"owner",email:"owner@example.test"});});
+afterEach(()=>vi.unstubAllEnvs());
+describe("V2 initialization route",()=>{
+  it("rejects unauthenticated checkout before accessing Paystack",async()=>{mocks.user.mockResolvedValue(null);expect((await POST(request({quote_id:id}))).status).toBe(401);expect(mocks.basket).not.toHaveBeenCalled();});
+  it("disables old stage-specific checkout and browser amounts while V2 is active",async()=>{for(const body of [{product_id:id},{quote_id:id,amount:1},{quote_id:id,user_id:"victim"}])expect((await POST(request(body))).status).toBe(400);expect(mocks.basket).not.toHaveBeenCalled();expect(mocks.legacy).not.toHaveBeenCalled();});
+  it("binds checkout to the authenticated customer and accepted quote",async()=>{mocks.basket.mockResolvedValue({authorizationUrl:"https://checkout.paystack.com/safe",reference:"fpc-basket-test"});const response=await POST(request({quote_id:id}));expect(response.status).toBe(200);expect(response.headers.get("cache-control")).toBe("no-store");expect(mocks.basket).toHaveBeenCalledWith(expect.objectContaining({quoteId:id,userId:"owner",email:"owner@example.test"}));expect(mocks.legacy).not.toHaveBeenCalled();});
+});

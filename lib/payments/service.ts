@@ -4,6 +4,8 @@ import { randomUUID } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { amountToSubunits, createPaystackClient } from "./paystack";
+import { verifyBasketPayment } from "./basket-service";
+import { matchPricingV2Enabled } from "./pricing-version";
 
 export type PaymentProduct = {
   id: string;
@@ -59,6 +61,7 @@ export async function initializePredictionPayment({
   hasExistingAccess: (product: PaymentProduct) => Promise<boolean>;
   lifecycleAllows: (product: PaymentProduct) => Promise<boolean>;
 }) {
+  if (matchPricingV2Enabled()) return { error: "LEGACY_PRICING_RETIRED" as const };
   const product = await loadProduct(admin, productId);
   if (!validatePaymentProduct(product, now)) return { error: "PRODUCT_NOT_AVAILABLE" as const };
   if (!await lifecycleAllows(product!)) return { error: "PRODUCT_NOT_AVAILABLE" as const };
@@ -89,6 +92,7 @@ export async function initializePredictionPayment({
 export async function verifyAndFulfillPayment({
   admin, paystack, reference, now = new Date(),
 }: { admin: SupabaseClient; paystack: ReturnType<typeof createPaystackClient>; reference: string; now?: Date }) {
+  if (reference.startsWith("fpc-basket-")) return verifyBasketPayment({ admin, paystack, reference });
   const paymentResult = await admin.from("prediction_payments").select("*").eq("provider_reference", reference).maybeSingle();
   const payment = paymentResult.data;
   if (!payment || paymentResult.error) return { status: "not_found" as const };
@@ -122,12 +126,22 @@ export async function verifyAndFulfillPayment({
   return { status: "successful" as const };
 }
 
-export type RecentPayment = { id: string; name: string; stage: string; amount: number; currency: string; status: string; createdAt: string };
+export type RecentPayment = { id: string; name: string; stage: string; amount: number; currency: string; status: string; createdAt: string; reference?: string };
 
 export async function getRecentPayments(supabase: SupabaseClient, userId: string): Promise<RecentPayment[]> {
+  const baskets: RecentPayment[] = [];
+  if (matchPricingV2Enabled()) {
+    const result = await supabase.from("match_basket_payments").select("id,status,created_at,provider_reference,match_basket_quotes!inner(match_count,total_pesewas,currency)").eq("user_id", userId).order("created_at", { ascending: false }).limit(10);
+    if (result.error) throw new Error("Basket payment history unavailable");
+    for (const item of result.data ?? []) {
+      const quote = item.match_basket_quotes as unknown as { match_count: number; total_pesewas: number; currency: string };
+      baskets.push({ id: item.id, name: `${quote.match_count} Premium ${quote.match_count === 1 ? "Match" : "Matches"}`, stage: "All available stages", amount: quote.total_pesewas / 100, currency: quote.currency, status: item.status, createdAt: item.created_at, reference: item.provider_reference });
+    }
+  }
   const { data, error } = await supabase.from("prediction_payments")
     .select("id, amount, currency, status, created_at, prediction_access_products!inner(name, prediction_stage)")
     .eq("user_id", userId).order("created_at", { ascending: false }).limit(10);
-  if (error || !data) return [];
-  return (data as unknown as Array<{ id: string; amount: number; currency: string; status: string; created_at: string; prediction_access_products: { name: string; prediction_stage: string } }>).map((payment) => ({ id: payment.id, name: payment.prediction_access_products.name, stage: payment.prediction_access_products.prediction_stage, amount: payment.amount, currency: payment.currency, status: payment.status, createdAt: payment.created_at }));
+  if (error || !data) return baskets;
+  const legacy = (data as unknown as Array<{ id: string; amount: number; currency: string; status: string; created_at: string; prediction_access_products: { name: string; prediction_stage: string } }>).map((payment) => ({ id: payment.id, name: payment.prediction_access_products.name, stage: payment.prediction_access_products.prediction_stage, amount: payment.amount, currency: payment.currency, status: payment.status, createdAt: payment.created_at }));
+  return [...baskets, ...legacy].sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt)).slice(0, 10);
 }

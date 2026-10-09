@@ -8,11 +8,25 @@ import { isDeliverablePrematch } from "@/lib/predictive-compass/prematch";
 import { getLiveFootballMatches, requestPrematchFreshness } from "@/lib/predictive-compass/server";
 import { createCustomerAuthServerClient } from "@/lib/supabase/auth-server";
 import { getServerSupabaseClient } from "@/lib/supabase/server";
+import { initializeBasketPayment } from "@/lib/payments/basket-service";
+import { BasketError, basketCheckoutSchema } from "@/lib/payments/match-pricing";
+import { matchPricingV2Enabled } from "@/lib/payments/pricing-version";
 
 export async function POST(request: Request) {
   const user = await getCurrentUser();
   if (!user?.email) return Response.json({ error: "AUTHENTICATION_REQUIRED" }, { status: 401 });
-  const parsed = parseCheckoutRequest(await request.json().catch(() => null));
+  const body = await request.json().catch(() => null);
+  if (matchPricingV2Enabled()) {
+    const selected = basketCheckoutSchema.safeParse(body);
+    if (!selected.success) return Response.json({ error: "ACCEPTED_QUOTE_REQUIRED" }, { status: 400 });
+    try {
+      const result = await initializeBasketPayment({ admin: getServerSupabaseClient(), paystack: createPaystackClient(), userId: user.id, email: user.email, quoteId: selected.data.quote_id, callbackOrigin: getTrustedSiteOrigin() });
+      return Response.json({ authorization_url: result.authorizationUrl, reference: result.reference }, { headers: { "Cache-Control": "no-store" } });
+    } catch (error) {
+      return Response.json({ error: error instanceof BasketError ? error.code : error instanceof PaystackConfigurationError ? "PAYSTACK_CONFIGURATION_REQUIRED" : "CHECKOUT_UNAVAILABLE" }, { status: error instanceof BasketError ? error.status : 503, headers: { "Cache-Control": "no-store" } });
+    }
+  }
+  const parsed = parseCheckoutRequest(body);
   if (!parsed.success) return Response.json({ error: "INVALID_PRODUCT" }, { status: 400 });
 
   try {
