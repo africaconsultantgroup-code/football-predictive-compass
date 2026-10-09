@@ -2,8 +2,9 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
 
-import { LiveMatchCard } from "../../app/live-matches";
+import LiveMatches, { LiveMatchCard, ownedMatchStage } from "../../app/live-matches";
 import { createLiveListHandler, createLiveMatchHandler } from "./live-routes";
 import {
   chronologicalHistory,
@@ -284,5 +285,27 @@ describe("live customer presentation", () => {
     const locked = toLockedHistoryEntry(historyEntry("2026-09-01T18:18:00.000Z", "goal"));
     expect(locked).toMatchObject({ stage: "FIRST_HALF_LIVE", locked: true });
     expect(JSON.stringify(locked)).not.toMatch(/predicted_outcome|predicted_score|probabilities|reliability|change_reason|change_description/);
+  });
+});
+
+
+describe("one owned-match intelligence hub", () => {
+  it.each(["FIRST_HALF_LIVE", "HALFTIME", "SECOND_HALF_LIVE", "FINAL"] as const)("selects only the entitled matching %s snapshot", stage => {
+    const current = liveMatch(stage);
+    expect(ownedMatchStage([{ ...current, match_id: `fm_${"b".repeat(32)}` }, current], matchId)).toBe(current);
+    expect(ownedMatchStage([toLiveListPreview({ domain: "football", matches: [current] }).matches[0]], matchId)).toBeUndefined();
+    expect(ownedMatchStage([liveMatch("PREMATCH")], matchId)).toBeUndefined();
+    const html = renderToStaticMarkup(<LiveMatchCard match={current} />);
+    expect(html).toContain(`/matches/${matchId}`);
+    expect(html).not.toContain("checkout-button");
+    expect(html).not.toContain("Full Access");
+  });
+  it("retains the separately identified prematch content while live outputs are unavailable", () => {
+    const html = renderToStaticMarkup(<LiveMatches matchId={matchId}><p>Premium Match Intelligence</p><p>Free Pre-Match</p></LiveMatches>);
+    expect(html).toContain("Premium Match Intelligence");
+    expect(html).toContain("Free Pre-Match");
+    expect(html).toContain("No additional stage purchase is required");
+    expect(html).toContain(`/my-predictions/${matchId}/report`);
+    expect(html).not.toContain("No matches are live right now");
   });
 });

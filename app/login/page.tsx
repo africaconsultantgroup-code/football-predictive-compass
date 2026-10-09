@@ -15,7 +15,7 @@ export default function LoginPage() {
         ]}
         submitLabel="Log in"
       />
-      <p className="mt-6 text-center text-sm text-slate-400">Don&apos;t have an account? <Link className="font-semibold text-emerald-300" href="/register">Register</Link></p>
+      <p className="mt-6 text-center text-sm text-slate-600">Don&apos;t have an account? <Link className="font-semibold text-blue-700" href="/register">Register</Link></p>
     </AuthShell>
   );
 }

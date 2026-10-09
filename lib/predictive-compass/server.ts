@@ -15,6 +15,7 @@ import { syncLivePredictionProducts, syncUpcomingPredictionProducts } from "../p
 import { matchPricingV2Enabled } from "../payments/pricing-version";
 
 const DEFAULT_TIMEOUT_MS = 8_000;
+const INVENTORY_TIMEOUT_MS = 20_000;
 
 export type CoreClientErrorKind =
   | "configuration"
@@ -36,6 +37,7 @@ type CoreClientOptions = {
   apiKey: string;
   fetch?: typeof fetch;
   timeoutMs?: number;
+  inventoryTimeoutMs?: number;
 };
 
 function mapStatus(status: number): CoreClientErrorKind {
@@ -57,10 +59,11 @@ export function createFootballCoreClient({
   apiKey,
   fetch: fetchImplementation = fetch,
   timeoutMs = DEFAULT_TIMEOUT_MS,
+  inventoryTimeoutMs = timeoutMs === DEFAULT_TIMEOUT_MS ? INVENTORY_TIMEOUT_MS : timeoutMs,
 }: CoreClientOptions) {
-  const request = async (path: string, method: "GET" | "POST" = "GET", allowNotFound = false) => {
+  const request = async (path: string, method: "GET" | "POST" = "GET", allowNotFound = false, deadlineMs = timeoutMs) => {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+    const timeout = setTimeout(() => controller.abort(), deadlineMs);
 
     try {
       const response = await fetchImplementation(new URL(path, `${baseUrl.replace(/\/$/, "")}/`), {
@@ -90,6 +93,16 @@ export function createFootballCoreClient({
     }
   };
 
+  // One bounded retry for read-only inventory transport failures. Never retry
+  // authentication, invalid DTOs or the freshness POST; never cache failures.
+  const inventoryRequest = async (path: string, allowNotFound = false) => {
+    try { return await request(path, "GET", allowNotFound, inventoryTimeoutMs); }
+    catch (error) {
+      if (!(error instanceof CoreClientError) || !["timeout", "unavailable"].includes(error.kind)) throw error;
+      return request(path, "GET", allowNotFound, inventoryTimeoutMs);
+    }
+  };
+
   return {
     async getPremiumFootballPrediction(predictionId: string, matchId: string) {
       try {
@@ -114,7 +127,7 @@ export function createFootballCoreClient({
       const start = new Date();
       const end = new Date(start); end.setUTCDate(end.getUTCDate()+4);
       const query = new URLSearchParams({ from: start.toISOString().slice(0,10), to: end.toISOString().slice(0,10) });
-      const value = await request(`api/v1/domains/football/free/upcoming?${query}`, "GET", true);
+      const value = await inventoryRequest(`api/v1/domains/football/free/upcoming?${query}`, true);
       if (value === null) return [];
       if (typeof value !== "object" || !Array.isArray(value.predictions)) throw new CoreClientError("malformed");
       const predictions: unknown[] = value.predictions;
@@ -130,7 +143,7 @@ export function createFootballCoreClient({
           to: end.toISOString().slice(0, 10),
         });
         const predictions = parseUpcomingFootballPredictions(
-          await request(
+          await inventoryRequest(
             `api/v1/domains/football/predictions/upcoming?${parameters}`,
           ),
         );

@@ -9,15 +9,17 @@ import { createCustomerAuthServerClient } from "../../lib/supabase/auth-server";
 import { logoutAction } from "../auth-actions";
 import { CustomerShell } from "../customer-shell";
 import { ProfileForm } from "./profile-form";
+import { listCustomerMatches } from "../../lib/reports/post-match";
 
 export const dynamic = "force-dynamic";
 
-export function AccountDetails({ user, displayName, access, predictionAccess = [], recentPayments = [] }: {
+export function AccountDetails({ user, displayName, access, predictionAccess = [], recentPayments = [], matchCounts }: {
   user: CurrentCustomer;
   displayName: string | null;
   access: CustomerAccess;
   predictionAccess?: PredictionAccessSummary[];
   recentPayments?: RecentPayment[];
+  matchCounts?: { owned: number; upcoming: number; completed: number };
 }) {
   const accessLabel = access.subscription?.name ?? "Free / Preview";
   return (
@@ -36,6 +38,7 @@ export function AccountDetails({ user, displayName, access, predictionAccess = [
           <div><span>Access Status</span><strong className="summary-status">{accessLabel}</strong><small>{access.subscription?.endsAt ? `Until ${new Intl.DateTimeFormat("en-GB", { dateStyle: "medium" }).format(new Date(access.subscription.endsAt))}` : "Current account level"}</small></div>
         </section>
 
+        {matchCounts ? <section className="summary-grid" aria-label="Your match history"><div><span>Owned matches</span><strong>{matchCounts.owned}</strong></div><div><span>Active purchased matches</span><strong>{matchCounts.upcoming}</strong></div><div><span>Completed history</span><strong>{matchCounts.completed}</strong></div></section> : null}
         <section className="account-section"><div className="account-section-title"><div><p className="section-kicker">Access summary</p><h2>Prediction Access</h2></div><Link className="text-action" href="/my-predictions">Open My Predictions →</Link></div>{predictionAccess.length ? <ul className="grant-grid">{predictionAccess.slice(0, 4).map((grant) => <li key={grant.productId}><span className={`stage-badge ${grant.stage}`}>{grant.stage}</span><p>{grant.name}</p><small>{grant.scopeType === "kickoff_slot" ? `${grant.matchCount} matches · Kickoff Slot` : "Single match"}</small><strong>✓ Unlocked</strong></li>)}</ul> : <div className="account-empty"><p>No prediction access purchased yet.</p><Link href="/matches">Browse Upcoming Matches →</Link></div>}</section>
 
         <section className="account-section"><div className="account-section-title"><div><p className="section-kicker">Payment activity</p><h2>Recent Purchases</h2></div></div>{recentPayments.length ? <ul className="purchase-list">{recentPayments.map((payment) => <li key={payment.id}><div><strong>{payment.name}</strong><span className="capitalize">{payment.stage} · {new Intl.DateTimeFormat("en-GB", { dateStyle: "medium" }).format(new Date(payment.createdAt))}</span>{payment.reference && payment.status !== "successful" ? <Link href={`/payments/paystack/callback?reference=${encodeURIComponent(payment.reference)}`}>Verify payment status</Link> : null}</div><div><b>{payment.currency} {Number(payment.amount).toFixed(2)}</b><span className="capitalize">{payment.status}</span></div></li>)}</ul> : <div className="account-empty"><p>No purchases yet.</p><Link href="/matches">Explore Upcoming Matches →</Link></div>}</section>
@@ -51,5 +54,7 @@ export default async function AccountPage() {
   const [profile, access, predictionAccess, recentPayments] = await Promise.all([
     getCustomerProfile(customerClient, user.id), getCustomerAccess(), getActivePredictionGrants(customerClient, user.id), getRecentPayments(customerClient, user.id),
   ]);
-  return <AccountDetails user={user} displayName={profile?.displayName ?? null} access={access} predictionAccess={predictionAccess} recentPayments={recentPayments} />;
+  const matches = await listCustomerMatches(user.id).catch(() => null);
+  const matchCounts = matches ? { owned: matches.filter(item => item.purchased).length, upcoming: matches.filter(item => item.purchased && !item.isFinal).length, completed: matches.filter(item => item.isFinal).length } : undefined;
+  return <AccountDetails user={user} displayName={profile?.displayName ?? null} access={access} predictionAccess={predictionAccess} recentPayments={recentPayments} matchCounts={matchCounts} />;
 }

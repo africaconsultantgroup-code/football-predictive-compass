@@ -2,7 +2,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("server-only", () => ({}));
 vi.mock("next/server", () => ({ connection: async () => undefined }));
-vi.mock("next/navigation", () => ({ notFound: () => { throw new Error("not found"); }, useRouter: () => ({ push: vi.fn() }) }));
+vi.mock("next/navigation", () => ({ notFound: () => { throw new Error("not found"); }, usePathname: () => "/matches", useRouter: () => ({ push: vi.fn() }) }));
 vi.mock("../customer-shell", () => ({ CustomerShell: ({ children }: { children: React.ReactNode }) => children }));
 const mocks = vi.hoisted(() => ({ access: vi.fn(), grants: vi.fn(), client: vi.fn(), freshness: vi.fn(), upcoming: vi.fn(), free: vi.fn(), offers: vi.fn(), purchase: vi.fn(), premium: vi.fn() }));
 vi.mock("../../lib/auth/access", () => ({ getCustomerAccess: mocks.access }));
@@ -52,11 +52,11 @@ describe("Actual match page premium branches", () => {
     expect(markup).not.toContain("private-raw"); expect(markup).not.toContain("unlock-button");
     expect(mocks.offers).not.toHaveBeenCalled();
   });
-  it("renders free only and existing offers when not entitled", async () => {
+  it("renders free only and Pricing V2 checkout when not entitled", async () => {
     mocks.grants.mockResolvedValue(false);
     const markup = await html();
     expect(markup).toContain("50%"); expect(markup).not.toContain("58%");
-    expect(markup).toContain("GH₵23.00"); expect(markup).toContain("Unlock Premium");
+    expect(markup).toContain("GH₵8"); expect(markup).toContain("Unlock Premium");
     expect(markup).not.toContain("PREMIUM MATCH INTELLIGENCE");
     expect(mocks.purchase).not.toHaveBeenCalled();
     expect(mocks.premium).not.toHaveBeenCalled();

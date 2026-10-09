@@ -1,4 +1,4 @@
-/* Matches-only theme: other customer pages retain their existing appearance. */
+/* Shared customer design: applied by CustomerShell on every customer route. */
 .matches-theme {
   --background: #fff;
   --foreground: #101828;

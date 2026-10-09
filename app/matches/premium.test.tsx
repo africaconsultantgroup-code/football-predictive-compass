@@ -118,9 +118,9 @@ describe("Approved Premium rendering", () => {
     expect(html).toContain("No new purchase is required"); expect(html).toContain("FREE PRE-MATCH"); expect(html).not.toContain("Forecast Change");
     expect(html.slice(0, html.indexOf("</section>"))).not.toContain("50%");
   });
-  it("preserves the existing real offer and checkout", () => {
+  it("uses the shared Pricing V2 authority without stage-only checkout", () => {
     const html = renderToStaticMarkup(<FreeMatchDetail free={free} unlocked={false} deliverable offers={[{ productId: "real-product", scopeType: "match", name: "Premium Pre-Match", currency: "GHS", priceAmount: 23, matchCount: 1 }]} />);
-    expect(html).toContain("GH₵23.00"); expect(html).toContain("Unlock Premium"); expect(html).not.toContain("58%");
+    expect(html).toContain("GH₵8"); expect(html).toContain("Unlock Premium"); expect(html).not.toContain("58%");
   });
   it("uses DTO generated_at without inventing a next update", () => {
     const html = renderToStaticMarkup(<ForecastFreshness prediction={premium} updating now={now} />);

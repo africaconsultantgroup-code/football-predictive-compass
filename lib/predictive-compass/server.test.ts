@@ -44,6 +44,44 @@ function clientWithResponse(status: number, body: unknown) {
 }
 
 describe("Football Core client", () => {
+  it("accepts a 14.8-second stored inventory response without widening the freshness POST deadline", async () => {
+    vi.useFakeTimers();
+    try {
+      const fetchMock = vi.fn<typeof fetch>().mockImplementation((_url, init) => new Promise((resolve, reject) => {
+        const timer = setTimeout(() => resolve(new Response(JSON.stringify({ predictions: [prediction] }))), 14_800);
+        init?.signal?.addEventListener("abort", () => { clearTimeout(timer); reject(new DOMException("aborted", "AbortError")); });
+      }));
+      const client = createFootballCoreClient({ baseUrl, apiKey, fetch: fetchMock });
+      const inventory = client.getUpcomingFootballPredictions({ syncProducts: false });
+      await vi.advanceTimersByTimeAsync(14_800);
+      expect(await inventory).toHaveLength(1);
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      const freshness = expect(client.requestPrematchFreshness(prediction.match_id)).rejects.toMatchObject({ kind: "timeout" });
+      await vi.advanceTimersByTimeAsync(8_000);
+      await freshness;
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+    } finally { vi.useRealTimers(); }
+  });
+  it("recovers an upcoming timeout with one fresh no-store GET at the unchanged per-attempt deadline", async () => {
+    const fetchMock = vi.fn<typeof fetch>().mockImplementationOnce((_url, init) => new Promise((_resolve, reject) => { init?.signal?.addEventListener("abort", () => reject(new DOMException("aborted", "AbortError"))); })).mockResolvedValueOnce(new Response(JSON.stringify({ predictions: [prediction] })));
+    const client = createFootballCoreClient({ baseUrl, apiKey, fetch: fetchMock, timeoutMs: 1 });
+    expect(await client.getUpcomingFootballPredictions({ syncProducts: false })).toHaveLength(1);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    for (const [, init] of fetchMock.mock.calls) { expect(init?.method).toBe("GET"); expect(init?.cache).toBe("no-store"); }
+  });
+  it("does not retry authentication failures, invalid responses or freshness POSTs", async () => {
+    for (const status of [401, 403]) {
+      const { client, fetchMock } = clientWithResponse(status, {});
+      await expect(client.getUpcomingFootballPredictions()).rejects.toBeInstanceOf(CoreClientError);
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    }
+    const malformed = clientWithResponse(200, { predictions: [{ match_id: "bad" }] });
+    await expect(malformed.client.getUpcomingFootballPredictions()).rejects.toMatchObject({ kind: "malformed" });
+    expect(malformed.fetchMock).toHaveBeenCalledTimes(1);
+    const freshness = clientWithResponse(503, {});
+    await expect(freshness.client.requestPrematchFreshness(prediction.match_id)).rejects.toBeInstanceOf(CoreClientError);
+    expect(freshness.fetchMock).toHaveBeenCalledTimes(1);
+  });
   it("builds the authenticated upcoming request without putting the key in its URL", async () => {
     const { client, fetchMock } = clientWithResponse(200, { predictions: [] });
     await client.getUpcomingFootballPredictions();

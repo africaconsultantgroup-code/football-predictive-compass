@@ -6,7 +6,7 @@ vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
 
 import { toPredictionPreview } from "../../lib/predictive-compass/preview";
 import type { FootballPrediction } from "../../lib/predictive-compass/schema";
-import { CompetitionTabs, DateSelector, MatchdayPass, MatchRow } from "./match-components";
+import { CompetitionTabs, DateSelector, MatchRow } from "./match-components";
 
 const prediction: FootballPrediction = {
   match_id: `fm_${"a".repeat(32)}`, prediction_id: "test-prediction", competition: "Premier League",
@@ -27,26 +27,25 @@ describe("Matches dashboard access and product boundaries", () => {
     expect(html).not.toContain("Unlock Prematch Prediction");
   });
 
-  it("keeps protected values out of locked markup and uses authoritative offer pricing", () => {
+  it("keeps protected values out of locked markup and uses the Pricing V2 authority", () => {
     const preview = toPredictionPreview(prediction, [{ productId: "real-product", name: "Prematch", scopeType: "match", priceAmount: 23, currency: "GHS", matchCount: 1 }]);
     const html = renderToStaticMarkup(<MatchRow prediction={preview} />);
     expect(html).not.toContain("58%");
     expect(html).not.toContain("Protected summary");
     expect(html).not.toContain("Most Likely:");
-    expect(html).toContain("GH₵23.00");
-    expect(html).toContain("Unlock Prematch Prediction");
+    expect(html).toContain("GH₵8");
+    expect(html).not.toContain("GH₵23.00");
+    expect(html).not.toContain("Unlock Prematch Prediction");
     expect(html).toContain("View Free Prediction");
-    expect(html).toContain("Coming soon · preview pricing");
+    expect(html).not.toContain("preview pricing");
   });
 
   it("does not enable checkout for unsupported products or missing prices", () => {
     const html = renderToStaticMarkup(<MatchRow prediction={toPredictionPreview(prediction)} />);
     expect(html).not.toContain("Unlock Prematch Prediction");
-    expect(html).toContain("disabled");
-    const pass = renderToStaticMarkup(<MatchdayPass matchCount={6} />);
-    expect(pass).toContain("all 6 games");
-    expect(pass).toContain("disabled");
-    expect(pass).toContain("preview pricing");
+    expect(html).toContain("Premium purchase currently unavailable");
+    expect(html).not.toContain("Matchday Pass");
+    expect(html).not.toContain("preview pricing");
   });
 
   it("retains FINAL state and handles absent kickoff and match IDs", () => {
@@ -54,7 +53,7 @@ describe("Matches dashboard access and product boundaries", () => {
     expect(html).toContain("Full-Time");
     expect(html).toContain("TBC");
     expect(html).toContain("Match details unavailable");
-    expect(html).toContain("Match completed");
+    expect(html).toContain("Completed");
     expect(html).not.toContain("/matches/null");
   });
 

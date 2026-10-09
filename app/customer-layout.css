@@ -1,0 +1,65 @@
+/* Page composition for the shared Matches customer design. */
+.mobile-app-nav { display: none; }
+.matches-theme .matches-premium { grid-template-columns: minmax(0,1fr); }
+.inventory-loading > p { margin: 20px 0; color: #52677e; }
+.inventory-skeleton { display: grid; gap: 16px; }
+.inventory-skeleton > div { display: grid; gap: 16px; min-height: 180px; padding: 24px; border: 1px solid #e4eaf2; border-radius: 18px; background: #fff; }
+.inventory-skeleton span { display: block; height: 18px; border-radius: 6px; background: #edf2f8; }
+.inventory-skeleton span:first-child { width: 45%; }
+.inventory-skeleton span:last-child { height: 48px; }
+.matches-theme .page-container { padding-bottom: 64px; }
+.matches-theme .page-header { margin: 32px 0; padding: 32px; border-radius: 20px; }
+.matches-theme .page-header h1 { max-width: 100%; font-size: clamp(26px, 4vw, 42px); }
+.matches-theme .hero-grid { gap: 40px; padding: 64px 0; min-height: 0; }
+.matches-theme .hero-copy h1 { font-size: clamp(36px, 5vw, 68px); }
+.matches-theme .hero-primary, .matches-theme .unlock-button, .matches-theme .checkout-button, .matches-theme .save-profile-button { color: #fff; background: var(--blue); }
+.matches-theme .stadium-visual { background: linear-gradient(150deg, #f4f8ff, #e4eefe); }
+.matches-theme .visual-stat { background: #fff; }
+.matches-theme :is(.prediction-card,.account-card,.education-card,.owned-card,.completed-card,.info-card,.story-section) { border-radius: 18px; box-shadow: 0 8px 28px rgba(16,40,80,.04); }
+.matches-theme :is(.fixture-header h3,.report-hero h1,.owned-card h3,.completed-card h3) { flex-wrap: wrap; overflow-wrap: anywhere; }
+.matches-theme .owned-teams { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 16px 0; }
+.matches-theme .owned-teams .matches-team { margin: 0; }
+.matches-theme .matches-team img { object-fit: contain; max-width: 100%; }
+.matches-theme .auth-card { width: min(480px,100%); margin: 48px auto; padding: 32px; border: 1px solid var(--line); border-radius: 20px; background: #fff; box-shadow: 0 10px 36px rgba(16,40,80,.06); }
+.matches-theme .auth-card h1 { margin: 12px 0; font-size: 30px; }
+.matches-theme .auth-card > p { color: var(--muted); line-height: 1.7; }
+.matches-theme .education-grid { grid-template-columns: repeat(auto-fit,minmax(min(100%,240px),1fr)); }
+.matches-theme .site-footer { margin-top: 0; background: #f4f8ff; }
+.matches-theme .summary-grid { grid-template-columns: repeat(auto-fit,minmax(min(100%,160px),1fr)); }
+.matches-theme .hero-grid > *, .matches-theme .account-card, .matches-theme .owned-card, .matches-theme .completed-card { min-width: 0; }
+@media(max-width:980px) { .matches-theme .hero-grid { grid-template-columns: 1fr; } }
+@media(max-width:680px) {
+  .matches-theme { background: #f3f6fc; }
+  .matches-theme .site-header { position: sticky; top: 0; z-index: 50; }
+  .matches-theme .page-container { padding-bottom: 96px; }
+  .matches-theme .top-nav { height: 68px; }
+  .matches-theme .brand small { display: none; }
+  .matches-theme .mobile-app-nav { position: fixed; bottom: 0; left: 0; right: 0; z-index: 60; display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); padding: 6px 8px calc(6px + env(safe-area-inset-bottom)); background: #fff; border-top: 1px solid #dce6f3; box-shadow: 0 -4px 24px #143b6810; }
+  .matches-theme .mobile-app-nav a { min-height: 54px; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; color: #65738b; font-size: 10px; font-weight: 650; text-align: center; text-decoration: none; border-radius: 10px; }
+  .matches-theme .mobile-app-nav a[aria-current=page] { color: #1259b4; background: #edf4ff; }
+  .matches-theme .mobile-app-nav svg { width: 21px; height: 21px; }
+  .matches-theme .site-footer { padding-bottom: calc(90px + env(safe-area-inset-bottom)); }
+  .matches-theme .matches-toolbar { align-items: stretch; flex-direction: column; gap: 14px; padding-bottom: 16px; }
+  .matches-theme .matches-date-selector { align-self: flex-start; }
+  .matches-theme .matches-heading { padding-block: 20px; }
+  .matches-theme .matches-heading h1 { font-size: 27px; }
+  .matches-theme .matches-row { background: #fff; border: 1px solid #dfe7f3; border-radius: 18px; box-shadow: 0 4px 16px #143b6806; }
+  .matches-theme .matches-date-heading { position: static; }
+  .matches-theme .matches-team-fallback { width: 34px; height: 38px; background: #eaf2ff; color: #1259b4; }
+  .matches-theme .matches-team > span:last-child { min-width: 0; overflow-wrap: anywhere; }
+  .matches-theme .matches-free { padding: 16px; border-radius: 12px; background: #f7faff; }
+  .matches-theme .matches-premium-option { border-radius: 12px; background: #edf4ff; }
+  .matches-theme .matches-free-link, .matches-theme .matches-option-link { display: flex; justify-content: space-between; align-items: center; min-height: 44px; }
+  .matches-theme .match-basket-panel { margin-bottom: 16px; border-radius: 18px; }
+  .matches-theme .owned-card, .matches-theme .completed-card, .matches-theme .account-card { background: #fff; }
+  .matches-theme .owned-match-lifecycle { min-width: 0; overflow-wrap: anywhere; }
+  .matches-theme .stadium-visual { display: none; }
+  .matches-theme .page-header { margin: 20px 0; padding: 22px 16px; }
+  .matches-theme .hero-grid { gap: 24px; padding: 32px 0; }
+  .matches-theme .stadium-visual { min-height: 340px; }
+  .matches-theme .auth-card { margin: 24px auto; padding: 22px 16px; }
+  .matches-theme :is(.benefit-grid,.owned-grid,.completed-grid,.education-detail,.identity-grid) { grid-template-columns: 1fr; }
+  .matches-theme .account-heading, .matches-theme .account-section-title, .matches-theme .report-actions { flex-wrap: wrap; gap: 14px; }
+  .matches-theme .purchase-list li { grid-template-columns: minmax(0,1fr); }
+  .matches-theme .purchase-list div:last-child { text-align: left; }
+}
