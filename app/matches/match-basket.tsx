@@ -7,7 +7,7 @@ import { openPaystackCheckout, paymentStatusHref, safePaystackCheckoutUrl, type 
 
 type Choice = { matchId: string; kickoffAt: string; label: string; owned: boolean; pendingCheckout?: PendingMatchCheckout };
 type CheckoutResult = { key: string; quote?: Omit<BasketQuote, "user_id">; pending?: PendingMatchCheckout; error?: string };
-type BasketContext = { choices: Choice[]; selected: string[]; now: number; pending?: PendingMatchCheckout; toggle: (id: string) => void; basketId: string };
+type BasketContext = { choices: Choice[]; selected: string[]; now: number; pending?: PendingMatchCheckout; reviewed: boolean; toggle: (id: string) => void; review: (id: string) => void; basketId: string };
 const Selection = createContext<BasketContext | null>(null);
 const errors: Record<string, string> = {
   ACCESS_ALREADY_GRANTED: "You already have access to a selected match. Refresh to update your selection.",
@@ -18,6 +18,7 @@ const errors: Record<string, string> = {
   CHECKOUT_ALREADY_PENDING: "A checkout is already pending. Check its payment status before starting another.",
   CHECKOUT_VERIFICATION_REQUIRED: "Checkout needs verification. No second payment has been opened.",
   CHECKOUT_STATUS_UNAVAILABLE: "We could not check for an existing checkout. Please try again before paying.",
+  CHECKOUT_EXPIRED: "Previous checkout expired. Review a fresh secure quote before paying.",
 };
 
 function useDeadlineClock(deadlines: string[]) {
@@ -31,15 +32,19 @@ function useDeadlineClock(deadlines: string[]) {
   return now;
 }
 
-export function PendingCheckoutAction({ checkout, closed = false }: { checkout: PendingMatchCheckout; closed?: boolean }) {
-  const url = closed ? null : safePaystackCheckoutUrl(checkout.authorizationUrl);
-  return <div className="pending-checkout"><p>A checkout already exists for this match.</p>
+export function PendingCheckoutAction({ checkout, closed = false, onReview }: { checkout: PendingMatchCheckout; closed?: boolean; onReview?: () => void }) {
+  const now = useDeadlineClock(checkout.usableUntil ? [checkout.usableUntil] : []);
+  if (checkout.state === "successful") return <div><strong>Premium Intelligence Unlocked</strong><Link href={`/matches/${checkout.matchIds[0]}`}>View Match Intelligence</Link></div>;
+  if (checkout.state === "expired") return <div className="pending-checkout"><p>Previous checkout expired</p>{onReview && !closed ? <button type="button" onClick={onReview}>Start Secure Checkout Again</button> : <Link href="/matches">Return to Matches</Link>}</div>;
+  const url = closed || checkout.state !== "active" || !(Date.parse(checkout.usableUntil ?? "") > now) ? null : safePaystackCheckoutUrl(checkout.authorizationUrl);
+  return <div className="pending-checkout"><p>{url ? "Payment pending" : checkout.state === "stale" ? "Previous checkout needs reconciliation. Its saved payment link is no longer offered." : "Payment verification required"}</p>
+    {onReview ? <button type="button" onClick={onReview}>Verify existing payment</button> : null}
     <a className="matches-option-link" href={url ?? paymentStatusHref(checkout.reference)}>{url ? "Continue Payment" : "Check Payment Status"}</a>
     {url ? <Link href={paymentStatusHref(checkout.reference)}>Check payment status</Link> : <p>Verify the existing payment before trying again. No second transaction will be created.</p>}
   </div>;
 }
 
-export function BasketCheckout({ matchIds, onResult }: { matchIds: string[]; onResult?: (result: CheckoutResult) => void }) {
+export function BasketCheckout({ matchIds, onResult, refreshKey = 0 }: { matchIds: string[]; onResult?: (result: CheckoutResult) => void; refreshKey?: number }) {
   const key = [...matchIds].sort().join(",");
   const [result, setResult] = useState<CheckoutResult>({ key: "" });
   const [busy, setBusy] = useState(false);
@@ -56,7 +61,7 @@ export function BasketCheckout({ matchIds, onResult }: { matchIds: string[]; onR
       }
     }).catch(() => { if (!controller.signal.aborted) { const next = { key, error: "QUOTE_UNAVAILABLE" }; setResult(next); onResult?.(next); } });
     return () => controller.abort();
-  }, [key, revision, onResult]);
+  }, [key, revision, onResult, refreshKey]);
   const current = result.key === key ? result : undefined;
   const quote = current?.quote;
   const error = current?.error;
@@ -84,13 +89,13 @@ export function BasketCheckout({ matchIds, onResult }: { matchIds: string[]; onR
   return <section className="match-basket-summary" aria-label="Your Match Selection" aria-live="polite">
     <h2>Your Match Selection</h2>
     <p>{matchIds.length} {matchIds.length === 1 ? "match" : "matches"} selected · One Ghana calendar day, across competitions.</p>
-    {current?.pending ? <><h3>Existing checkout</h3>{current.pending.fixtures.length ? <ul>{current.pending.fixtures.map(item => <li key={item.match_id}>{item.home_team} vs {item.away_team}</li>)}</ul> : null}{current.pending.totalPesewas !== null ? <p>Existing checkout total: <strong>{formatPesewas(current.pending.totalPesewas)}</strong></p> : null}<PendingCheckoutAction checkout={current.pending} /></> : quote ? <>
+    {current?.pending ? <><h3>Existing checkout</h3>{current.pending.fixtures.length ? <ul>{current.pending.fixtures.map(item => <li key={item.match_id}>{item.home_team} vs {item.away_team}</li>)}</ul> : null}{current.pending.totalPesewas !== null ? <p>Existing checkout total: <strong>{formatPesewas(current.pending.totalPesewas)}</strong></p> : null}<PendingCheckoutAction checkout={current.pending} onReview={refreshQuote} /></> : quote ? <>
       <p>Authoritative server quote</p><ul aria-label="Quoted fixtures">{quote.fixtures.map(item => <li key={item.match_id}>{item.home_team} vs {item.away_team}<small>{item.competition} · {new Date(item.kickoff_at).toLocaleString("en-GB", { timeZone: "Africa/Accra" })} GMT</small></li>)}</ul><dl><div><dt>Regular price</dt><dd>{formatPesewas(quote.regular_pesewas)}</dd></div><div><dt>Multi-match discount</dt><dd>{formatPesewas(quote.discount_pesewas)}</dd></div><div><dt>Effective price per match</dt><dd>{formatEffectivePrice(quote)}</dd></div><div><dt>Total</dt><dd><strong>{formatPesewas(quote.total_pesewas)}</strong></dd></div></dl>
       <small>Quote valid until {new Date(quote.expires_at).toLocaleTimeString("en-GB", { timeZone: "Africa/Accra" })} GMT.</small>
       <button className="checkout-button" type="button" disabled={busy || Boolean(expired || closed)} onClick={checkout}>{busy ? "Opening secure checkout…" : "Continue to Payment"}</button>
       {closed ? <p role="alert">Purchasing has closed for this match. Remove it from your basket.</p> : expired ? <><p role="alert">Your quote expired. Review a new quote before paying.</p><button type="button" onClick={refreshQuote}>Review new quote</button></> : null}
-    </> : key && !error ? <p role="status">Calculating your secure quote…</p> : !key ? <p>Add a match to review your server quote.</p> : null}
-    {error === "AUTHENTICATION_REQUIRED" ? <Link href="/login?next=/matches">Sign in to review your price and purchase</Link> : error ? <><p role="alert">{errors[error] ?? "Checkout is temporarily unavailable."}</p><button type="button" disabled={busy} onClick={refreshQuote}>{["CHECKOUT_VERIFICATION_REQUIRED", "CHECKOUT_ALREADY_PENDING"].includes(error) ? "Check existing checkout" : "Review new quote"}</button><Link href="/account">View payment activity</Link></> : null}
+    </> : key && !error ? <p role="status">Verifying your payment… Reviewing your secure quote.</p> : !key ? <p>Add a match to review your server quote.</p> : null}
+    {error === "AUTHENTICATION_REQUIRED" ? <Link href="/login?next=/matches">Sign in to review your price and purchase</Link> : error ? <><p role="alert">{errors[error] ?? "Checkout is temporarily unavailable."}</p><button type="button" disabled={busy} onClick={refreshQuote}>{error === "CHECKOUT_EXPIRED" ? "Start Secure Checkout Again" : ["CHECKOUT_VERIFICATION_REQUIRED", "CHECKOUT_ALREADY_PENDING"].includes(error) ? "Check existing checkout" : "Review new quote"}</button><Link href="/account">View payment activity</Link></> : null}
     <p>One payment unlocks every available Premium stage for each selected match, including historical review. Free Early Forecast stays separate.</p>
   </section>;
 }
@@ -99,6 +104,7 @@ export function MatchBasket({ choices, children }: { choices: Choice[]; children
   const [selected, setSelected] = useState<string[]>([]);
   const [message, setMessage] = useState("");
   const [result, setResult] = useState<CheckoutResult>({ key: "" });
+  const [reviewRevision, setReviewRevision] = useState(0);
   const basketId = useId();
   const now = useDeadlineClock([...choices.map(item => item.kickoffAt), ...(result.quote ? [result.quote.expires_at] : [])]);
   const active = selected.filter(id => { const item = choices.find(item => item.matchId === id); return item && !item.owned && Date.parse(item.kickoffAt) > now; });
@@ -113,12 +119,13 @@ export function MatchBasket({ choices, children }: { choices: Choice[]; children
     if (selected.length >= MATCH_PRICING_POLICY.totals.length) { setMessage("You can select up to 10 matches per basket."); return; }
     setMessage(""); setSelected(items => [...items, id]);
   }
-  return <Selection.Provider value={{ choices, selected, toggle, now, pending: current?.pending, basketId }}><div className="match-basket-layout">{children}
+  function review(id: string) { setSelected(items => items.includes(id) ? items : [...items, id]); setReviewRevision(value => value + 1); }
+  return <Selection.Provider value={{ choices, selected, toggle, review, now, pending: current?.pending, reviewed: Boolean(current?.quote), basketId }}><div className="match-basket-layout">{children}
     <aside id={basketId} tabIndex={-1} className="match-basket-panel" aria-label="Match basket">
       {message ? <p role="alert">{message}</p> : null}
       {selected.length ? <><ul aria-label="Selected fixtures">{selected.map(id => <li key={id}>{choices.find(item => item.matchId === id)?.label ?? "Match details being prepared"}<button type="button" onClick={() => toggle(id)} aria-label={`Remove ${choices.find(item => item.matchId === id)?.label ?? "match"}`}>Remove</button></li>)}</ul><button type="button" onClick={() => setSelected([])}>Clear selection</button></> : null}
       {selected.length !== active.length ? <p role="alert">Purchasing has closed for a selected match. Remove it from your basket.</p> : null}
-      <BasketCheckout matchIds={active} onResult={setResult} />
+      <BasketCheckout matchIds={active} onResult={setResult} refreshKey={reviewRevision} />
     </aside>
   </div>{selected.length ? <div className="mobile-basket-bar" aria-label="Selected match basket"><div><strong>{selected.length} {selected.length === 1 ? "match" : "matches"} selected</strong><span>{current?.pending ? "Existing checkout" : current?.quote && Date.parse(current.quote.expires_at) > now ? formatPesewas(current.quote.total_pesewas) : "Review total in basket"}</span></div><a href={`#${basketId}`}>View Basket</a></div> : null}</Selection.Provider>;
 }
@@ -130,8 +137,8 @@ export function MatchSelection({ matchId, kickoffAt, label }: { matchId: string;
   if (!item) return kickoffAt && Date.parse(kickoffAt) <= basket.now ? <><button type="button" disabled>Purchase closed</button><p>Purchasing has closed for this match.</p></> : <small>Premium purchase currently unavailable</small>;
   if (item.owned) return <><strong>Premium Intelligence Unlocked</strong><Link href={`/matches/${matchId}`}>View Match Intelligence</Link></>;
   const closed = Date.parse(item.kickoffAt) <= basket.now;
-  const pending = item.pendingCheckout ?? (basket.pending?.matchIds.includes(matchId) ? basket.pending : undefined);
-  if (pending) return <PendingCheckoutAction checkout={pending} closed={closed} />;
+  const pending = (basket.pending?.matchIds.includes(matchId) ? basket.pending : undefined) ?? (basket.reviewed ? undefined : item.pendingCheckout);
+  if (pending) return <PendingCheckoutAction checkout={pending} closed={closed} onReview={() => basket.review(matchId)} />;
   const added = basket.selected.includes(matchId);
   return <div className="match-selection">{closed ? <><button type="button" disabled>Purchase closed</button><p>Purchasing has closed for this match.</p>{added ? <button type="button" onClick={() => basket.toggle(matchId)}>Remove</button> : null}</> : added ? <><strong role="status">Added ✓</strong><button type="button" onClick={() => basket.toggle(matchId)} aria-label={`Remove ${item.label}`}>Remove</button><a href={`#${basket.basketId}`}>View Basket</a></> : <button className="add-to-basket" type="button" onClick={() => basket.toggle(matchId)} aria-label={`Add to Basket: ${item.label}`}>Add to Basket</button>}</div>;
 }

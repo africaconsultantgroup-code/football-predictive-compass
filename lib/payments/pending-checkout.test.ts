@@ -21,11 +21,27 @@ describe("pending checkout recovery", () => {
     const results = await loadPendingMatchCheckouts(db.client, "customer");
     expect(db.queries.every(query => query.user === "customer")).toBe(true);
     expect(db.queries[1].select).not.toContain("authorization_url");
-    expect(results[0].authorizationUrl).toBe("https://checkout.paystack.com/existing");
+    expect(results[0].authorizationUrl).toBeNull();
+    expect(results[0].state).toBe("stale");
     expect(results[0].fixtures[0]).not.toHaveProperty("private_metadata");
     expect(results[1]).toMatchObject({ reference: "legacy", authorizationUrl: null, matchIds: ["legacy-match"], totalPesewas: 800 });
   });
   it("fails closed if checkout history cannot be checked", async () => {
     await expect(loadPendingMatchCheckouts(database(true).client, "customer")).rejects.toMatchObject({ code: "CHECKOUT_STATUS_UNAVAILABLE" });
+  });
+  it("never exposes a stale URL even if provider still reports pending", async () => {
+    const reconcile = vi.fn().mockResolvedValue({ status: "pending", checkoutUsable: false });
+    const [checkout] = await loadPendingMatchCheckouts(database().client, "customer", { matchIds: ["match"], reconcile });
+    expect(checkout).toMatchObject({ state: "stale", authorizationUrl: null });
+    expect(reconcile).toHaveBeenCalledWith("basket");
+  });
+  it.each(["failed", "abandoned", "reversed"])("offers fresh checkout after provider-confirmed %s finalization", async status => {
+    const [checkout] = await loadPendingMatchCheckouts(database().client, "customer", { reconcile: async () => ({ status }) });
+    expect(checkout).toMatchObject({ state: "expired", authorizationUrl: null });
+  });
+  it("does not verify another customer's unselected matches", async () => {
+    const reconcile = vi.fn();
+    await loadPendingMatchCheckouts(database().client, "customer", { matchIds: ["other"], reconcile });
+    expect(reconcile).not.toHaveBeenCalled();
   });
 });

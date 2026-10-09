@@ -41,6 +41,7 @@ let prediction: FootballPrediction;
 let quotes: BasketQuote[];
 let payments: BasketPayment[];
 let entitlements: Set<string>;
+let reservations: Map<string, string>;
 let initialize: ReturnType<typeof vi.fn>;
 let verify: ReturnType<typeof vi.fn>;
 let requests: ReturnType<typeof vi.fn>;
@@ -73,13 +74,17 @@ function database() {
     if (name === "accept_match_basket") {
       const existing = payments.find(payment => payment.quote_id === args.p_quote);
       if (existing) return { data: existing, error: null };
+      const quote = quotes.find(quote => quote.id === args.p_quote)!;
+      if (quote.fixtures.some(item => reservations.has(item.match_id))) return { data: null, error: { message: "CHECKOUT_ALREADY_PENDING" } };
       const payment = { id: args.p_payment, user_id: args.p_user, quote_id: args.p_quote, provider_reference: args.p_reference, status: "initialized", authorization_url: null };
+      for (const item of quote.fixtures) reservations.set(item.match_id, payment.id);
       payments.push(payment); return { data: payment, error: null };
     }
     const payment = payments.find(payment => payment.id === args.p_payment)!;
     if (payment.status !== "successful") {
       payment.status = args.p_status;
       if (args.p_status === "successful") for (const fixture of quotes.find(quote => quote.id === payment.quote_id)!.fixtures) entitlements.add(fixture.match_id);
+      if (["successful", "failed", "abandoned", "reversed"].includes(args.p_status)) for (const [matchId, paymentId] of reservations) if (paymentId === payment.id) reservations.delete(matchId);
     }
     return { data: payment.status, error: null };
   });
@@ -93,13 +98,15 @@ function pending() {
   quotes.push(stored);
   const payment = { id: "existing", user_id: owner, quote_id: stored.id, provider_reference: "fpc-basket-original", status: "pending", authorization_url: "https://checkout.paystack.com/original" };
   payments.push(payment);
-  return { reference: payment.provider_reference, authorizationUrl: payment.authorization_url, matchIds: [id], fixtures: stored.fixtures, totalPesewas: 800 };
+  reservations.set(id, payment.id);
+  transaction = { reference: payment.provider_reference, amount: stored.total_pesewas, currency: "GHS", status: "pending", metadata: { payment_id: payment.id, user_id: owner, quote_id: stored.id, pricing_policy: stored.policy_version } };
+  return { reference: payment.provider_reference, authorizationUrl: payment.authorization_url, matchIds: [id], fixtures: stored.fixtures, totalPesewas: 800, state: "active" as const, usableUntil: new Date(Date.now()+60_000).toISOString() };
 }
 
 beforeEach(() => {
   vi.clearAllMocks(); vi.stubEnv("PREDICTIVE_CUSTOMER_PRICING_VERSION", "v2");
   vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
-  quotes = []; payments = []; entitlements = new Set(); transaction = {};
+  quotes = []; payments = []; entitlements = new Set(); reservations = new Map(); transaction = {};
   prediction = { match_id: id, prediction_id: "stored-unit-forecast", competition: "Premier League", home_team: "Arsenal", away_team: "Chelsea", kickoff_at: new Date(Date.now() + 3_600_000).toISOString(), stage: "PREMATCH", probabilities: { home_win: 58, draw: 25, away_win: 17 }, predicted_outcome: "home_win", predicted_score: null, reliability: { score: 65, label: "High" }, verification_status: "verified", important_information_pending: false, customer_summary: "Paid intelligence", customer_key_factors: [], generated_at: null, updated_at: null };
   mocks.user.mockResolvedValue({ id: owner, email: "unit@example.invalid" });
   mocks.upcoming.mockImplementation(async () => [prediction]); mocks.live.mockImplementation(async () => prediction);
@@ -120,6 +127,45 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.useRealTimers(); vi.unstubAllGlobals(); vi.unstubAllEnvs(); });
 
 describe("ordinary customer Premium purchase journey", () => {
+  it.each(["failed", "abandoned", "expired"])("reconciles %s checkout, releases its reservation and starts a new reference only after fresh quote confirmation", async status => {
+    const old = pending(); quotes[0].expires_at = new Date(Date.now()-1).toISOString(); transaction.status = status;
+    render(card()); fireEvent.click(screen.getByRole("button", { name: /Add to Basket/ }));
+    const restart = await screen.findAllByRole("button", { name: "Start Secure Checkout Again" });
+    expect(reservations.size).toBe(0); expect(entitlements.size).toBe(0); expect(initialize).not.toHaveBeenCalled();
+    expect(screen.queryByRole("link", { name: "Continue Payment" })).toBeNull();
+    fireEvent.click(restart[restart.length-1]);
+    const pay = await screen.findByRole("button", { name: "Continue to Payment" });
+    expect(quotes).toHaveLength(2); expect(quotes[1].id).not.toBe(quotes[0].id);
+    expect(Date.parse(quotes[1].expires_at)).toBeGreaterThan(Date.now()); fireEvent.click(pay);
+    await waitFor(() => expect(initialize).toHaveBeenCalledOnce());
+    expect(payments).toHaveLength(2); expect(payments[1].provider_reference).not.toBe(old.reference);
+    expect(initialize).toHaveBeenCalledWith(expect.objectContaining({ reference: payments[1].provider_reference, amount: "800" }));
+    expect(reservations.get(id)).toBe(payments[1].id); expect(entitlements.size).toBe(0);
+  });
+  it("retains unresolved stale pending reservations without offering the old URL or creating another charge", async () => {
+    pending(); quotes[0].expires_at = new Date(Date.now()-1).toISOString();
+    render(card()); fireEvent.click(screen.getByRole("button", { name: /Add to Basket/ }));
+    await screen.findAllByText(/Previous checkout needs reconciliation/);
+    expect(screen.queryByRole("link", { name: "Continue Payment" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Start Secure Checkout Again" })).toBeNull();
+    expect(reservations.size).toBe(1); expect(quotes).toHaveLength(1); expect(initialize).not.toHaveBeenCalled();
+  });
+  it("fulfills a legitimate old success despite quote expiry, grants once and releases its reservation", async () => {
+    const old = pending(); quotes[0].expires_at = new Date(Date.now()-1).toISOString(); transaction.status = "success"; transaction.paid_at = new Date().toISOString();
+    render(card()); fireEvent.click(screen.getByRole("button", { name: /Add to Basket/ }));
+    await screen.findAllByText("Premium Intelligence Unlocked");
+    expect(entitlements).toEqual(new Set([id])); expect(reservations.size).toBe(0); expect(initialize).not.toHaveBeenCalled();
+    expect(await verifyBasketPayment({ admin: mocks.admin as SupabaseClient, paystack: mocks.paystack as ReturnType<typeof createPaystackClient>, reference: old.reference })).toEqual({ status: "successful" });
+    expect(verify).toHaveBeenCalledOnce(); expect(entitlements.size).toBe(1);
+  });
+  it("removes Continue Payment when its verified usability window expires", async () => {
+    vi.useFakeTimers(); const checkout = pending();
+    render(<MatchBasket choices={[{ ...choice(), pendingCheckout: checkout }]}><MatchRow prediction={toPredictionPreview(prediction)} /></MatchBasket>);
+    expect(screen.getByRole("link", { name: "Continue Payment" })).toBeTruthy();
+    await act(async () => { await vi.advanceTimersByTimeAsync(60_010); });
+    expect(screen.queryByRole("link", { name: "Continue Payment" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Verify existing payment" })).toBeTruthy(); expect(initialize).not.toHaveBeenCalled();
+  });
   it("clicks the real card through server quote and Pricing V2 initialization, then verifies permanent entitlement once", async () => {
     render(card());
     expect(screen.getByRole("link", { name: "Premium Match Intelligence" }).getAttribute("href")).toBe(`/matches/${id}`);

@@ -87,7 +87,7 @@ export function createPaystackClient({
       });
     },
     verify(reference: string) {
-      return paystackRequest(`/transaction/verify/${encodeURIComponent(reference)}`);
+      return paystackRequest(`/transaction/verify/${encodeURIComponent(reference)}`, { signal: AbortSignal.timeout(15_000) });
     },
   };
 }

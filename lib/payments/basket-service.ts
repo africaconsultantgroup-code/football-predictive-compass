@@ -39,9 +39,7 @@ export async function initializeBasketPayment({ admin, paystack, quoteId, userId
   if (existing.error) throw new BasketError("CHECKOUT_STATUS_UNAVAILABLE", 503);
   if (existing.data) {
     const payment = existing.data as BasketPayment;
-    const url = payment.status === "pending" ? safePaystackCheckoutUrl(payment.authorization_url) : null;
-    if (url) return { authorizationUrl: url, reference: payment.provider_reference };
-    throw new BasketError("CHECKOUT_VERIFICATION_REQUIRED", 409);
+    return resumeBasketPayment({ admin, paystack, payment, quote, catalog, now });
   }
   const [fixtures, owned] = await Promise.all([catalog(), ownedMatchIds(admin, userId)]);
   revalidateQuote(quote, fixtures, owned, now);
@@ -53,9 +51,7 @@ export async function initializeBasketPayment({ admin, paystack, quoteId, userId
   }
   const payment = accepted.data as BasketPayment;
   if (payment.id !== id) {
-    const url = payment.status === "pending" ? safePaystackCheckoutUrl(payment.authorization_url) : null;
-    if (url) return { authorizationUrl: url, reference: payment.provider_reference };
-    throw new BasketError("CHECKOUT_ALREADY_PENDING");
+    return resumeBasketPayment({ admin, paystack, payment, quote, catalog, now });
   }
   try {
     const checkout = await paystack.initialize({ email, amount: String(quote.total_pesewas), currency: "GHS", reference, callbackUrl: `${callbackOrigin}/payments/paystack/callback`, metadata: { payment_id: id, user_id: userId, quote_id: quote.id, pricing_policy: quote.policy_version } });
@@ -75,7 +71,16 @@ export function verifiedBasketTransaction(payment: BasketPayment, quote: BasketQ
   const meta = transaction.metadata ?? {};
   return transaction.reference === payment.provider_reference && String(transaction.amount) === String(quote.total_pesewas) && transaction.currency === "GHS" && meta.payment_id === payment.id && meta.user_id === payment.user_id && meta.quote_id === quote.id && meta.pricing_policy === quote.policy_version;
 }
-export async function verifyBasketPayment({ admin, paystack, reference, catalog }: { admin: SupabaseClient; paystack: Provider; reference: string; catalog?: () => Promise<BasketFixture[]> }) {
+async function resumeBasketPayment({ admin, paystack, payment, quote, catalog, now }: { admin: SupabaseClient; paystack: Provider; payment: BasketPayment; quote: BasketQuote; catalog?: () => Promise<BasketFixture[]>; now: Date }) {
+  const startedAt = Date.now();
+  const result = await verifyBasketPayment({ admin, paystack, reference: payment.provider_reference, catalog, now });
+  if (result.status === "successful") throw new BasketError("ACCESS_ALREADY_GRANTED");
+  if (["failed", "abandoned", "reversed"].includes(result.status)) throw new BasketError("CHECKOUT_EXPIRED");
+  const url = safePaystackCheckoutUrl(payment.authorization_url);
+  if (payment.status === "pending" && result.checkoutUsable && url && Date.parse(quote.expires_at) > now.getTime() + Date.now() - startedAt) return { authorizationUrl: url, reference: payment.provider_reference };
+  throw new BasketError("CHECKOUT_VERIFICATION_REQUIRED");
+}
+export async function verifyBasketPayment({ admin, paystack, reference, catalog, now = new Date() }: { admin: SupabaseClient; paystack: Provider; reference: string; catalog?: () => Promise<BasketFixture[]>; now?: Date }): Promise<{ status: string; checkoutUsable?: boolean }> {
   const { data, error } = await admin.from("match_basket_payments").select("*").eq("provider_reference", reference).maybeSingle();
   if (error) return { status: "verification_failed" as const };
   if (!data) return { status: "not_found" as const };
@@ -89,8 +94,12 @@ export async function verifyBasketPayment({ admin, paystack, reference, catalog 
       return { status: "mismatch" as const };
     }
     if (transaction.status !== "success") {
-      const status = ["failed", "abandoned", "reversed"].includes(transaction.status) ? transaction.status : "pending";
-      return { status: await finish(admin, payment.id, status) };
+      // The existing finalizer stores provider expiry as failed and releases its
+      // reservation. Age alone NEVER makes an unresolved transaction terminal.
+      const status = transaction.status === "expired" ? "failed" : ["failed", "abandoned", "reversed"].includes(transaction.status) ? transaction.status : "pending";
+      if (status === "pending" && ["failed", "abandoned", "reversed"].includes(payment.status)) return { status: "verification_failed" };
+      const finalized = await finish(admin, payment.id, status);
+      return { status: finalized, checkoutUsable: finalized === "pending" && ["pending", "ongoing"].includes(transaction.status) && payment.status === "pending" && Date.parse(quote.expires_at) > now.getTime() && Boolean(safePaystackCheckoutUrl(payment.authorization_url)) };
     }
     // Read fixture identities even if kickoff has just passed. No time-expiring
     // entitlement and no rejected payment merely because a match started.
