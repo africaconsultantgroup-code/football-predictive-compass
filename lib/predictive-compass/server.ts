@@ -12,6 +12,7 @@ import {
   parseUpcomingFootballPredictions,
 } from "./schema";
 import { syncLivePredictionProducts, syncUpcomingPredictionProducts } from "../payments/product-sync";
+import { matchPricingV2Enabled } from "../payments/pricing-version";
 
 const DEFAULT_TIMEOUT_MS = 8_000;
 
@@ -133,7 +134,7 @@ export function createFootballCoreClient({
             `api/v1/domains/football/predictions/upcoming?${parameters}`,
           ),
         );
-        if (syncProducts) await syncUpcomingPredictionProducts(predictions).catch(() => undefined);
+        if (syncProducts && !matchPricingV2Enabled()) await syncUpcomingPredictionProducts(predictions).catch(() => undefined);
         return predictions;
       } catch (error) {
         if (error instanceof CoreClientError) throw error;
@@ -175,7 +176,7 @@ export function createFootballCoreClient({
         const matches = footballLiveMatchListSchema.parse(
           await request("api/v1/domains/football/matches/live"),
         );
-        await syncLivePredictionProducts(matches.matches).catch(() => undefined);
+        if (!matchPricingV2Enabled()) await syncLivePredictionProducts(matches.matches).catch(() => undefined);
         return matches;
       } catch (error) {
         if (error instanceof CoreClientError) throw error;

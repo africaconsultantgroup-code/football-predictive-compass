@@ -10,6 +10,8 @@ import type { FootballPrediction } from "../lib/predictive-compass/schema";
 import { getUpcomingFootballPredictions } from "../lib/predictive-compass/server";
 import { createCustomerAuthServerClient } from "../lib/supabase/auth-server";
 import { CheckoutButton } from "./checkout-button";
+import { matchPricingV2Enabled } from "../lib/payments/pricing-version";
+import { SingleMatchCheckout } from "./matches/match-basket";
 import { OfferList, PredictionDisclaimer, PredictionEmptyState } from "./experience-components";
 
 export type PredictionView = FootballPrediction | FootballPredictionPreview;
@@ -59,6 +61,7 @@ export function UpcomingFilters({ active, competition, competitions = [...CUSTOM
 }
 
 export function KickoffSlotOffers({ predictions }: { predictions: PredictionView[] }) {
+  if (matchPricingV2Enabled()) return null;
   const slots = new Map<string, { offer: FootballPredictionPreview["offers"][number]; matches: FootballPredictionPreview[] }>();
   for (const prediction of predictions) {
     if (!("locked" in prediction)) continue;
@@ -105,7 +108,7 @@ export function PredictionPreviewCard({ prediction }: { prediction: FootballPred
     <article id={prediction.match_id ?? prediction.prediction_id} className="prediction-card locked-card">
       <header className="fixture-header"><div><span className="stage-badge prematch">Prematch · Available</span><p>{prediction.competition}</p><h3>{prediction.home_team}<span>vs</span>{prediction.away_team}</h3><time dateTime={prediction.kickoff_at ?? undefined}>{kickoffLabel(prediction.kickoff_at)}</time></div><span className="locked-state">◈ Locked</span></header>
       <div className="locked-preview"><span className="lock-icon" aria-hidden="true">◇</span><div><strong>Prediction available</strong><p>Unlock this stage to view the modeled outcome, probabilities, confidence and key match factors.</p><small>Locked · Match access required</small></div></div>
-      <OfferList offers={prediction.offers} matchLabel={label} stage="Prematch" />
+      {matchPricingV2Enabled() && prediction.match_id ? <SingleMatchCheckout matchId={prediction.match_id} label={label} /> : <OfferList offers={prediction.offers} matchLabel={label} stage="Prematch" />}
       {prediction.match_id ? <Link className="match-detail-link" href={`/matches/${prediction.match_id}`}>View match access <span aria-hidden="true">→</span></Link> : null}
     </article>
   );
@@ -115,7 +118,7 @@ export function PredictionsLoading() { return <div className="loading-state" rol
 
 export async function loadPredictions() {
   try {
-    const [predictions, access, supabase] = await Promise.all([getUpcomingFootballPredictions(), getCustomerAccess(), createCustomerAuthServerClient()]);
+    const [predictions, access, supabase] = await Promise.all([getUpcomingFootballPredictions({ syncProducts: !matchPricingV2Enabled() }), getCustomerAccess(), createCustomerAuthServerClient()]);
     const views = await Promise.all(predictions.map(async (prediction) => {
       const unlocked = await hasPredictionAccess({ access, supabase, matchId: prediction.match_id, stage: "prematch" });
       return unlocked ? prediction : toPredictionPreview(prediction, await getPredictionOffers(supabase, prediction.match_id, "prematch"));

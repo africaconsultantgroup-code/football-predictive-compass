@@ -53,14 +53,14 @@ export function PredictionDisclaimer({ compact = false }: { compact?: boolean })
   );
 }
 
-export function PredictionStageSelector() {
+export function PredictionStageSelector({ pricingV2 = false }: { pricingV2?: boolean } = {}) {
   return (
     <aside className="stage-selector" aria-label="Prediction stages">
       <div className="section-kicker">Prediction stages</div>
       <a className="stage-option prematch" href="#prematch"><span className="stage-symbol">01</span><span><strong>Prematch</strong><small>Before kickoff</small></span><b>View</b></a>
       <a className="stage-option live" href="#live-matches"><span className="stage-symbol">02</span><span><strong>Live</strong><small>During the match</small></span><b>View</b></a>
       <a className="stage-option halftime" href="#live-matches"><span className="stage-symbol">03</span><span><strong>Halftime</strong><small>At half-time</small></span><b>View</b></a>
-      <p className="stage-helper">Each prediction stage is purchased separately because the model receives new information as the match develops.</p>
+      <p className="stage-helper">{pricingV2 ? "One match purchase unlocks every available Premium stage and historical review. Select matches from the same Ghana day for automatic discounts." : "Each prediction stage is purchased separately because the model receives new information as the match develops."}</p>
     </aside>
   );
 }

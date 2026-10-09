@@ -4,14 +4,15 @@ import { formatPredictedOutcome } from "../../lib/predictive-compass/presentatio
 import { formatProductPrice } from "../../lib/payments/format";
 import { CheckoutButton } from "../checkout-button";
 import { OutcomeProbabilityBar } from "./match-components";
+import { SingleMatchCheckout } from "./match-basket";
 
-export function FreeMatchDetail({ free, unlocked, offers, deliverable }: { free: FreePrematchPrediction; unlocked: boolean; offers: PredictionAccessOffer[]; deliverable: boolean }) {
+export function FreeMatchDetail({ free, unlocked, offers, deliverable, pricingV2 = false }: { free: FreePrematchPrediction; unlocked: boolean; offers: PredictionAccessOffer[]; deliverable: boolean; pricingV2?: boolean }) {
   const label = `${free.home_team} vs ${free.away_team}`;
   return <div className="free-detail-grid">
     <FreeForecastCard free={free} />
     <aside className="free-premium-panel"><p className="matches-eyebrow">Premium pre-match</p><h2>{unlocked ? "Premium Intelligence Unlocked" : "Unlock Premium Match Intelligence"}</h2>
       {unlocked ? <p>Your existing match access is active. Your purchased intelligence is shown below when available.</p> : <><p>Premium updates the prediction using the latest match information available closer to kickoff.</p><ul><li>Latest team news and player availability</li><li>Confirmed tactical information</li><li>Updated match conditions</li><li>Deeper market intelligence</li></ul>
-        {deliverable && offers.length ? offers.map(offer => <div className="free-premium-offer" key={offer.productId}><strong>{offer.name}</strong><span>{offer.priceAmount === null ? "Price unavailable" : formatProductPrice(offer.priceAmount, offer.currency)}</span>{offer.priceAmount !== null ? <CheckoutButton offer={offer} stage="Prematch" matchLabel={label} label={offer.scopeType === "match" ? "Unlock Premium" : undefined} /> : null}</div>) : <p role="status">Premium checkout is currently unavailable.</p>}
+        {pricingV2 && deliverable ? <><p>One purchase includes every available Premium stage and historical review.</p><SingleMatchCheckout matchId={free.match_id} label={label} /></> : deliverable && offers.length ? offers.map(offer => <div className="free-premium-offer" key={offer.productId}><strong>{offer.name}</strong><span>{offer.priceAmount === null ? "Price unavailable" : formatProductPrice(offer.priceAmount, offer.currency)}</span>{offer.priceAmount !== null ? <CheckoutButton offer={offer} stage="Prematch" matchLabel={label} label={offer.scopeType === "match" ? "Unlock Premium" : undefined} /> : null}</div>) : <p role="status">Premium checkout is currently unavailable.</p>}
       </>}
     </aside>
   </div>;

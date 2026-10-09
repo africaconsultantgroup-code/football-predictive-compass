@@ -3,6 +3,7 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { accessHasCapability, capabilities, type CustomerAccess } from "./access";
+import { matchPricingV2Enabled } from "../payments/pricing-version";
 
 export type CommercialPredictionStage = "prematch" | "live" | "halftime";
 
@@ -56,6 +57,7 @@ export async function hasPredictionAccess({
 }) {
   if (accessHasCapability(access, overrideCapability(stage))) return true;
   if (!access.customer || !matchId) return false;
+  if (matchPricingV2Enabled() && await ownsPremiumMatch(supabase, access.customer.id, matchId)) return true;
 
   const { data, error } = await supabase
     .from("prediction_access_grants")
@@ -90,12 +92,18 @@ export type PredictionAccessOffer = {
   matchCount: number;
 };
 
+export async function ownsPremiumMatch(supabase: SupabaseClient, userId: string, matchId: string) {
+  const { data, error } = await supabase.from("customer_match_entitlements").select("match_id").eq("user_id", userId).eq("match_id", matchId).maybeSingle();
+  return !error && data?.match_id === matchId;
+}
+
 export async function getPredictionOffers(
   supabase: SupabaseClient,
   matchId: string | null,
   stage: CommercialPredictionStage,
 ): Promise<PredictionAccessOffer[]> {
   if (!matchId) return [];
+  if (matchPricingV2Enabled()) return [];
   const membership = await supabase
     .from("prediction_access_product_matches")
     .select("product_id")
@@ -124,14 +132,20 @@ export async function getActivePredictionGrants(
   userId: string,
   now = new Date(),
 ): Promise<PredictionAccessSummary[]> {
+  const permanent: PredictionAccessSummary[] = [];
+  if (matchPricingV2Enabled()) {
+    const result = await supabase.from("customer_match_entitlements").select("match_id,kickoff_at").eq("user_id", userId);
+    if (result.error) throw new Error("Match ownership unavailable");
+    for (const item of result.data ?? []) permanent.push({ productId: item.match_id, name: "Premium Unlocked · All available stages", stage: "prematch", scopeType: "match", matchCount: 1, expiresAt: null, matches: [{ matchId: item.match_id, kickoffAt: item.kickoff_at }] });
+  }
   const { data, error } = await supabase
     .from("prediction_access_grants")
     .select("expires_at, prediction_access_products!inner(id, name, scope_type, prediction_stage, is_active, prediction_access_product_matches(match_id, kickoff_at))")
     .eq("user_id", userId)
     .eq("prediction_access_products.is_active", true)
     .or(`expires_at.is.null,expires_at.gt.${now.toISOString()}`);
-  if (error || !data) return [];
-  return (data as unknown as Array<{ expires_at: string | null; prediction_access_products: { id: string; name: string; scope_type: "match" | "kickoff_slot"; prediction_stage: CommercialPredictionStage; prediction_access_product_matches: { match_id: string; kickoff_at: string }[] } }>).map((grant) => ({
+  if (error || !data) return permanent;
+  const legacy = (data as unknown as Array<{ expires_at: string | null; prediction_access_products: { id: string; name: string; scope_type: "match" | "kickoff_slot"; prediction_stage: CommercialPredictionStage; prediction_access_product_matches: { match_id: string; kickoff_at: string }[] } }>).map((grant) => ({
     productId: grant.prediction_access_products.id,
     name: grant.prediction_access_products.name,
     stage: grant.prediction_access_products.prediction_stage,
@@ -140,4 +154,5 @@ export async function getActivePredictionGrants(
     matches: grant.prediction_access_products.prediction_access_product_matches.map((match) => ({ matchId: match.match_id, kickoffAt: match.kickoff_at })),
     expiresAt: grant.expires_at,
   }));
+  return [...permanent, ...legacy.filter(grant => !grant.matches.every(match => permanent.some(item => item.productId === match.matchId)))];
 }

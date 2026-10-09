@@ -16,6 +16,7 @@ import { paidPrematchSnapshot, toPrematchReadiness, type PrematchReadiness } fro
 import { footballMatchIdSchema } from "../../../lib/predictive-compass/schema";
 import { CoreClientError, getUpcomingFootballPredictions, requestPrematchFreshness, getPremiumFootballPrediction } from "../../../lib/predictive-compass/server";
 import { createCustomerAuthServerClient } from "../../../lib/supabase/auth-server";
+import { matchPricingV2Enabled } from "../../../lib/payments/pricing-version";
 
 function formatKickoff(value: string | null) {
   if (!value) return "Kickoff time to be confirmed";
@@ -87,6 +88,6 @@ export default async function MatchPage({ params }: { params: Promise<{ matchId:
   return <CustomerShell authenticated={Boolean(access.customer)} theme="matches"><div className="match-page">
     <nav className="match-breadcrumb" aria-label="Breadcrumb"><Link href="/matches">Upcoming Matches</Link><span aria-hidden="true">›</span><span>{label}</span></nav>
     <section className="match-intelligence-header"><span className={unlocked ? "premium-badge" : "matches-summary-badge"}>{unlocked ? "PREMIUM MATCH INTELLIGENCE" : "FREE PRE-MATCH"}</span><h1>{readiness.home_team}<span>vs</span>{readiness.away_team}</h1><p>{readiness.competition} · {formatKickoff(readiness.kickoff_at)}</p><p>{matchStatus}</p>{unlocked ? <div className="premium-access-state"><strong>Premium Intelligence Unlocked</strong>{purchased ? <span>Purchased ✓</span> : <span>Access active</span>}</div> : null}</section>
-    {unlocked ? <PremiumMatchExperience prediction={premium} free={free} updating={["queued", "in_progress"].includes(readiness.refresh_status)} /> : free ? <FreeMatchDetail free={free} unlocked={false} offers={offers} deliverable={readiness.deliverable} /> : null}
+    {unlocked ? <PremiumMatchExperience prediction={premium} free={free} updating={["queued", "in_progress"].includes(readiness.refresh_status)} /> : free ? <FreeMatchDetail free={free} unlocked={false} offers={offers} deliverable={readiness.deliverable} pricingV2={matchPricingV2Enabled()} /> : null}
   </div></CustomerShell>;
 }

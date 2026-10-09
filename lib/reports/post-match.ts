@@ -4,6 +4,11 @@ import { createHash } from "node:crypto";
 import type { FootballPredictionHistoryEntry, FootballScore } from "../predictive-compass/schema";
 import { getLiveFootballPrediction, getLiveFootballPredictionHistory } from "../predictive-compass/server";
 import { getServerSupabaseClient } from "../supabase/server";
+import { allocatedMatchPesewas, type BasketQuote } from "../payments/match-pricing";
+import { matchPricingV2Enabled } from "../payments/pricing-version";
+import { getCustomerAccess } from "../auth/access";
+import { commercialStage, hasPredictionAccess } from "../auth/match-access";
+import { createCustomerAuthServerClient } from "../supabase/auth-server";
 
 export class ReportAccessError extends Error {
   constructor(public code: "not_final" | "unavailable") { super(code); }
@@ -35,7 +40,12 @@ export async function listCustomerMatches(userId:string,now=new Date()){
   const grants=grantResult.data as unknown as Array<{prediction_access_products:{prediction_stage:string;prediction_access_product_matches:{match_id:string;kickoff_at:string}[]};prediction_payments:PaymentSnapshot|PaymentSnapshot[]|null}>;
   const memberships=membershipResult.data as {match_id:string;kickoff_at:string}[];
   const matches=new Map<string,MatchSeed>();
-  for(const membership of memberships)matches.set(membership.match_id,{matchId:membership.match_id,kickoffAt:membership.kickoff_at,purchased:false,purchasedStages:new Set(),amount:null,currency:null});
+  if (matchPricingV2Enabled()) {
+    const owned = await admin.from("customer_match_entitlements").select("match_id,kickoff_at").eq("user_id", userId);
+    if (owned.error) throw new Error("Match ownership unavailable");
+    for (const item of owned.data ?? []) matches.set(item.match_id, { matchId: item.match_id, kickoffAt: item.kickoff_at, purchased: true, purchasedStages: new Set(["prematch", "live", "halftime"]), amount: null, currency: null });
+  }
+  for(const membership of memberships)if(!matches.has(membership.match_id))matches.set(membership.match_id,{matchId:membership.match_id,kickoffAt:membership.kickoff_at,purchased:false,purchasedStages:new Set(),amount:null,currency:null});
   for(const grant of grants)for(const membership of grant.prediction_access_products.prediction_access_product_matches){
     const item=matches.get(membership.match_id)||{matchId:membership.match_id,kickoffAt:membership.kickoff_at,purchased:false,purchasedStages:new Set<string>(),amount:null,currency:null};
     item.purchased=true;
@@ -54,15 +64,34 @@ export async function listCustomerMatches(userId:string,now=new Date()){
 export async function loadPostMatchReport(userId:string,matchId:string,now=new Date()):Promise<PostMatchReport>{
   const [current,timeline]=await Promise.all([getLiveFootballPrediction(matchId),getLiveFootballPredictionHistory(matchId)]);
   if(!isAuthoritativeFinal(current)||!current.current_score)throw new ReportAccessError("not_final");
-  const history=timeline.history.filter((entry):entry is FootballPredictionHistoryEntry=>!("locked" in entry)),finalScore=current.current_score;
+  const admin=getServerSupabaseClient();
+  let permanentPurchase: { amount: number; currency: string; stages: string[] } | null = null;
+  let owned = !matchPricingV2Enabled();
+  if (matchPricingV2Enabled()) {
+    const result = await admin.from("customer_match_entitlements").select("match_id,basket_payment_id,match_basket_payments(match_basket_quotes(fixtures,total_pesewas,match_count,currency))").eq("user_id",userId).eq("match_id",matchId).maybeSingle();
+    if (result.error) throw new ReportAccessError("unavailable");
+    owned = result.data?.match_id === matchId;
+    const basket = result.data?.match_basket_payments as unknown as { match_basket_quotes: Pick<BasketQuote, "fixtures" | "total_pesewas" | "match_count" | "currency"> } | null;
+    if (owned && basket?.match_basket_quotes) permanentPurchase = { amount: allocatedMatchPesewas(basket.match_basket_quotes, matchId) / 100, currency: basket.match_basket_quotes.currency, stages: ["prematch","live","halftime"] };
+  }
+  // Keep free settlement facts, but never embed paid historical snapshots in an
+  // unpaid customer's HTML, PDF or DTO when Pricing V2 is active.
+  const allowedStages = new Set<string>();
+  if (!owned && matchPricingV2Enabled()) {
+    const access = await getCustomerAccess();
+    if (access.customer?.id === userId) {
+      const client = await createCustomerAuthServerClient();
+      for (const stage of ["prematch","live","halftime"] as const) if (await hasPredictionAccess({ access, supabase:client,matchId,stage })) allowedStages.add(stage);
+    }
+  }
+  const history=timeline.history.filter((entry):entry is FootballPredictionHistoryEntry=>!("locked" in entry)&&(owned||allowedStages.has(commercialStage(entry.stage)??""))),finalScore=current.current_score;
   const stages:[StageReview["stage"],FootballPredictionHistoryEntry|null][]=[["PREMATCH",choose(history,"PREMATCH")],["LIVE",choose(history,"LIVE")],["HALFTIME",choose(history,"HALFTIME")]];
   const reviews=stages.map(([stage,snapshot])=>({stage,snapshot,outcomeResult:evaluateOutcome(snapshot?.predicted_outcome,finalScore),exactResult:evaluateExact(snapshot?.predicted_score,finalScore),scoreStrength:snapshot?.predicted_score?100:null,actualRank:snapshot?.predicted_score&&evaluateExact(snapshot.predicted_score,finalScore)==="CORRECT"?1:null,marketResult:"NOT APPLICABLE" as const}));
-  const admin=getServerSupabaseClient();
   const {data:payments}=await admin.from("prediction_payments").select("amount,currency,prediction_access_products!inner(prediction_stage,prediction_access_product_matches!inner(match_id))").eq("user_id",userId).eq("status","successful").eq("prediction_access_products.prediction_access_product_matches.match_id",matchId);
   const paid=payments as unknown as {amount:number;currency:string;prediction_access_products:{prediction_stage:string}}[]|null;
   const outcome=outcomeForScore(finalScore),winner=outcome==="draw"?"a draw":outcome==="home_win"?`${timeline.home_team} winning`:`${timeline.away_team} winning`;
   const available=reviews.filter(review=>review.snapshot);
   const summary=available.length?`Predictive Compass recorded ${available.length} historical prediction stage${available.length===1?"":"s"} for this match. The verified match result was ${timeline.home_team} ${finalScore.home}-${finalScore.away} ${timeline.away_team}, with ${winner}.`:"No historical prediction snapshots are available for this completed match. The verified final result is preserved below.";
   const timestamps=history.map(entry=>entry.generated_at).filter((value):value is string=>Boolean(value));
-  return{reportId:`PCR-${current.kickoff_at?.slice(0,4)||now.getUTCFullYear()}-${createHash("sha256").update(matchId+timestamps.join("|")).digest("hex").slice(0,8).toUpperCase()}`,matchId,competition:timeline.competition,homeTeam:timeline.home_team,awayTeam:timeline.away_team,kickoffAt:timeline.kickoff_at,finalScore,finalStatus:"FINAL",generatedAt:now.toISOString(),purchase:paid?.length?{amount:Number(paid[0].amount),currency:paid[0].currency,stages:[...new Set(paid.map(payment=>payment.prediction_access_products.prediction_stage))]}:null,reviews,snapshotTimestamps:timestamps,summary}
+  return{reportId:`PCR-${current.kickoff_at?.slice(0,4)||now.getUTCFullYear()}-${createHash("sha256").update(matchId+timestamps.join("|")).digest("hex").slice(0,8).toUpperCase()}`,matchId,competition:timeline.competition,homeTeam:timeline.home_team,awayTeam:timeline.away_team,kickoffAt:timeline.kickoff_at,finalScore,finalStatus:"FINAL",generatedAt:now.toISOString(),purchase:permanentPurchase??(paid?.length?{amount:Number(paid[0].amount),currency:paid[0].currency,stages:[...new Set(paid.map(payment=>payment.prediction_access_products.prediction_stage))]}:null),reviews,snapshotTimestamps:timestamps,summary}
 }

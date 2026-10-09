@@ -96,7 +96,7 @@ export function PredictionTimeline({ match }: { match: FootballLiveMatch }) {
               {entries.map((entry, index) => {
                 const minute = formatMatchMinute(entry.minute, null);
                 if ("locked" in entry) {
-                  return <li key={`${entry.generated_at ?? "entry"}-${index}`} className="timeline-entry locked"><span className="timeline-node" /><div><p>{minute ?? formatFootballStage(entry.stage)}</p><strong>◇ Locked</strong><small>Purchase this stage to unlock</small></div></li>;
+                  return <li key={`${entry.generated_at ?? "entry"}-${index}`} className="timeline-entry locked"><span className="timeline-node" /><div><p>{minute ?? formatFootballStage(entry.stage)}</p><strong>◇ Locked</strong><small>Premium match access required</small></div></li>;
                 }
                 const event = formatChangeReason(entry.change_reason);
                 const heading = minute ?? formatFootballStage(entry.stage);
