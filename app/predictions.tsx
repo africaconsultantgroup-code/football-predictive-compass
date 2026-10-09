@@ -109,7 +109,7 @@ export function PredictionPreviewCard({ prediction }: { prediction: FootballPred
     <article id={prediction.match_id ?? prediction.prediction_id} className="prediction-card locked-card">
       <header className="fixture-header"><div><span className="stage-badge prematch">Prematch · Available</span><p>{prediction.competition}</p><h3>{prediction.home_team}<span>vs</span>{prediction.away_team}</h3><time dateTime={prediction.kickoff_at ?? undefined}>{kickoffLabel(prediction.kickoff_at)}</time></div><span className="locked-state">◈ Locked</span></header>
       <div className="locked-preview"><span className="lock-icon" aria-hidden="true">◇</span><div><strong>Prediction available</strong><p>Unlock Premium Match Intelligence to view the modeled outcome, probabilities, confidence and key match factors.</p><small>Locked · Match access required</small></div></div>
-      {prediction.match_id ? <SingleMatchCheckout matchId={prediction.match_id} label={label} /> : <p>Premium purchase currently unavailable</p>}
+      {prediction.match_id ? <SingleMatchCheckout matchId={prediction.match_id} label={label} kickoffAt={prediction.kickoff_at} /> : <p>Premium purchase currently unavailable</p>}
       {prediction.match_id ? <Link className="match-detail-link" href={`/matches/${prediction.match_id}`}>View match access <span aria-hidden="true">→</span></Link> : null}
     </article>
   );

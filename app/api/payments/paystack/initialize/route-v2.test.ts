@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("server-only", () => ({}));
-const mocks = vi.hoisted(() => ({ user: vi.fn(), basket: vi.fn(), legacy: vi.fn() }));
+const mocks = vi.hoisted(() => ({ user: vi.fn(), basket: vi.fn(), legacy: vi.fn(), pending: vi.fn().mockResolvedValue([]) }));
+vi.mock("@/lib/payments/pending-checkout", () => ({ loadPendingMatchCheckouts:mocks.pending }));
 vi.mock("@/lib/auth/session", () => ({ getCurrentUser:mocks.user }));
 vi.mock("@/lib/auth/access", () => ({ getCustomerAccess:vi.fn() }));
 vi.mock("@/lib/auth/match-access", () => ({ commercialStage:vi.fn(),hasPredictionAccess:vi.fn() }));

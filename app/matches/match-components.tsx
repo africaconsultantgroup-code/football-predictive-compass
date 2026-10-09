@@ -3,7 +3,6 @@ import { unavailableFreePrematch, type FreePrematchPrediction } from "../../lib/
 import { formatFootballStage, formatPredictedOutcome, formatProbability } from "../../lib/predictive-compass/presentation";
 import type { FootballPrediction } from "../../lib/predictive-compass/schema";
 import { TeamIdentity } from "../team-identity";
-import { customerFixture } from "../../lib/predictive-compass/fixture";
 import { CUSTOMER_COMPETITIONS, type PredictionView, type UpcomingFilter } from "../predictions";
 import { MatchSelection } from "./match-basket";
 import { MATCH_PRICING_POLICY, formatPesewas } from "../../lib/payments/match-pricing";
@@ -54,7 +53,6 @@ export function FreeOnlyMatchRow({ free, owned = false }: { free: FreePrematchPr
 
 export function MatchRow({ prediction, freePrediction }: { prediction: PredictionView; freePrediction?: FreePrematchPrediction; pricingV2?: boolean }) {
   const locked = "locked" in prediction;
-  const fixture = customerFixture(prediction, { freeAvailable: freePrediction?.status === "available", premiumAvailable: true, owned: !locked });
   const href = prediction.match_id ? `/matches/${prediction.match_id}` : undefined;
   const label = `${prediction.home_team} vs ${prediction.away_team}`;
   const time = prediction.kickoff_at ? new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Africa/Accra" }).format(new Date(prediction.kickoff_at)) : "TBC";
@@ -62,6 +60,9 @@ export function MatchRow({ prediction, freePrediction }: { prediction: Predictio
     <div className="matches-match"><small>{prediction.competition}</small><div className="matches-row-stage">{formatFootballStage(prediction.stage)}{!locked ? <span>Access active</span> : null}</div><TeamIdentity name={prediction.home_team} /><span className="matches-versus">vs</span><TeamIdentity name={prediction.away_team} /></div>
     <div className="matches-kickoff"><span className="matches-mobile-label">Kickoff</span><time dateTime={prediction.kickoff_at ?? undefined}>{time}</time><small>GMT · Ghana time</small></div>
     <FreePredictionSummary prediction={prediction} freePrediction={freePrediction} />
-    <section className="matches-premium" aria-label="Premium options"><div className="matches-premium-option"><h3>Premium Match Intelligence</h3>{!locked ? <strong>Premium Intelligence Unlocked</strong> : <p>{formatPesewas(MATCH_PRICING_POLICY.standardUnit)} · All available stages and historical review.</p>}{fixture.basketEligible && prediction.match_id ? <MatchSelection matchId={prediction.match_id} /> : null}{href ? <Link className="matches-option-link" href={href}>{!locked ? "View Match Intelligence" : "Unlock Premium"} &rarr;</Link> : <p>Match details unavailable</p>}{prediction.stage === "FINAL" ? <p>Completed</p> : null}</div></section>
+    <section className="matches-premium" aria-label="Premium options"><div className="matches-premium-option"><h3>{href ? <Link href={href}>Premium Match Intelligence</Link> : "Premium Match Intelligence"}</h3>{!locked ? <><strong>Premium Intelligence Unlocked</strong>{href ? <Link className="matches-option-link" href={href}>View Match Intelligence &rarr;</Link> : null}</> : <>
+      <p>{formatPesewas(MATCH_PRICING_POLICY.standardUnit)} single-match starting price</p><small>All available stages and historical review.</small>
+      {prediction.match_id && prediction.stage === "PREMATCH" && prediction.kickoff_at ? <MatchSelection matchId={prediction.match_id} kickoffAt={prediction.kickoff_at} label={label} /> : <><button type="button" disabled>Purchase closed</button><p>Purchasing has closed for this match.</p></>}
+    </>}{!href ? <p>Match details unavailable</p> : null}{prediction.stage === "FINAL" ? <p>Completed</p> : null}</div></section>
   </article>;
 }

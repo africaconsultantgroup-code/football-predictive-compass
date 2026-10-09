@@ -10,7 +10,7 @@ export function FreeMatchDetail({ free, unlocked, deliverable }: { free: FreePre
     <FreeForecastCard free={free} />
     <aside className="free-premium-panel"><p className="matches-eyebrow">Premium Match Intelligence</p><h2>{unlocked ? "Premium Intelligence Unlocked" : "Unlock Premium Match Intelligence"}</h2>
       {unlocked ? <p>Your existing match access is active. Your purchased intelligence is shown below when available.</p> : <><p>Premium updates the prediction using the latest match information available closer to kickoff.</p><ul><li>Latest team news and player availability</li><li>Confirmed tactical information</li><li>Updated match conditions</li><li>Deeper market intelligence</li></ul>
-        {deliverable ? <><p>One purchase includes every available Premium stage and historical review.</p><SingleMatchCheckout matchId={free.match_id} label={label} /></> : <p role="status">Premium intelligence being prepared. Checkout is currently unavailable.</p>}
+        {deliverable ? <><p>One purchase includes every available Premium stage and historical review.</p><SingleMatchCheckout matchId={free.match_id} label={label} kickoffAt={free.kickoff_at} /></> : <p role="status">Premium intelligence being prepared. Checkout is currently unavailable.</p>}
       </>}
     </aside>
   </div>;

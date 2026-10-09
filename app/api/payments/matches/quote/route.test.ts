@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("server-only", () => ({}));
-const mocks = vi.hoisted(() => ({ user: vi.fn(), quote: vi.fn() }));
+const mocks = vi.hoisted(() => ({ user: vi.fn(), quote: vi.fn(), pending: vi.fn() }));
+vi.mock("@/lib/payments/pending-checkout", () => ({ loadPendingMatchCheckouts: mocks.pending }));
 vi.mock("@/lib/auth/session", () => ({ getCurrentUser: mocks.user }));
 vi.mock("@/lib/supabase/server", () => ({ getServerSupabaseClient: () => ({}) }));
 vi.mock("@/lib/payments/basket-service", () => ({ calculateMatchBasketPrice: mocks.quote }));
@@ -9,7 +10,7 @@ vi.mock("@/lib/payments/pricing-version", async () => import("../../../../../lib
 import { POST } from "./route";
 const id = `fm_${"a".repeat(32)}`;
 const request = (body: unknown) => new Request("https://example.test/api/payments/matches/quote", { method: "POST", body: JSON.stringify(body) });
-beforeEach(() => { vi.clearAllMocks(); vi.stubEnv("PREDICTIVE_CUSTOMER_PRICING_VERSION", "v2"); mocks.user.mockResolvedValue({ id: "owner", email: "owner@example.test" }); });
+beforeEach(() => { vi.clearAllMocks(); mocks.pending.mockResolvedValue([]); vi.stubEnv("PREDICTIVE_CUSTOMER_PRICING_VERSION", "v2"); mocks.user.mockResolvedValue({ id: "owner", email: "owner@example.test" }); });
 afterEach(() => vi.unstubAllEnvs());
 describe("basket quote authentication and boundary", () => {
   it("returns 401 before querying quotes for anonymous users", async () => {
@@ -27,5 +28,13 @@ describe("basket quote authentication and boundary", () => {
     expect(response.status).toBe(200); expect(response.headers.get("cache-control")).toContain("no-store");
     expect(dto.quote).not.toHaveProperty("user_id"); expect(JSON.stringify(dto)).not.toMatch(/shadow|world_state|probabilit|research|experiment/);
     expect(mocks.quote).toHaveBeenCalledWith(expect.objectContaining({ userId: "owner", matchIds: [id] }));
+  });
+  it("returns the existing customer's checkout before creating another quote", async () => {
+    const pending = { reference: "fpc-basket-existing", authorizationUrl: "https://checkout.paystack.com/existing", matchIds: [id], fixtures: [], totalPesewas: 800 };
+    mocks.pending.mockResolvedValue([pending]);
+    const response = await POST(request({ match_ids: [id] }));
+    expect(await response.json()).toEqual({ pending_checkout: pending });
+    expect(mocks.pending).toHaveBeenCalledWith(expect.anything(), "owner");
+    expect(mocks.quote).not.toHaveBeenCalled(); expect(response.headers.get("cache-control")).toContain("no-store");
   });
 });
