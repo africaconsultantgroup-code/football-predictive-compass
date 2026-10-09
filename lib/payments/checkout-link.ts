@@ -6,6 +6,8 @@ export type PendingMatchCheckout = {
   matchIds: string[];
   fixtures: BasketFixture[];
   totalPesewas: number | null;
+  state?: "active" | "stale" | "verifying" | "expired" | "successful";
+  usableUntil?: string;
 };
 
 export function safePaystackCheckoutUrl(value: unknown): string | null {

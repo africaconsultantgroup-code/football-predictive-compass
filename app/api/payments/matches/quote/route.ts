@@ -1,5 +1,6 @@
 import { getCurrentUser } from "@/lib/auth/session";
-import { calculateMatchBasketPrice } from "@/lib/payments/basket-service";
+import { calculateMatchBasketPrice, verifyBasketPayment } from "@/lib/payments/basket-service";
+import { createPaystackClient } from "@/lib/payments/paystack";
 import { BasketError, matchSelectionSchema } from "@/lib/payments/match-pricing";
 import { matchPricingV2Enabled } from "@/lib/payments/pricing-version";
 import { getServerSupabaseClient } from "@/lib/supabase/server";
@@ -13,7 +14,7 @@ export async function POST(request: Request) {
   if (!parsed.success) return Response.json({ error: "INVALID_SELECTION" }, { status: 400 });
   try {
     const admin = getServerSupabaseClient();
-    const pending = (await loadPendingMatchCheckouts(admin, user.id)).find(item => item.matchIds.some(id => parsed.data.match_ids.includes(id)));
+    const pending = (await loadPendingMatchCheckouts(admin, user.id, { matchIds: parsed.data.match_ids, reconcile: reference => verifyBasketPayment({ admin, paystack: createPaystackClient(), reference }) })).find(item => item.matchIds.some(id => parsed.data.match_ids.includes(id)));
     if (pending) return Response.json({ pending_checkout: pending }, { headers: { "Cache-Control": "private, no-store" } });
     const { user_id: _owner, ...quote } = await calculateMatchBasketPrice({ admin, matchIds: parsed.data.match_ids, userId: user.id });
     void _owner;

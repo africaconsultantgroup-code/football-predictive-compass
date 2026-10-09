@@ -10,8 +10,8 @@ const now = new Date("2026-10-08T12:00:00Z");
 const fixtures: BasketFixture[] = Array.from({ length: 4 }, (_, i) => ({ match_id: `fm_${i.toString(16).padStart(32,"0")}`, kickoff_at: "2026-10-09T18:00:00.000Z", competition: i % 2 ? "UEFA Champions League" : "EPL", home_team: `Home ${i}`, away_team: `Away ${i}` }));
 const quote: BasketQuote = { ...validateBasket(fixtures.map(item => item.match_id), fixtures, new Set(), now), id: "11111111-1111-4111-8111-111111111111", user_id: "customer", expires_at: "2026-10-08T12:10:00Z" };
 const payment: BasketPayment = { id: "payment", user_id: "customer", quote_id: quote.id, provider_reference: "fpc-basket-test", status: "pending", authorization_url: "https://checkout.paystack.com/safe" };
-function setup(options: { ownership?: string[]; quote?: BasketQuote | null; successful?: boolean; rpcError?: string; existing?: BasketPayment } = {}) {
-  const records: Record<string, unknown> = { match_basket_quotes: options.quote === undefined ? quote : options.quote, match_basket_payments: { ...payment, status: options.successful ? "successful" : "pending" }, customer_match_entitlements: (options.ownership ?? []).map(match_id => ({ match_id })) };
+function setup(options: { ownership?: string[]; quote?: BasketQuote | null; successful?: boolean; rpcError?: string; existing?: BasketPayment; storedStatus?: string } = {}) {
+  const records: Record<string, unknown> = { match_basket_quotes: options.quote === undefined ? quote : options.quote, match_basket_payments: { ...payment, status: options.storedStatus ?? (options.successful ? "successful" : "pending") }, customer_match_entitlements: (options.ownership ?? []).map(match_id => ({ match_id })) };
   const writes = vi.fn();
   const query = (table: string) => {
     let byQuote = false;
@@ -31,6 +31,11 @@ function setup(options: { ownership?: string[]; quote?: BasketQuote | null; succ
   return { admin, rpc, writes, paystack, initialize, verify, transaction, catalog: async () => fixtures };
 }
 describe("basket checkout and fulfillment", () => {
+  it("never resurrects a terminal payment when a later provider read is unresolved", async () => {
+    const s = setup({ storedStatus: "failed" }); s.verify.mockResolvedValueOnce({ ...s.transaction, status: "pending" });
+    expect((await verifyBasketPayment({ ...s, reference: payment.provider_reference })).status).toBe("verification_failed");
+    expect(s.rpc).not.toHaveBeenCalled(); expect(s.initialize).not.toHaveBeenCalled();
+  });
   it.each([800,1500,2100,2700,3300,3900,4500,5100,5700,6300].map((total,index)=>[index+1,total]))("sends exact stored total for %i matches", async (count,total) => {
     const catalog = Array.from({length:count},(_,i)=>({...fixtures[0],match_id:`fm_${i.toString(16).padStart(32,"0")}`}));
     const q = {...quote,...validateBasket(catalog.map(f=>f.match_id),catalog,new Set(),now)};
@@ -72,19 +77,22 @@ describe("basket checkout and fulfillment", () => {
   });
   it("resumes the same accepted quote without a second initialization", async () => {
     const s = setup(); s.rpc.mockResolvedValueOnce({ data: payment, error: null });
+    s.verify.mockResolvedValueOnce({ ...s.transaction, status: "pending" });
     expect(await initializeBasketPayment({ ...s, quoteId: quote.id, userId: "customer", email: "a@b.test", callbackOrigin: "https://example.test", now })).toMatchObject({ reference: payment.provider_reference });
     expect(s.initialize).not.toHaveBeenCalled();
   });
-  it("continues a stored pending checkout after quote expiry without another provider call", async () => {
+  it("requires reconciliation for an expired quote even when a stored pending URL exists", async () => {
     const s = setup({ existing: payment });
+    s.verify.mockResolvedValueOnce({ ...s.transaction, status: "pending" });
     const catalog = vi.fn().mockRejectedValue(new Error("Core outage"));
-    expect(await initializeBasketPayment({ ...s, catalog, quoteId: quote.id, userId: "customer", email: "a@b.test", callbackOrigin: "https://example.test", now: new Date("2026-10-10T20:00:00Z") })).toEqual({ authorizationUrl: payment.authorization_url, reference: payment.provider_reference });
-    expect(s.initialize).not.toHaveBeenCalled(); expect(s.rpc).not.toHaveBeenCalled(); expect(catalog).not.toHaveBeenCalled();
+    await expect(initializeBasketPayment({ ...s, catalog, quoteId: quote.id, userId: "customer", email: "a@b.test", callbackOrigin: "https://example.test", now: new Date("2026-10-10T20:00:00Z") })).rejects.toThrow("CHECKOUT_VERIFICATION_REQUIRED");
+    expect(s.initialize).not.toHaveBeenCalled(); expect(s.rpc).toHaveBeenCalledWith("finish_match_basket", expect.objectContaining({ p_status: "pending" })); expect(catalog).not.toHaveBeenCalled();
   });
   it.each([{ ...payment, status: "initialized", authorization_url: null }, { ...payment, authorization_url: "https://checkout.paystack.com.evil.test/unsafe" }, { ...payment, status: "grant_failed" }])("requires verification for unresolved or unsafe existing checkout", async existing => {
     const s = setup({ existing });
+    s.verify.mockResolvedValueOnce({ ...s.transaction, status: "pending" });
     await expect(initializeBasketPayment({ ...s, quoteId: quote.id, userId: "customer", email: "a@b.test", callbackOrigin: "https://example.test", now })).rejects.toThrow("CHECKOUT_VERIFICATION_REQUIRED");
-    expect(s.initialize).not.toHaveBeenCalled(); expect(s.rpc).not.toHaveBeenCalled();
+    expect(s.initialize).not.toHaveBeenCalled(); expect(s.rpc).not.toHaveBeenCalledWith("accept_match_basket", expect.anything());
   });
   it("does not release a reservation after ambiguous initialization timeout", async () => {
     const s = setup(); s.initialize.mockRejectedValueOnce(new Error("timeout"));

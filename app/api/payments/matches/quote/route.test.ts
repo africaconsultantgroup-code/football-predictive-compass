@@ -34,7 +34,7 @@ describe("basket quote authentication and boundary", () => {
     mocks.pending.mockResolvedValue([pending]);
     const response = await POST(request({ match_ids: [id] }));
     expect(await response.json()).toEqual({ pending_checkout: pending });
-    expect(mocks.pending).toHaveBeenCalledWith(expect.anything(), "owner");
+    expect(mocks.pending).toHaveBeenCalledWith(expect.anything(), "owner", expect.objectContaining({ matchIds: [id], reconcile: expect.any(Function) }));
     expect(mocks.quote).not.toHaveBeenCalled(); expect(response.headers.get("cache-control")).toContain("no-store");
   });
 });
