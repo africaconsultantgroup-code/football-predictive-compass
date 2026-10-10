@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { teamIdentityFields } from "../teams/schema";
+import { withTeamIdentities } from "../teams/identity";
 
 export const footballStageSchema = z.enum([
   "PREMATCH",
@@ -41,6 +43,7 @@ export const footballLivePredictionSchema = z
 
 export const footballPredictionSchema = z
   .object({
+    ...teamIdentityFields,
     match_id: footballMatchIdSchema.nullable(),
     prediction_id: z.string().min(1),
     competition: z.string().min(1),
@@ -81,6 +84,7 @@ export type FootballPrematchFreshness = z.infer<typeof footballPrematchFreshness
 
 export const footballLiveMatchSchema = z
   .object({
+    ...teamIdentityFields,
     match_id: footballMatchIdSchema,
     competition: z.string().min(1),
     home_team: z.string().min(1),
@@ -98,6 +102,7 @@ export const footballLiveMatchSchema = z
 
 export const footballLiveMatchPreviewSchema = z
   .object({
+    ...teamIdentityFields,
     match_id: footballMatchIdSchema,
     competition: z.string().min(1),
     home_team: z.string().min(1),
@@ -146,6 +151,7 @@ export const footballCustomerLiveMatchListSchema = z
 
 export const footballMatchPredictionSchema = z
   .object({
+    ...teamIdentityFields,
     match_id: footballMatchIdSchema,
     competition: z.string().min(1),
     home_team: z.string().min(1),
@@ -195,6 +201,7 @@ export const footballLockedHistoryEntrySchema = z.object({
 
 export const footballPredictionHistorySchema = z
   .object({
+    ...teamIdentityFields,
     match_id: footballMatchIdSchema,
     competition: z.string().min(1),
     home_team: z.string().min(1),
@@ -238,5 +245,5 @@ export function parseUpcomingFootballPredictions(
       ? envelope.predictions
       : envelope.data;
 
-  return predictions.map((prediction) => footballPredictionSchema.parse(prediction));
+  return predictions.map((prediction) => footballPredictionSchema.parse(withTeamIdentities(prediction)));
 }

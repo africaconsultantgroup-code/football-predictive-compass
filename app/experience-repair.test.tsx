@@ -75,12 +75,12 @@ describe("customer fixture identity and shared design", () => {
     expect(filterPredictionViews([{ ...identity, competition: "UCL" }], "all", "UEFA Champions League")).toHaveLength(1);
   });
   it("projects explicit display fields without spreading Premium/internal objects", () => {
-    const dto = customerFixture({ ...premium, shadow: "secret", world_state: "secret" } as typeof premium, { freeAvailable: true, premiumAvailable: true, owned: false }, { home: { crest: "https://provider.example/crest.png", shortName: "ARS" } });
-    expect(dto.homeTeamLogo).toBe("https://provider.example/crest.png"); expect(dto.homeTeamShortName).toBe("ARS"); expect(dto.competitionCode).toBe("EPL");
+    const dto = customerFixture({ ...premium, shadow: "secret", world_state: "secret" } as typeof premium, { freeAvailable: true, premiumAvailable: true, owned: false }, { home: { crest: "https://crests.football-data.org/57.png", shortName: "ARS" } });
+    expect(dto.homeTeamLogo).toBe("https://crests.football-data.org/57.png"); expect(dto.homeTeamShortName).toBe("ARS"); expect(dto.competitionCode).toBe("EPL");
     expect(dto.basketEligible).toBe(true); expect(JSON.stringify(dto)).not.toMatch(/secret|probabilities|shadow|world_state|prediction_id/);
   });
   it("renders a supplied crest and initials when absent, without inventing URLs", () => {
-    expect(renderToStaticMarkup(<TeamIdentity name="Arsenal" crest="https://provider.example/crest.png" />)).toContain('src="https://provider.example/crest.png"');
+    expect(renderToStaticMarkup(<TeamIdentity name="Arsenal" crest="https://crests.football-data.org/57.png" />)).toContain('src="https://crests.football-data.org/57.png"');
     const fallback = renderToStaticMarkup(<TeamIdentity name="Sporting CP" />);
     expect(fallback).toContain(">SC<"); expect(fallback).not.toContain("<img");
     expect(renderToStaticMarkup(<TeamIdentity name="Lens" crest="javascript:alert(1)" />)).not.toContain("<img");

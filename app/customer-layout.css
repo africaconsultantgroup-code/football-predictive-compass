@@ -20,6 +20,14 @@
 .matches-theme .owned-teams { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 16px 0; }
 .matches-theme .owned-teams .matches-team { margin: 0; }
 .matches-theme .matches-team img { object-fit: contain; max-width: 100%; }
+.matches-theme .matches-team { display:flex; align-items:center; gap:8px; min-width:0; }
+.matches-theme .matches-team-fallback { display:grid; place-items:center; flex-shrink:0; width:36px; height:36px; font-size:10px; }
+.matches-theme .matches-team-fallback.has-crest { clip-path:none; background:transparent; }
+.matches-theme span.matches-team { display:inline-flex; align-items:center; gap:8px; min-width:0; vertical-align:middle; }
+.matches-theme .team-identity-heading { display:flex; flex-wrap:wrap; align-items:center; gap:12px; }
+.matches-theme .team-identity-heading .matches-team { font-size:inherit; color:inherit; }
+.matches-theme .team-identity-heading .matches-team > span { color:inherit; font-size:inherit; }
+.matches-theme .match-basket-summary li { overflow-wrap:anywhere; }
 .matches-theme .auth-card { width: min(480px,100%); margin: 48px auto; padding: 32px; border: 1px solid var(--line); border-radius: 20px; background: #fff; box-shadow: 0 10px 36px rgba(16,40,80,.06); }
 .matches-theme .auth-card h1 { margin: 12px 0; font-size: 30px; }
 .matches-theme .auth-card > p { color: var(--muted); line-height: 1.7; }

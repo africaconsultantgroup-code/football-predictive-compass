@@ -1,0 +1,906 @@
+{
+  "version": 1,
+  "updatedAt": "2026-10-10",
+  "teams": [
+    {
+      "canonicalName": "Leeds United",
+      "shortName": "Leeds",
+      "footballDataId": null,
+      "apiFootballId": 63,
+      "crestUrl": "https://media.api-sports.io/football/teams/63.png",
+      "fallbackInitials": "LU",
+      "aliases": [
+        "Leeds United",
+        "Leeds"
+      ],
+      "crestSource": "api-football",
+      "alternateCrests": [],
+      "verifiedAt": "2026-10-10",
+      "verification": {
+        "source": "https://media.api-sports.io/football/teams/63.png",
+        "method": "Provider CDN HTTP 200 image; club crest visually reviewed"
+      }
+    },
+    {
+      "canonicalName": "Arsenal",
+      "shortName": "Arsenal",
+      "footballDataId": null,
+      "apiFootballId": 42,
+      "crestUrl": "https://media.api-sports.io/football/teams/42.png",
+      "fallbackInitials": "A",
+      "aliases": [
+        "Arsenal"
+      ],
+      "crestSource": "api-football",
+      "alternateCrests": [],
+      "verifiedAt": "2026-10-10",
+      "verification": {
+        "source": "https://media.api-sports.io/football/teams/42.png",
+        "method": "Provider CDN HTTP 200 image; club crest visually reviewed"
+      }
+    },
+    {
+      "canonicalName": "Chelsea",
+      "shortName": "Chelsea",
+      "footballDataId": null,
+      "apiFootballId": 49,
+      "crestUrl": "https://media.api-sports.io/football/teams/49.png",
+      "fallbackInitials": "C",
+      "aliases": [
+        "Chelsea"
+      ],
+      "crestSource": "api-football",
+      "alternateCrests": [],
+      "verifiedAt": "2026-10-10",
+      "verification": {
+        "source": "https://media.api-sports.io/football/teams/49.png",
+        "method": "Provider CDN HTTP 200 image; club crest visually reviewed"
+      }
+    },
+    {
+      "canonicalName": "AFC Bournemouth",
+      "shortName": "Bournemouth",
+      "footballDataId": null,
+      "apiFootballId": 35,
+      "crestUrl": "https://media.api-sports.io/football/teams/35.png",
+      "fallbackInitials": "AB",
+      "aliases": [
+        "AFC Bournemouth",
+        "Bournemouth"
+      ],
+      "crestSource": "api-football",
+      "alternateCrests": [],
+      "verifiedAt": "2026-10-10",
+      "verification": {
+        "source": "https://media.api-sports.io/football/teams/35.png",
+        "method": "Provider CDN HTTP 200 image; club crest visually reviewed"
+      }
+    },
+    {
+      "canonicalName": "Brighton & Hove Albion",
+      "shortName": "Brighton",
+      "footballDataId": null,
+      "apiFootballId": 51,
+      "crestUrl": "https://media.api-sports.io/football/teams/51.png",
+      "fallbackInitials": "B&",
+      "aliases": [
+        "Brighton & Hove Albion",
+        "Brighton"
+      ],
+      "crestSource": "api-football",
+      "alternateCrests": [],
+      "verifiedAt": "2026-10-10",
+      "verification": {
+        "source": "https://media.api-sports.io/football/teams/51.png",
+        "method": "Provider CDN HTTP 200 image; club crest visually reviewed"
+      }
+    },
+    {
+      "canonicalName": "Brentford",
+      "shortName": "Brentford",
+      "footballDataId": null,
+      "apiFootballId": 55,
+      "crestUrl": "https://media.api-sports.io/football/teams/55.png",
+      "fallbackInitials": "B",
+      "aliases": [
+        "Brentford"
+      ],
+      "crestSource": "api-football",
+      "alternateCrests": [],
+      "verifiedAt": "2026-10-10",
+      "verification": {
+        "source": "https://media.api-sports.io/football/teams/55.png",
+        "method": "Provider CDN HTTP 200 image; club crest visually reviewed"
+      }
+    },
+    {
+      "canonicalName": "Aston Villa",
+      "shortName": "Aston Villa",
+      "footballDataId": null,
+      "apiFootballId": 66,
+      "crestUrl": "https://media.api-sports.io/football/teams/66.png",
+      "fallbackInitials": "AV",
+      "aliases": [
+        "Aston Villa"
+      ],
+      "crestSource": "api-football",
+      "alternateCrests": [],
+      "verifiedAt": "2026-10-10",
+      "verification": {
+        "source": "https://media.api-sports.io/football/teams/66.png",
+        "method": "Provider CDN HTTP 200 image; club crest visually reviewed"
+      }
+    },
+    {
+      "canonicalName": "Sunderland",
+      "shortName": "Sunderland",
+      "footballDataId": null,
+      "apiFootballId": 746,
+      "crestUrl": "https://media.api-sports.io/football/teams/746.png",
+      "fallbackInitials": "S",
+      "aliases": [
+        "Sunderland"
+      ],
+      "crestSource": "api-football",
+      "alternateCrests": [],
+      "verifiedAt": "2026-10-10",
+      "verification": {
+        "source": "https://media.api-sports.io/football/teams/746.png",
+        "method": "Provider CDN HTTP 200 image; club crest visually reviewed"
+      }
+    },
+    {
+      "canonicalName": "Ipswich Town",
+      "shortName": "Ipswich",
+      "footballDataId": null,
+      "apiFootballId": 57,
+      "crestUrl": "https://media.api-sports.io/football/teams/57.png",
+      "fallbackInitials": "IT",
+      "aliases": [
+        "Ipswich Town",
+        "Ipswich"
+      ],
+      "crestSource": "api-football",
+      "alternateCrests": [],
+      "verifiedAt": "2026-10-10",
+      "verification": {
+        "source": "https://media.api-sports.io/football/teams/57.png",
+        "method": "Provider CDN HTTP 200 image; club crest visually reviewed"
+      }
+    },
+    {
+      "canonicalName": "Fulham",
+      "shortName": "Fulham",
+      "footballDataId": null,
+      "apiFootballId": 36,
+      "crestUrl": "https://media.api-sports.io/football/teams/36.png",
+      "fallbackInitials": "F",
+      "aliases": [
+        "Fulham"
+      ],
+      "crestSource": "api-football",
+      "alternateCrests": [],
+      "verifiedAt": "2026-10-10",
+      "verification": {
+        "source": "https://media.api-sports.io/football/teams/36.png",
+        "method": "Provider CDN HTTP 200 image; club crest visually reviewed"
+      }
+    },
+    {
+      "canonicalName": "Manchester United",
+      "shortName": "Man United",
+      "footballDataId": null,
+      "apiFootballId": 33,
+      "crestUrl": "https://media.api-sports.io/football/teams/33.png",
+      "fallbackInitials": "MU",
+      "aliases": [
+        "Manchester United",
+        "Man United",
+        "Man Utd"
+      ],
+      "crestSource": "api-football",
+      "alternateCrests": [],
+      "verifiedAt": "2026-10-10",
+      "verification": {
+        "source": "https://media.api-sports.io/football/teams/33.png",
+        "method": "Provider CDN HTTP 200 image; club crest visually reviewed"
+      }
+    },
+    {
+      "canonicalName": "Tottenham Hotspur",
+      "shortName": "Tottenham",
+      "footballDataId": null,
+      "apiFootballId": 47,
+      "crestUrl": "https://media.api-sports.io/football/teams/47.png",
+      "fallbackInitials": "TH",
+      "aliases": [
+        "Tottenham Hotspur",
+        "Tottenham"
+      ],
+      "crestSource": "api-football",
+      "alternateCrests": [],
+      "verifiedAt": "2026-10-10",
+      "verification": {
+        "source": "https://media.api-sports.io/football/teams/47.png",
+        "method": "Provider CDN HTTP 200 image; club crest visually reviewed"
+      }
+    },
+    {
+      "canonicalName": "Hull City",
+      "shortName": "Hull City",
+      "footballDataId": null,
+      "apiFootballId": 64,
+      "crestUrl": "https://media.api-sports.io/football/teams/64.png",
+      "fallbackInitials": "HC",
+      "aliases": [
+        "Hull City"
+      ],
+      "crestSource": "api-football",
+      "alternateCrests": [],
+      "verifiedAt": "2026-10-10",
+      "verification": {
+        "source": "https://media.api-sports.io/football/teams/64.png",
+        "method": "Provider CDN HTTP 200 image; club crest visually reviewed"
+      }
+    },
+    {
+      "canonicalName": "Everton",
+      "shortName": "Everton",
+      "footballDataId": null,
+      "apiFootballId": 45,
+      "crestUrl": "https://media.api-sports.io/football/teams/45.png",
+      "fallbackInitials": "E",
+      "aliases": [
+        "Everton"
+      ],
+      "crestSource": "api-football",
+      "alternateCrests": [],
+      "verifiedAt": "2026-10-10",
+      "verification": {
+        "source": "https://media.api-sports.io/football/teams/45.png",
+        "method": "Provider CDN HTTP 200 image; club crest visually reviewed"
+      }
+    },
+    {
+      "canonicalName": "Nottingham Forest",
+      "shortName": "Nott'm Forest",
+      "footballDataId": null,
+      "apiFootballId": 65,
+      "crestUrl": "https://media.api-sports.io/football/teams/65.png",
+      "fallbackInitials": "NF",
+      "aliases": [
+        "Nottingham Forest",
+        "Nott'm Forest"
+      ],
+      "crestSource": "api-football",
+      "alternateCrests": [],
+      "verifiedAt": "2026-10-10",
+      "verification": {
+        "source": "https://media.api-sports.io/football/teams/65.png",
+        "method": "Provider CDN HTTP 200 image; club crest visually reviewed"
+      }
+    },
+    {
+      "canonicalName": "Crystal Palace",
+      "shortName": "Crystal Palace",
+      "footballDataId": null,
+      "apiFootballId": 52,
+      "crestUrl": "https://media.api-sports.io/football/teams/52.png",
+      "fallbackInitials": "CP",
+      "aliases": [
+        "Crystal Palace"
+      ],
+      "crestSource": "api-football",
+      "alternateCrests": [],
+      "verifiedAt": "2026-10-10",
+      "verification": {
+        "source": "https://media.api-sports.io/football/teams/52.png",
+        "method": "Provider CDN HTTP 200 image; club crest visually reviewed"
+      }
+    },
+    {
+      "canonicalName": "Liverpool",
+      "shortName": "Liverpool",
+      "footballDataId": null,
+      "apiFootballId": 40,
+      "crestUrl": "https://media.api-sports.io/football/teams/40.png",
+      "fallbackInitials": "L",
+      "aliases": [
+        "Liverpool"
+      ],
+      "crestSource": "api-football",
+      "alternateCrests": [],
+      "verifiedAt": "2026-10-10",
+      "verification": {
+        "source": "https://media.api-sports.io/football/teams/40.png",
+        "method": "Provider CDN HTTP 200 image; club crest visually reviewed"
+      }
+    },
+    {
+      "canonicalName": "Manchester City",
+      "shortName": "Man City",
+      "footballDataId": null,
+      "apiFootballId": 50,
+      "crestUrl": "https://media.api-sports.io/football/teams/50.png",
+      "fallbackInitials": "MC",
+      "aliases": [
+        "Manchester City",
+        "Man City"
+      ],
+      "crestSource": "api-football",
+      "alternateCrests": [],
+      "verifiedAt": "2026-10-10",
+      "verification": {
+        "source": "https://media.api-sports.io/football/teams/50.png",
+        "method": "Provider CDN HTTP 200 image; club crest visually reviewed"
+      }
+    },
+    {
+      "canonicalName": "Coventry City",
+      "shortName": "Coventry",
+      "footballDataId": null,
+      "apiFootballId": 1346,
+      "crestUrl": "https://media.api-sports.io/football/teams/1346.png",
+      "fallbackInitials": "CC",
+      "aliases": [
+        "Coventry City",
+        "Coventry"
+      ],
+      "crestSource": "api-football",
+      "alternateCrests": [],
+      "verifiedAt": "2026-10-10",
+      "verification": {
+        "source": "https://media.api-sports.io/football/teams/1346.png",
+        "method": "Provider CDN HTTP 200 image; club crest visually reviewed"
+      }
+    },
+    {
+      "canonicalName": "Newcastle United",
+      "shortName": "Newcastle",
+      "footballDataId": null,
+      "apiFootballId": 34,
+      "crestUrl": "https://media.api-sports.io/football/teams/34.png",
+      "fallbackInitials": "NU",
+      "aliases": [
+        "Newcastle United",
+        "Newcastle"
+      ],
+      "crestSource": "api-football",
+      "alternateCrests": [],
+      "verifiedAt": "2026-10-10",
+      "verification": {
+        "source": "https://media.api-sports.io/football/teams/34.png",
+        "method": "Provider CDN HTTP 200 image; club crest visually reviewed"
+      }
+    },
+    {
+      "canonicalName": "RC Lens",
+      "shortName": "Lens",
+      "footballDataId": null,
+      "apiFootballId": 116,
+      "crestUrl": "https://media.api-sports.io/football/teams/116.png",
+      "fallbackInitials": "RL",
+      "aliases": [
+        "RC Lens",
+        "Lens"
+      ],
+      "crestSource": "api-football",
+      "alternateCrests": [],
+      "verifiedAt": "2026-10-10",
+      "verification": {
+        "source": "https://media.api-sports.io/football/teams/116.png",
+        "method": "Provider CDN HTTP 200 image; club crest visually reviewed"
+      }
+    },
+    {
+      "canonicalName": "Sporting CP",
+      "shortName": "Sporting CP",
+      "footballDataId": null,
+      "apiFootballId": 228,
+      "crestUrl": "https://media.api-sports.io/football/teams/228.png",
+      "fallbackInitials": "SC",
+      "aliases": [
+        "Sporting CP"
+      ],
+      "crestSource": "api-football",
+      "alternateCrests": [],
+      "verifiedAt": "2026-10-10",
+      "verification": {
+        "source": "https://media.api-sports.io/football/teams/228.png",
+        "method": "Provider CDN HTTP 200 image; club crest visually reviewed"
+      }
+    },
+    {
+      "canonicalName": "Slavia Praha",
+      "shortName": "Slavia Praha",
+      "footballDataId": null,
+      "apiFootballId": 560,
+      "crestUrl": "https://media.api-sports.io/football/teams/560.png",
+      "fallbackInitials": "SP",
+      "aliases": [
+        "Slavia Praha"
+      ],
+      "crestSource": "api-football",
+      "alternateCrests": [],
+      "verifiedAt": "2026-10-10",
+      "verification": {
+        "source": "https://media.api-sports.io/football/teams/560.png",
+        "method": "Provider CDN HTTP 200 image; club crest visually reviewed"
+      }
+    },
+    {
+      "canonicalName": "LOSC Lille",
+      "shortName": "Lille",
+      "footballDataId": null,
+      "apiFootballId": 79,
+      "crestUrl": "https://media.api-sports.io/football/teams/79.png",
+      "fallbackInitials": "LL",
+      "aliases": [
+        "LOSC Lille",
+        "Lille"
+      ],
+      "crestSource": "api-football",
+      "alternateCrests": [],
+      "verifiedAt": "2026-10-10",
+      "verification": {
+        "source": "https://media.api-sports.io/football/teams/79.png",
+        "method": "Provider CDN HTTP 200 image; club crest visually reviewed"
+      }
+    },
+    {
+      "canonicalName": "Viking FK",
+      "shortName": "Viking",
+      "footballDataId": null,
+      "apiFootballId": 759,
+      "crestUrl": "https://media.api-sports.io/football/teams/759.png",
+      "fallbackInitials": "VF",
+      "aliases": [
+        "Viking FK",
+        "Viking"
+      ],
+      "crestSource": "api-football",
+      "alternateCrests": [],
+      "verifiedAt": "2026-10-10",
+      "verification": {
+        "source": "https://media.api-sports.io/football/teams/759.png",
+        "method": "Provider CDN HTTP 200 image; club crest visually reviewed"
+      }
+    },
+    {
+      "canonicalName": "Bayern München",
+      "shortName": "Bayern Munich",
+      "footballDataId": null,
+      "apiFootballId": 157,
+      "crestUrl": "https://media.api-sports.io/football/teams/157.png",
+      "fallbackInitials": "BM",
+      "aliases": [
+        "Bayern München",
+        "Bayern Munich",
+        "FC Bayern München"
+      ],
+      "crestSource": "api-football",
+      "alternateCrests": [],
+      "verifiedAt": "2026-10-10",
+      "verification": {
+        "source": "https://media.api-sports.io/football/teams/157.png",
+        "method": "Provider CDN HTTP 200 image; club crest visually reviewed"
+      }
+    },
+    {
+      "canonicalName": "Villarreal CF",
+      "shortName": "Villarreal",
+      "footballDataId": null,
+      "apiFootballId": 533,
+      "crestUrl": "https://media.api-sports.io/football/teams/533.png",
+      "fallbackInitials": "VC",
+      "aliases": [
+        "Villarreal CF",
+        "Villarreal"
+      ],
+      "crestSource": "api-football",
+      "alternateCrests": [],
+      "verifiedAt": "2026-10-10",
+      "verification": {
+        "source": "https://media.api-sports.io/football/teams/533.png",
+        "method": "Provider CDN HTTP 200 image; club crest visually reviewed"
+      }
+    },
+    {
+      "canonicalName": "Inter Milan",
+      "shortName": "Inter",
+      "footballDataId": null,
+      "apiFootballId": 505,
+      "crestUrl": "https://media.api-sports.io/football/teams/505.png",
+      "fallbackInitials": "IM",
+      "aliases": [
+        "Inter Milan",
+        "Inter",
+        "Internazionale"
+      ],
+      "crestSource": "api-football",
+      "alternateCrests": [],
+      "verifiedAt": "2026-10-10",
+      "verification": {
+        "source": "https://media.api-sports.io/football/teams/505.png",
+        "method": "Provider CDN HTTP 200 image; club crest visually reviewed"
+      }
+    },
+    {
+      "canonicalName": "Club Brugge KV",
+      "shortName": "Club Brugge KV",
+      "footballDataId": null,
+      "apiFootballId": 569,
+      "crestUrl": "https://media.api-sports.io/football/teams/569.png",
+      "fallbackInitials": "CB",
+      "aliases": [
+        "Club Brugge KV"
+      ],
+      "crestSource": "api-football",
+      "alternateCrests": [],
+      "verifiedAt": "2026-10-10",
+      "verification": {
+        "source": "https://media.api-sports.io/football/teams/569.png",
+        "method": "Provider CDN HTTP 200 image; club crest visually reviewed"
+      }
+    },
+    {
+      "canonicalName": "SSC Napoli",
+      "shortName": "Napoli",
+      "footballDataId": null,
+      "apiFootballId": 492,
+      "crestUrl": "https://media.api-sports.io/football/teams/492.png",
+      "fallbackInitials": "SN",
+      "aliases": [
+        "SSC Napoli",
+        "Napoli"
+      ],
+      "crestSource": "api-football",
+      "alternateCrests": [],
+      "verifiedAt": "2026-10-10",
+      "verification": {
+        "source": "https://media.api-sports.io/football/teams/492.png",
+        "method": "Provider CDN HTTP 200 image; club crest visually reviewed"
+      }
+    },
+    {
+      "canonicalName": "Atlético Madrid",
+      "shortName": "Atletico Madrid",
+      "footballDataId": null,
+      "apiFootballId": 530,
+      "crestUrl": "https://media.api-sports.io/football/teams/530.png",
+      "fallbackInitials": "AM",
+      "aliases": [
+        "Atlético Madrid",
+        "Atletico Madrid"
+      ],
+      "crestSource": "api-football",
+      "alternateCrests": [],
+      "verifiedAt": "2026-10-10",
+      "verification": {
+        "source": "https://media.api-sports.io/football/teams/530.png",
+        "method": "Provider CDN HTTP 200 image; club crest visually reviewed"
+      }
+    },
+    {
+      "canonicalName": "Galatasaray",
+      "shortName": "Galatasaray",
+      "footballDataId": null,
+      "apiFootballId": 645,
+      "crestUrl": "https://media.api-sports.io/football/teams/645.png",
+      "fallbackInitials": "G",
+      "aliases": [
+        "Galatasaray"
+      ],
+      "crestSource": "api-football",
+      "alternateCrests": [],
+      "verifiedAt": "2026-10-10",
+      "verification": {
+        "source": "https://media.api-sports.io/football/teams/645.png",
+        "method": "Provider CDN HTTP 200 image; club crest visually reviewed"
+      }
+    },
+    {
+      "canonicalName": "FC Barcelona",
+      "shortName": "Barcelona",
+      "footballDataId": null,
+      "apiFootballId": 529,
+      "crestUrl": "https://media.api-sports.io/football/teams/529.png",
+      "fallbackInitials": "FB",
+      "aliases": [
+        "FC Barcelona",
+        "Barcelona"
+      ],
+      "crestSource": "api-football",
+      "alternateCrests": [],
+      "verifiedAt": "2026-10-10",
+      "verification": {
+        "source": "https://media.api-sports.io/football/teams/529.png",
+        "method": "Provider CDN HTTP 200 image; club crest visually reviewed"
+      }
+    },
+    {
+      "canonicalName": "PSV Eindhoven",
+      "shortName": "PSV Eindhoven",
+      "footballDataId": null,
+      "apiFootballId": 197,
+      "crestUrl": "https://media.api-sports.io/football/teams/197.png",
+      "fallbackInitials": "PE",
+      "aliases": [
+        "PSV Eindhoven"
+      ],
+      "crestSource": "api-football",
+      "alternateCrests": [],
+      "verifiedAt": "2026-10-10",
+      "verification": {
+        "source": "https://media.api-sports.io/football/teams/197.png",
+        "method": "Provider CDN HTTP 200 image; club crest visually reviewed"
+      }
+    },
+    {
+      "canonicalName": "RB Leipzig",
+      "shortName": "RB Leipzig",
+      "footballDataId": null,
+      "apiFootballId": 173,
+      "crestUrl": "https://media.api-sports.io/football/teams/173.png",
+      "fallbackInitials": "RL",
+      "aliases": [
+        "RB Leipzig"
+      ],
+      "crestSource": "api-football",
+      "alternateCrests": [],
+      "verifiedAt": "2026-10-10",
+      "verification": {
+        "source": "https://media.api-sports.io/football/teams/173.png",
+        "method": "Provider CDN HTTP 200 image; club crest visually reviewed"
+      }
+    },
+    {
+      "canonicalName": "Sabah FA",
+      "shortName": null,
+      "footballDataId": null,
+      "apiFootballId": null,
+      "crestUrl": null,
+      "fallbackInitials": "SF",
+      "aliases": [
+        "Sabah FA"
+      ],
+      "crestSource": null,
+      "alternateCrests": [],
+      "unresolvedReason": "No safely verified provider team ID in the customer-accessible contract or controlled registry"
+    },
+    {
+      "canonicalName": "Feyenoord",
+      "shortName": null,
+      "footballDataId": null,
+      "apiFootballId": 209,
+      "crestUrl": "https://media.api-sports.io/football/teams/209.png",
+      "fallbackInitials": "F",
+      "aliases": [
+        "Feyenoord"
+      ],
+      "crestSource": "api-football",
+      "alternateCrests": [],
+      "verifiedAt": "2026-10-10",
+      "verification": {
+        "source": "https://media.api-sports.io/football/teams/209.png",
+        "method": "Provider CDN HTTP 200 image; club crest visually reviewed"
+      }
+    },
+    {
+      "canonicalName": "Como",
+      "shortName": null,
+      "footballDataId": null,
+      "apiFootballId": 895,
+      "crestUrl": "https://media.api-sports.io/football/teams/895.png",
+      "fallbackInitials": "C",
+      "aliases": [
+        "Como"
+      ],
+      "crestSource": "api-football",
+      "alternateCrests": [],
+      "verifiedAt": "2026-10-10",
+      "verification": {
+        "source": "https://media.api-sports.io/football/teams/895.png",
+        "method": "Provider CDN HTTP 200 image; club crest visually reviewed"
+      }
+    },
+    {
+      "canonicalName": "Slovan Bratislava",
+      "shortName": null,
+      "footballDataId": null,
+      "apiFootballId": 656,
+      "crestUrl": "https://media.api-sports.io/football/teams/656.png",
+      "fallbackInitials": "SB",
+      "aliases": [
+        "Slovan Bratislava"
+      ],
+      "crestSource": "api-football",
+      "alternateCrests": [],
+      "verifiedAt": "2026-10-10",
+      "verification": {
+        "source": "https://media.api-sports.io/football/teams/656.png",
+        "method": "Provider CDN HTTP 200 image; club crest visually reviewed"
+      }
+    },
+    {
+      "canonicalName": "VfB Stuttgart",
+      "shortName": null,
+      "footballDataId": null,
+      "apiFootballId": 172,
+      "crestUrl": "https://media.api-sports.io/football/teams/172.png",
+      "fallbackInitials": "VS",
+      "aliases": [
+        "VfB Stuttgart"
+      ],
+      "crestSource": "api-football",
+      "alternateCrests": [],
+      "verifiedAt": "2026-10-10",
+      "verification": {
+        "source": "https://media.api-sports.io/football/teams/172.png",
+        "method": "Provider CDN HTTP 200 image; club crest visually reviewed"
+      }
+    },
+    {
+      "canonicalName": "Fenerbahçe",
+      "shortName": null,
+      "footballDataId": null,
+      "apiFootballId": 611,
+      "crestUrl": "https://media.api-sports.io/football/teams/611.png",
+      "fallbackInitials": "F",
+      "aliases": [
+        "Fenerbahçe"
+      ],
+      "crestSource": "api-football",
+      "alternateCrests": [],
+      "verifiedAt": "2026-10-10",
+      "verification": {
+        "source": "https://media.api-sports.io/football/teams/611.png",
+        "method": "Provider CDN HTTP 200 image; club crest visually reviewed"
+      }
+    },
+    {
+      "canonicalName": "Bodo/Glimt",
+      "shortName": null,
+      "footballDataId": null,
+      "apiFootballId": 327,
+      "crestUrl": "https://media.api-sports.io/football/teams/327.png",
+      "fallbackInitials": "B",
+      "aliases": [
+        "Bodo/Glimt"
+      ],
+      "crestSource": "api-football",
+      "alternateCrests": [],
+      "verifiedAt": "2026-10-10",
+      "verification": {
+        "source": "https://media.api-sports.io/football/teams/327.png",
+        "method": "Provider CDN HTTP 200 image; club crest visually reviewed"
+      }
+    },
+    {
+      "canonicalName": "Borussia Dortmund",
+      "shortName": null,
+      "footballDataId": null,
+      "apiFootballId": 165,
+      "crestUrl": "https://media.api-sports.io/football/teams/165.png",
+      "fallbackInitials": "BD",
+      "aliases": [
+        "Borussia Dortmund"
+      ],
+      "crestSource": "api-football",
+      "alternateCrests": [],
+      "verifiedAt": "2026-10-10",
+      "verification": {
+        "source": "https://media.api-sports.io/football/teams/165.png",
+        "method": "Provider CDN HTTP 200 image; club crest visually reviewed"
+      }
+    },
+    {
+      "canonicalName": "Shakhtar Donetsk",
+      "shortName": null,
+      "footballDataId": null,
+      "apiFootballId": 550,
+      "crestUrl": "https://media.api-sports.io/football/teams/550.png",
+      "fallbackInitials": "SD",
+      "aliases": [
+        "Shakhtar Donetsk"
+      ],
+      "crestSource": "api-football",
+      "alternateCrests": [],
+      "verifiedAt": "2026-10-10",
+      "verification": {
+        "source": "https://media.api-sports.io/football/teams/550.png",
+        "method": "Provider CDN HTTP 200 image; club crest visually reviewed"
+      }
+    },
+    {
+      "canonicalName": "Real Betis",
+      "shortName": null,
+      "footballDataId": null,
+      "apiFootballId": 543,
+      "crestUrl": "https://media.api-sports.io/football/teams/543.png",
+      "fallbackInitials": "RB",
+      "aliases": [
+        "Real Betis"
+      ],
+      "crestSource": "api-football",
+      "alternateCrests": [],
+      "verifiedAt": "2026-10-10",
+      "verification": {
+        "source": "https://media.api-sports.io/football/teams/543.png",
+        "method": "Provider CDN HTTP 200 image; club crest visually reviewed"
+      }
+    },
+    {
+      "canonicalName": "FC Porto",
+      "shortName": null,
+      "footballDataId": null,
+      "apiFootballId": 212,
+      "crestUrl": "https://media.api-sports.io/football/teams/212.png",
+      "fallbackInitials": "FP",
+      "aliases": [
+        "FC Porto"
+      ],
+      "crestSource": "api-football",
+      "alternateCrests": [],
+      "verifiedAt": "2026-10-10",
+      "verification": {
+        "source": "https://media.api-sports.io/football/teams/212.png",
+        "method": "Provider CDN HTTP 200 image; club crest visually reviewed"
+      }
+    },
+    {
+      "canonicalName": "Paris Saint Germain",
+      "shortName": null,
+      "footballDataId": null,
+      "apiFootballId": 85,
+      "crestUrl": "https://media.api-sports.io/football/teams/85.png",
+      "fallbackInitials": "PS",
+      "aliases": [
+        "Paris Saint Germain"
+      ],
+      "crestSource": "api-football",
+      "alternateCrests": [],
+      "verifiedAt": "2026-10-10",
+      "verification": {
+        "source": "https://media.api-sports.io/football/teams/85.png",
+        "method": "Provider CDN HTTP 200 image; club crest visually reviewed"
+      }
+    },
+    {
+      "canonicalName": "AS Roma",
+      "shortName": null,
+      "footballDataId": null,
+      "apiFootballId": 497,
+      "crestUrl": "https://media.api-sports.io/football/teams/497.png",
+      "fallbackInitials": "AR",
+      "aliases": [
+        "AS Roma"
+      ],
+      "crestSource": "api-football",
+      "alternateCrests": [],
+      "verifiedAt": "2026-10-10",
+      "verification": {
+        "source": "https://media.api-sports.io/football/teams/497.png",
+        "method": "Provider CDN HTTP 200 image; club crest visually reviewed"
+      }
+    },
+    {
+      "canonicalName": "Real Madrid",
+      "shortName": null,
+      "footballDataId": null,
+      "apiFootballId": 541,
+      "crestUrl": "https://media.api-sports.io/football/teams/541.png",
+      "fallbackInitials": "RM",
+      "aliases": [
+        "Real Madrid"
+      ],
+      "crestSource": "api-football",
+      "alternateCrests": [],
+      "verifiedAt": "2026-10-10",
+      "verification": {
+        "source": "https://media.api-sports.io/football/teams/541.png",
+        "method": "Provider CDN HTTP 200 image; club crest visually reviewed"
+      }
+    }
+  ]
+}

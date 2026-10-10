@@ -19,7 +19,7 @@ export async function loadPendingMatchCheckouts(client: SupabaseClient, userId: 
   for (const row of baskets.data ?? []) {
     const quote = row.match_basket_quotes as unknown as { fixtures: BasketFixture[]; total_pesewas: number; expires_at: string };
     if (!Array.isArray(quote?.fixtures)) continue;
-    const fixtures = quote.fixtures.map(({ match_id, kickoff_at, competition, home_team, away_team }) => ({ match_id, kickoff_at, competition, home_team, away_team }));
+    const fixtures = quote.fixtures.map(({ match_id, kickoff_at, competition, home_team, away_team, home_team_identity, away_team_identity }) => ({ match_id, kickoff_at, competition, home_team, away_team, ...(home_team_identity ? {home_team_identity} : {}), ...(away_team_identity ? {away_team_identity} : {}) }));
     const matchIds = fixtures.map(item => item.match_id);
     if (options.matchIds && !matchIds.some(id => options.matchIds!.includes(id))) continue;
     const stale = !(Date.parse(quote.expires_at) > (options.now ?? new Date()).getTime());

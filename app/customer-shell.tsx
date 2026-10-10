@@ -3,6 +3,8 @@ import type { ReactNode } from "react";
 
 import { BrandMark } from "./experience-components";
 import { SiteNavigation } from "./site-navigation";
+import { TeamIdentityProvider } from "./team-identity";
+import { cachedTeamIdentities } from "../lib/teams/cache";
 
 export function PageHeader({ eyebrow, title, description, accent = "prematch" }: { eyebrow: string; title: string; description: string; accent?: "prematch" | "live" | "halftime" }) {
   return <header className={`page-header page-header-${accent}`}><p className="section-kicker">{eyebrow}</p><h1>{title}</h1><p>{description}</p></header>;
@@ -17,5 +19,5 @@ export function AppFooter() {
 }
 
 export function CustomerShell({ authenticated, children }: { authenticated: boolean; children: ReactNode; theme?: "matches" }) {
-  return <div className="site-shell matches-theme"><SiteNavigation authenticated={authenticated} /><main className="page-container">{children}</main><AppFooter /></div>;
+  return <TeamIdentityProvider teams={cachedTeamIdentities()}><div className="site-shell matches-theme"><SiteNavigation authenticated={authenticated} /><main className="page-container">{children}</main><AppFooter /></div></TeamIdentityProvider>;
 }

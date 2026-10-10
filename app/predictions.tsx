@@ -1,5 +1,6 @@
 import { connection } from "next/server";
 import Link from "next/link";
+import { TeamIdentity } from "./team-identity";
 
 import { getCustomerAccess } from "../lib/auth/access";
 import { hasPredictionAccess } from "../lib/auth/match-access";
@@ -91,7 +92,7 @@ export function PredictionCard({ prediction }: { prediction: FootballPrediction 
   const factors = prediction.customer_key_factors.slice(0, 3);
   return (
     <article id={prediction.match_id ?? prediction.prediction_id} className="prediction-card unlocked-card">
-      <header className="fixture-header"><div><span className="stage-badge prematch">Prematch · Unlocked</span><p>{prediction.competition}</p><h3>{prediction.home_team}<span>vs</span>{prediction.away_team}</h3><time dateTime={prediction.kickoff_at ?? undefined}>{kickoffLabel(prediction.kickoff_at)}</time></div><span className="unlock-state">✓ Unlocked</span></header>
+      <header className="fixture-header"><div><span className="stage-badge prematch">Prematch · Unlocked</span><p>{prediction.competition}</p><h3><TeamIdentity inline name={prediction.home_team} team={prediction.home_team_identity} /><span>vs</span><TeamIdentity inline name={prediction.away_team} team={prediction.away_team_identity} /></h3><time dateTime={prediction.kickoff_at ?? undefined}>{kickoffLabel(prediction.kickoff_at)}</time></div><span className="unlock-state">✓ Unlocked</span></header>
       <div className="outcome-panel"><p>Most likely outcome · 90 minutes</p><strong>{formatPredictedOutcome(prediction)}</strong>{prediction.predicted_score ? <span>Modeled score · {prediction.predicted_score.home}–{prediction.predicted_score.away}</span> : null}</div>
       <section className="probability-panel" aria-label="Model probabilities"><div className="card-label"><span>Chances / Model Probability</span><small>Higher = stronger likelihood</small></div><ProbabilityBars prediction={prediction} /></section>
       <section className="confidence-panel"><div><span>Confidence</span><strong>{formatReliability(prediction.reliability)}</strong></div><p>Confidence indicates how strongly the available evidence supports the model&apos;s preferred outcome. It is not a guarantee.</p></section>
@@ -107,7 +108,7 @@ export function PredictionPreviewCard({ prediction }: { prediction: FootballPred
   const label = `${prediction.home_team} vs ${prediction.away_team}`;
   return (
     <article id={prediction.match_id ?? prediction.prediction_id} className="prediction-card locked-card">
-      <header className="fixture-header"><div><span className="stage-badge prematch">Prematch · Available</span><p>{prediction.competition}</p><h3>{prediction.home_team}<span>vs</span>{prediction.away_team}</h3><time dateTime={prediction.kickoff_at ?? undefined}>{kickoffLabel(prediction.kickoff_at)}</time></div><span className="locked-state">◈ Locked</span></header>
+      <header className="fixture-header"><div><span className="stage-badge prematch">Prematch · Available</span><p>{prediction.competition}</p><h3><TeamIdentity inline name={prediction.home_team} team={prediction.home_team_identity} /><span>vs</span><TeamIdentity inline name={prediction.away_team} team={prediction.away_team_identity} /></h3><time dateTime={prediction.kickoff_at ?? undefined}>{kickoffLabel(prediction.kickoff_at)}</time></div><span className="locked-state">◈ Locked</span></header>
       <div className="locked-preview"><span className="lock-icon" aria-hidden="true">◇</span><div><strong>Prediction available</strong><p>Unlock Premium Match Intelligence to view the modeled outcome, probabilities, confidence and key match factors.</p><small>Locked · Match access required</small></div></div>
       {prediction.match_id ? <SingleMatchCheckout matchId={prediction.match_id} label={label} kickoffAt={prediction.kickoff_at} /> : <p>Premium purchase currently unavailable</p>}
       {prediction.match_id ? <Link className="match-detail-link" href={`/matches/${prediction.match_id}`}>View match access <span aria-hidden="true">→</span></Link> : null}

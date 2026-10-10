@@ -12,7 +12,7 @@ export async function loadBasketCatalog(now = new Date()): Promise<BasketFixture
   // Read existing customer snapshots only. Never invoke freshness/generation or
   // automatic legacy product synchronization while calculating a price.
   const predictions = await getUpcomingFootballPredictions({ syncProducts: false });
-  return predictions.filter(item => item.match_id && item.stage === "PREMATCH" && item.kickoff_at && Date.parse(item.kickoff_at) > now.getTime()).map(item => ({ match_id: item.match_id!, kickoff_at: new Date(item.kickoff_at!).toISOString(), competition: item.competition, home_team: item.home_team, away_team: item.away_team }));
+  return predictions.filter(item => item.match_id && item.stage === "PREMATCH" && item.kickoff_at && Date.parse(item.kickoff_at) > now.getTime()).map(item => ({ match_id: item.match_id!, kickoff_at: new Date(item.kickoff_at!).toISOString(), competition: item.competition, home_team: item.home_team, away_team: item.away_team, ...(item.home_team_identity ? {home_team_identity:item.home_team_identity} : {}), ...(item.away_team_identity ? {away_team_identity:item.away_team_identity} : {}) }));
 }
 export async function ownedMatchIds(admin: SupabaseClient, userId: string) {
   const { data, error } = await admin.from("customer_match_entitlements").select("match_id").eq("user_id", userId);

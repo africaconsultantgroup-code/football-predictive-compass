@@ -24,7 +24,7 @@ export default async function MyPredictionsPage(){
         <span className="stage-badge prematch">{match.purchasedStages.join(" · ")}</span>
         <p>{match.competition || "Competition being confirmed"}</p>
         <h3 className={match.homeTeam && match.awayTeam ? "sr-only" : undefined}>{fixtureTitle(match.homeTeam, match.awayTeam)}</h3>
-        {match.homeTeam && match.awayTeam ? <div className="owned-teams"><TeamIdentity name={match.homeTeam} /><span>vs</span><TeamIdentity name={match.awayTeam} /></div> : null}
+        {match.homeTeam && match.awayTeam ? <div className="owned-teams"><TeamIdentity name={match.homeTeam} team={match.homeIdentity} /><span>vs</span><TeamIdentity name={match.awayTeam} team={match.awayIdentity} /></div> : null}
         <p>{new Date(match.kickoffAt).toLocaleString("en-GB")} · {match.status}</p>
         <strong>✓ Owned · Premium Intelligence</strong>
         <Link href={activeHref(match.matchId)}>View Match Intelligence →</Link>
@@ -35,7 +35,7 @@ export default async function MyPredictionsPage(){
       {completed.length?<div className="completed-grid">{completed.map(match=><article className="completed-card" key={match.matchId}>
         <p>{match.competition}</p>
         <h3 className={match.homeTeam && match.awayTeam ? "sr-only" : undefined}>{fixtureTitle(match.homeTeam, match.awayTeam)}</h3>
-        <div className="owned-teams"><TeamIdentity name={match.homeTeam} /><span>{match.finalScore?.home} - {match.finalScore?.away}</span><TeamIdentity name={match.awayTeam} /></div>
+        <div className="owned-teams"><TeamIdentity name={match.homeTeam} team={match.homeIdentity} /><span>{match.finalScore?.home} - {match.finalScore?.away}</span><TeamIdentity name={match.awayTeam} team={match.awayIdentity} /></div>
         <time>{new Date(match.kickoffAt).toLocaleString("en-GB")}</time>
         <b>Completed · Prediction Review Available</b>
         {match.amount!==null&&match.currency?<small>Purchased for {formatProductPrice(match.amount,match.currency)}</small>:<small>{match.purchased ? "Owned · Premium Intelligence" : "Free post-match report"}</small>}

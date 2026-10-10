@@ -8,7 +8,7 @@ import type { PredictionAccessOffer } from "../auth/match-access";
 
 export type FootballPredictionPreview = Pick<
   FootballPrediction,
-  "match_id" | "competition" | "home_team" | "away_team" | "kickoff_at" | "stage"
+  "match_id" | "competition" | "home_team" | "away_team" | "kickoff_at" | "stage" | "home_team_identity" | "away_team_identity"
 > & {
   prediction_id: string;
   prediction_available: true;
@@ -29,6 +29,8 @@ export type FootballLiveMatchPreview = Pick<
   | "current_score"
   | "stage"
   | "updated_at"
+  | "home_team_identity"
+  | "away_team_identity"
 > & {
   prediction_available: boolean;
   locked: true;
@@ -41,6 +43,7 @@ export function toPredictionPreview(
 ): FootballPredictionPreview {
   return {
     match_id: prediction.match_id,
+    ...(prediction.home_team_identity ? { home_team_identity: prediction.home_team_identity } : {}), ...(prediction.away_team_identity ? { away_team_identity: prediction.away_team_identity } : {}),
     prediction_id: prediction.prediction_id,
     competition: prediction.competition,
     home_team: prediction.home_team,
@@ -59,6 +62,8 @@ export function toLiveMatchPreview(
 ): FootballLiveMatchPreview {
   return {
     match_id: match.match_id,
+    ...(match.home_team_identity ? { home_team_identity: match.home_team_identity } : {}),
+    ...(match.away_team_identity ? { away_team_identity: match.away_team_identity } : {}),
     competition: match.competition,
     home_team: match.home_team,
     away_team: match.away_team,

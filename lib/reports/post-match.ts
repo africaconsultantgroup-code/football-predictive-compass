@@ -1,4 +1,5 @@
 import "server-only";
+import type { TeamIdentityRecord } from "../teams/identity";
 
 import { createHash } from "node:crypto";
 import type { FootballPredictionHistoryEntry, FootballScore } from "../predictive-compass/schema";
@@ -42,7 +43,7 @@ export async function listCustomerMatches(userId:string,now=new Date()){
   const grants=grantResult.data as unknown as Array<{prediction_access_products:{prediction_stage:string;prediction_access_product_matches:{match_id:string;kickoff_at:string}[]};prediction_payments:PaymentSnapshot|PaymentSnapshot[]|null}>;
   const memberships=membershipResult.data as {match_id:string;kickoff_at:string}[];
   const matches=new Map<string,MatchSeed>();
-  const purchasedIdentities = new Map<string, { homeTeam: string; awayTeam: string; competition: string }>();
+  const purchasedIdentities = new Map<string, { homeTeam: string; awayTeam: string; competition: string; homeIdentity?: TeamIdentityRecord; awayIdentity?: TeamIdentityRecord }>();
   if (matchPricingV2Enabled()) {
     const owned = await admin.from("customer_match_entitlements").select("match_id,kickoff_at,match_basket_payments(match_basket_quotes(fixtures))").eq("user_id", userId);
     if (owned.error) throw new Error("Match ownership unavailable");
@@ -53,7 +54,7 @@ export async function listCustomerMatches(userId:string,now=new Date()){
       if (Array.isArray(fixtures)) {
         const fixture = fixtures.find(value => value && value.match_id === item.match_id && Date.parse(value.kickoff_at) === Date.parse(item.kickoff_at));
         if (fixture && [fixture.home_team, fixture.away_team, fixture.competition].every(value => typeof value === "string" && value.trim())) {
-          purchasedIdentities.set(item.match_id, { homeTeam: fixture.home_team, awayTeam: fixture.away_team, competition: canonicalCompetition(fixture.competition) });
+          purchasedIdentities.set(item.match_id, { homeTeam: fixture.home_team, awayTeam: fixture.away_team, competition: canonicalCompetition(fixture.competition), ...(fixture.home_team_identity ? {homeIdentity:fixture.home_team_identity} : {}), ...(fixture.away_team_identity ? {awayIdentity:fixture.away_team_identity} : {}) });
         }
       }
     }
@@ -69,8 +70,8 @@ export async function listCustomerMatches(userId:string,now=new Date()){
   }
   const unresolved: MatchSeed[] = [];
   const resolved=await Promise.all([...matches.values()].map(async item=>{
-    try{const current=await getLiveFootballPrediction(item.matchId);return{...item,purchasedStages:[...item.purchasedStages],competition:current.competition,homeTeam:current.home_team,awayTeam:current.away_team,status:current.status,isFinal:isAuthoritativeFinal(current),finalScore:current.current_score}}
-    catch{unresolved.push(item);return{...item,purchasedStages:[...item.purchasedStages],competition:"",homeTeam:"",awayTeam:"",status:"Intelligence being prepared",isFinal:false,finalScore:null}}
+    try{const current=await getLiveFootballPrediction(item.matchId);return{...item,purchasedStages:[...item.purchasedStages],competition:current.competition,homeTeam:current.home_team,awayTeam:current.away_team,homeIdentity:current.home_team_identity,awayIdentity:current.away_team_identity,status:current.status,isFinal:isAuthoritativeFinal(current),finalScore:current.current_score}}
+    catch{unresolved.push(item);return{...item,purchasedStages:[...item.purchasedStages],competition:"",homeTeam:"",awayTeam:"",homeIdentity:undefined as TeamIdentityRecord | undefined,awayIdentity:undefined as TeamIdentityRecord | undefined,status:"Intelligence being prepared",isFinal:false,finalScore:null}}
   }));
   if (unresolved.length) {
     const identities = unresolved.some(item => !purchasedIdentities.has(item.matchId)) ? await loadFixtureIdentities() : new Map();

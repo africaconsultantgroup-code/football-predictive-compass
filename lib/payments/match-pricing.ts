@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { TeamIdentityRecord } from "../teams/identity";
 
 // Integer pesewas throughout. Change policy here, never in a checkout component.
 export const MATCH_PRICING_POLICY = {
@@ -11,7 +12,7 @@ export const MATCH_PRICING_POLICY = {
 
 export const matchSelectionSchema = z.object({ match_ids: z.array(z.string().regex(/^fm_[a-f0-9]{32}$/)).min(1).max(10) }).strict();
 export const basketCheckoutSchema = z.object({ quote_id: z.string().uuid() }).strict();
-export type BasketFixture = { match_id: string; kickoff_at: string; competition: string; home_team: string; away_team: string };
+export type BasketFixture = { match_id: string; kickoff_at: string; competition: string; home_team: string; away_team: string; home_team_identity?: TeamIdentityRecord; away_team_identity?: TeamIdentityRecord };
 // total_pesewas / match_count stores the exact effective price as a rational.
 // A fractional pesewa is never rounded into a charge; unit is null in that case.
 export type BasketPrice = { policy_version: string; currency: "GHS"; match_count: number; unit_pesewas: number | null; regular_pesewas: number; discount_pesewas: number; total_pesewas: number; tier: number };
