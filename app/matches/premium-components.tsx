@@ -13,7 +13,7 @@ function outcomeLabel(outcome: "home_win" | "draw" | "away_win", prediction: Pre
 export function PremiumForecastHero({ prediction, updating = false }: { prediction: PremiumCustomerPrediction | null; updating?: boolean }) {
   const forecast = prediction?.premium_intelligence.primary_forecast;
   return <section className="premium-forecast-hero" aria-label="Premium forecast"><div><span className="premium-badge">PREMIUM MATCH INTELLIGENCE</span><p>Most Likely Outcome</p>
-    {forecast && prediction ? <><h2>{outcomeLabel(forecast.most_likely_outcome, prediction)}</h2><strong className="premium-main-probability">{forecast.probabilities[forecast.most_likely_outcome]}<span>%</span></strong><OutcomeProbabilityBar probabilities={forecast.probabilities} /></> : <div role="status"><h2>Premium forecast is being prepared.</h2><p>Your premium access remains active. No new purchase is required.</p></div>}
+    {forecast && prediction ? <><h2>{outcomeLabel(forecast.most_likely_outcome, prediction)}</h2><strong className="premium-main-probability">{forecast.probabilities[forecast.most_likely_outcome]}<span>%</span></strong><OutcomeProbabilityBar probabilities={forecast.probabilities} teamNames={{ home: prediction.home_team, away: prediction.away_team }} /></> : <div role="status"><h2>Premium forecast is being prepared.</h2><p>Your premium access remains active. No new purchase is required.</p></div>}
     {updating ? <small role="status">A match-information check is underway.</small> : null}
     <small>Regulation time · 90 minutes. Probabilities are possibilities, not guarantees.</small></div><span className="premium-compass-mark" aria-hidden="true">✧</span></section>;
 }
@@ -40,19 +40,19 @@ export function IntelligenceReasonList({ intelligence }: SectionProps) {
 
 export function RecommendationStrength({ intelligence }: SectionProps) {
   const strength = intelligence?.recommendation_strength;
-  return <section className="premium-panel"><h2>Recommendation Strength</h2>{strength && strength.label !== "Unavailable" ? <><p>{strength.label}{strength.score !== null ? ` · ${strength.score}/100` : ""}</p><small>Recommendation strength is not certainty.</small></> : <p>Recommendation strength is unavailable for this forecast.</p>}</section>;
+  return <section className="premium-panel"><h2>Recommendation Strength</h2>{strength && strength.label !== "Unavailable" ? <><p>Recommendation: {strength.label}{strength.score !== null ? ` · ${strength.score}/100` : ""}</p><small>Recommendation strength is not certainty.</small></> : <p>Recommendation strength is unavailable for this forecast.</p>}</section>;
 }
 
 export function ScoreForecastCard({ prediction }: { prediction: PremiumCustomerPrediction | null }) {
   const intelligence = prediction?.premium_intelligence;
   const score = intelligence?.availability.score_forecast === "available" && intelligence.score_forecast.status === "available" ? intelligence.score_forecast : null;
-  return <section className="premium-panel"><h2>Most Likely Score</h2>{score?.most_likely_score && prediction ? <><p>{prediction.home_team} {score.most_likely_score.home}–{score.most_likely_score.away} {prediction.away_team}</p>{score.score_probability !== null ? <p>Exact-score probability: {score.score_probability}%</p> : null}{score.alternative_scorelines.length ? <p>Alternative scorelines: {score.alternative_scorelines.map(s => `${s.home}–${s.away}`).join(", ")}</p> : null}</> : <p>Score forecast is unavailable for this match.</p>}</section>;
+  return <section className="premium-panel"><h2>Score Forecast</h2>{score?.most_likely_score && prediction ? <><p>{prediction.home_team} {score.most_likely_score.home}–{score.most_likely_score.away} {prediction.away_team}</p>{score.score_probability !== null ? <p>Exact Score Probability: {score.score_probability}%</p> : <p>Exact Score Probability: unavailable for this forecast.</p>}{score.alternative_scorelines.length ? <p>Alternative scorelines: {score.alternative_scorelines.map(s => `${s.home}–${s.away}`).join(", ")}</p> : null}</> : <><p>Score forecast is unavailable for this match.</p><p>Exact Score Probability: unavailable for this forecast.</p></>}</section>;
 }
 
 export function ForecastComparison({ prediction }: { prediction: PremiumCustomerPrediction | null }) {
   const intelligence = prediction?.premium_intelligence;
   const change = intelligence?.forecast_change;
-  if (!prediction || intelligence?.availability.forecast_change !== "available" || !change?.available) return null;
+  if (!prediction || intelligence?.availability.forecast_change !== "available" || !change?.available) return <section className="premium-panel premium-unavailable"><h2>Forecast Change</h2><p>Forecast change is unavailable for this match. No comparison has been supplied.</p></section>;
   return <section className="premium-panel premium-comparison"><h2>Forecast Change</h2><div className="premium-comparison-views"><div><span>FREE FORECAST</span><h3>{outcomeLabel(change.free_leading_outcome!, prediction)}</h3><strong>{change.free_probability}%</strong></div><span className="premium-comparison-arrow" aria-hidden="true">→</span><div><span>PREMIUM FORECAST</span><h3>{outcomeLabel(change.premium_leading_outcome!, prediction)}</h3><strong>{change.premium_probability}%</strong></div></div><p>{change.probability_point_change! > 0 ? "+" : ""}{change.probability_point_change} percentage points</p><p>{change.leading_outcome_changed ? "Most likely outcome changed" : "Most likely outcome unchanged"}</p>{change.reasons.map((reason, index) => <p key={index}>{reason}</p>)}<small>A probability change does not establish which forecast will be more accurate.</small></section>;
 }
 

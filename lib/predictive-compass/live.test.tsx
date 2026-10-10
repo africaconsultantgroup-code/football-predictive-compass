@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 vi.mock("server-only", () => ({}));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
 
-import LiveMatches, { LiveMatchCard, ownedMatchStage } from "../../app/live-matches";
+import LiveMatches, { LiveMatchCard, OwnedMatchLifecycle, ownedMatchStage } from "../../app/live-matches";
 import { createLiveListHandler, createLiveMatchHandler } from "./live-routes";
 import {
   chronologicalHistory,
@@ -290,6 +290,14 @@ describe("live customer presentation", () => {
 
 
 describe("one owned-match intelligence hub", () => {
+  it.each(["FIRST_HALF_LIVE", "HALFTIME", "SECOND_HALF_LIVE", "FINAL"] as const)("retains stored Premium alongside %s lifecycle intelligence",stage=>{
+    const current=liveMatch(stage);
+    const html=renderToStaticMarkup(<OwnedMatchLifecycle current={current} matchId={matchId}><p>Stored Premium DTO sections</p></OwnedMatchLifecycle>);
+    expect(html).toContain("Stored Premium DTO sections");expect(html).toContain("Match lifecycle / history");
+    expect(html).toContain("View Prediction Timeline");expect(html).toContain("Final historical review");
+    expect(html).toContain(stage==="FINAL"?"Core reports the match as final":"Final historical review is unavailable");
+    expect(html).not.toContain("Add to Basket");
+  });
   it.each(["FIRST_HALF_LIVE", "HALFTIME", "SECOND_HALF_LIVE", "FINAL"] as const)("selects only the entitled matching %s snapshot", stage => {
     const current = liveMatch(stage);
     expect(ownedMatchStage([{ ...current, match_id: `fm_${"b".repeat(32)}` }, current], matchId)).toBe(current);

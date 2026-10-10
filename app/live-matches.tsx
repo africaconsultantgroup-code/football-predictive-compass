@@ -44,7 +44,7 @@ export function ownedMatchStage(matches: FootballLiveMatchView[], matchId: strin
   return matches.find(match => match.match_id === matchId && match.stage !== "PREMATCH" && !("locked" in match));
 }
 
-export function PredictionTimeline({ match }: { match: FootballLiveMatch }) {
+export function PredictionTimeline({ match }: { match: Pick<FootballLiveMatch, "match_id" | "home_team" | "away_team"> }) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [history, setHistory] = useState<FootballPredictionHistory | null>(null);
@@ -223,7 +223,19 @@ export function LiveMatchCard({ match }: { match: FootballLiveMatchView }) {
   );
 }
 
-export default function LiveMatches({ stage = "all", compact = false, embeddedHeading = true, matchId, children }: { matchId?: string; children?: ReactNode; stage?: "all" | "live" | "halftime"; compact?: boolean; embeddedHeading?: boolean } = {}) {
+export function OwnedMatchLifecycle({current,matchId,identity,children,updateDelayed=false}:{current?:FootballLiveMatchView;matchId:string;identity?:{home_team:string;away_team:string};children?:ReactNode;updateDelayed?:boolean}) {
+    return <section className="owned-match-lifecycle" aria-label="Owned match intelligence">
+      {updateDelayed ? <p role="status">Match update temporarily delayed. Your access remains active.</p> : null}
+      {current?.stage === "FINAL" ? <h2>Historical pre-match forecast</h2> : null}
+      {children}
+      <h2>Match lifecycle / history</h2>
+      {current ? <><h3>{current.stage === "HALFTIME" ? "Second-Half Intelligence" : current.stage === "FINAL" ? "Final Match Intelligence" : "Live Match Intelligence"}</h3><LiveMatchCard match={current} /></> : <><p role="status">Live lifecycle intelligence is unavailable for this match at present. Any supplied Premium forecast remains above.</p>{identity ? <PredictionTimeline match={{ match_id: matchId, ...identity }} /> : <p>Match history is unavailable until team details are supplied.</p>}</>}
+      <p>One match purchase includes every supported intelligence stage. No additional stage purchase is required.</p>
+      <section aria-label="Final historical review"><h2>Final historical review</h2>{current?.stage === "FINAL" ? <p>Core reports the match as final. Open the historical review for the available report.</p> : <p role="status">Final historical review is unavailable until Core confirms the official final result.</p>}<Link className="matches-free-link" href={`/my-predictions/${matchId}/report`}>View historical review</Link></section>
+    </section>;
+}
+
+export default function LiveMatches({ stage = "all", compact = false, embeddedHeading = true, matchId, children, identity }: { matchId?: string; children?: ReactNode; identity?: { home_team: string; away_team: string }; stage?: "all" | "live" | "halftime"; compact?: boolean; embeddedHeading?: boolean } = {}) {
   const router = useRouter();
   const [state, dispatch] = useReducer(liveMatchesReducer, initialLiveMatchesState);
   const matchesRef = useRef(state.matches);
@@ -280,12 +292,7 @@ export default function LiveMatches({ stage = "all", compact = false, embeddedHe
   const filteredMatches = state.matches.filter((match) => (!matchId || match.match_id === matchId) && (stage === "all" ? true : stage === "halftime" ? match.stage === "HALFTIME" : match.stage === "FIRST_HALF_LIVE" || match.stage === "SECOND_HALF_LIVE"));
   if (matchId) {
     const current = ownedMatchStage(filteredMatches, matchId);
-    return <section className="owned-match-lifecycle" aria-label="Owned match intelligence">
-      {state.updateDelayed ? <p role="status">Match update temporarily delayed. Your access remains active.</p> : null}
-      {current ? <><h2>{current.stage === "HALFTIME" ? "Second-Half Intelligence" : current.stage === "FINAL" ? "Final Match Intelligence" : "Live Match Intelligence"}</h2><LiveMatchCard match={current} /></> : children}
-      <p>One match purchase includes every supported intelligence stage. No additional stage purchase is required.</p>
-      <Link className="matches-free-link" href={`/my-predictions/${matchId}/report`}>View historical review</Link>
-    </section>;
+    return <OwnedMatchLifecycle current={current} matchId={matchId} identity={identity} updateDelayed={state.updateDelayed}>{children}</OwnedMatchLifecycle>;
   }
   const visibleMatches = compact ? filteredMatches.slice(0, 3) : filteredMatches;
   const emptyTitle = stage === "halftime" ? "No matches are currently at halftime." : "No matches are live right now.";
