@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("server-only", () => ({}));
-const mocks = vi.hoisted(() => ({ user: vi.fn(), basket: vi.fn(), legacy: vi.fn(), pending: vi.fn().mockResolvedValue([]) }));
+const mocks = vi.hoisted(() => ({ user: vi.fn(), basket: vi.fn(), legacy: vi.fn(), pending: vi.fn().mockResolvedValue([]), access: vi.fn() }));
 vi.mock("@/lib/payments/pending-checkout", () => ({ loadPendingMatchCheckouts:mocks.pending }));
 vi.mock("@/lib/auth/session", () => ({ getCurrentUser:mocks.user }));
-vi.mock("@/lib/auth/access", () => ({ getCustomerAccess:vi.fn() }));
+vi.mock("@/lib/auth/access", () => ({ getCustomerAccess:mocks.access }));
 vi.mock("@/lib/auth/match-access", () => ({ commercialStage:vi.fn(),hasPredictionAccess:vi.fn() }));
 vi.mock("@/lib/payments/checkout", () => ({ parseCheckoutRequest:vi.fn() }));
 vi.mock("@/lib/payments/service", () => ({ initializePredictionPayment:mocks.legacy }));
@@ -21,6 +21,12 @@ const request=(body:unknown)=>new Request("https://example.test/api/payments/pay
 beforeEach(()=>{vi.clearAllMocks();vi.stubEnv("PREDICTIVE_CUSTOMER_PRICING_VERSION","v2");mocks.user.mockResolvedValue({id:"owner",email:"owner@example.test"});});
 afterEach(()=>vi.unstubAllEnvs());
 describe("V2 initialization route",()=>{
+  it("prevents owner Paystack initialization before any basket payment",async()=>{
+    mocks.access.mockResolvedValueOnce({owner:true});
+    const response=await POST(request({quote_id:id}));
+    expect(response.status).toBe(409);expect(await response.json()).toEqual({error:"PREMIUM_ALREADY_UNLOCKED"});
+    expect(mocks.basket).not.toHaveBeenCalled();expect(mocks.legacy).not.toHaveBeenCalled();
+  });
   it("rejects unauthenticated checkout before accessing Paystack",async()=>{mocks.user.mockResolvedValue(null);expect((await POST(request({quote_id:id}))).status).toBe(401);expect(mocks.basket).not.toHaveBeenCalled();});
   it("disables old stage-specific checkout and browser amounts while V2 is active",async()=>{for(const body of [{product_id:id},{quote_id:id,amount:1},{quote_id:id,user_id:"victim"}])expect((await POST(request(body))).status).toBe(400);expect(mocks.basket).not.toHaveBeenCalled();expect(mocks.legacy).not.toHaveBeenCalled();});
   it("binds checkout to the authenticated customer and accepted quote",async()=>{mocks.basket.mockResolvedValue({authorizationUrl:"https://checkout.paystack.com/safe",reference:"fpc-basket-test"});const response=await POST(request({quote_id:id}));expect(response.status).toBe(200);expect(response.headers.get("cache-control")).toBe("no-store");expect(mocks.basket).toHaveBeenCalledWith(expect.objectContaining({quoteId:id,userId:"owner",email:"owner@example.test"}));expect(mocks.legacy).not.toHaveBeenCalled();});

@@ -16,6 +16,9 @@ import { loadPendingMatchCheckouts } from "@/lib/payments/pending-checkout";
 export async function POST(request: Request) {
   const user = await getCurrentUser();
   if (!user?.email) return Response.json({ error: "AUTHENTICATION_REQUIRED" }, { status: 401 });
+  try {
+    if ((await getCustomerAccess())?.owner) return Response.json({ error: "PREMIUM_ALREADY_UNLOCKED" }, { status: 409, headers: { "Cache-Control": "private, no-store" } });
+  } catch { return Response.json({ error: "ACCESS_CHECK_UNAVAILABLE" }, { status: 503, headers: { "Cache-Control": "no-store" } }); }
   const body = await request.json().catch(() => null);
   if (matchPricingV2Enabled()) {
     const selected = basketCheckoutSchema.safeParse(body);

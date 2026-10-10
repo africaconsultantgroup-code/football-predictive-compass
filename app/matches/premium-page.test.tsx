@@ -37,6 +37,13 @@ beforeEach(() => {
 afterEach(() => vi.useRealTimers());
 
 describe("Actual match page premium branches", () => {
+  it("opens owner intelligence without a purchase or checkout", async () => {
+    mocks.access.mockResolvedValue({customer:{id:"owner"},owner:true,capabilities:new Set(["football.prematch.full"])});
+    const markup=await html();
+    expect(markup).toContain("Premium Unlocked");expect(markup).toContain("Compass Pick");expect(markup).toContain("58%");
+    expect(markup).not.toContain("Add to Basket");expect(markup).not.toContain("Continue to Payment");expect(markup).not.toContain("Purchased ✓");
+    expect(mocks.purchase).not.toHaveBeenCalled();expect(mocks.offers).not.toHaveBeenCalled();
+  });
   it("keeps active access and Free when the approved Premium contract cannot be read", async () => {
     mocks.premium.mockRejectedValue(new CoreClientError("malformed"));
     const markup = await html();

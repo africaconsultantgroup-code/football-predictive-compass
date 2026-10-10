@@ -22,12 +22,14 @@ export async function MatchesDashboard({ filter, competition }: { filter: Upcomi
   const rows: (PredictionView | FreePrematchPrediction)[] = [...predictions, ...freePredictions.filter(item => !premiumIds.has(item.match_id))];
   const visible = filterPredictionViews(sortPredictionViews(rows), filter, selected);
   const freeOwnership = new Map<string, boolean>();
+  let owner = false;
   let pendingCheckouts: PendingMatchCheckout[] = [];
   const freeOnly = visible.filter((item): item is FreePrematchPrediction => "tier" in item);
   if (rows.length) {
     try {
       const [access, supabase] = await Promise.all([getCustomerAccess(), createCustomerAuthServerClient()]);
-      if (access.customer) pendingCheckouts = await loadPendingMatchCheckouts(supabase, access.customer.id).catch(() => []);
+      owner = access.owner === true;
+      if (access.customer && !owner) pendingCheckouts = await loadPendingMatchCheckouts(supabase, access.customer.id).catch(() => []);
       await Promise.all(freeOnly.map(async item => {
         try { freeOwnership.set(item.match_id, await hasPredictionAccess({ access, supabase, matchId: item.match_id, stage: "prematch" })); }
         catch { reportInventory("access", "ACCESS_CHECK_FAILED"); }
@@ -49,12 +51,12 @@ export async function MatchesDashboard({ filter, competition }: { filter: Upcomi
     {(failed || freeResult.failed) && !visible.length ? <div className="matches-empty" role="alert"><h2>Match service temporarily unavailable</h2><p>Please try again shortly.</p><InventoryRetry /></div> : !visible.length ? <div className="matches-empty"><h2>{rows.length ? "No matches in this view" : "No upcoming matches currently available"}</h2><p>{rows.length ? "Try another date or competition." : "New fixtures will appear when the next schedule is available."}</p></div> : <div className="matches-fixtures">
       <div className="matches-columns" aria-hidden="true"><span>Match</span><span>Kickoff</span><span>Free Prediction</span><span>Premium Options</span></div>
       {[...groups].map(([date, fixtures]) => <section key={date} aria-label={`${date} fixtures`}><div className="matches-date-heading"><h2>{date}</h2><span>{fixtures.length} {fixtures.length === 1 ? "match" : "matches"}</span></div><div className="matches-rows">{fixtures.map(prediction => {
-        if ("tier" in prediction) return <FreeOnlyMatchRow free={prediction} owned={freeOwnership.get(prediction.match_id)} key={prediction.match_id} />;
+        if ("tier" in prediction) return <FreeOnlyMatchRow owner={owner} free={prediction} owned={freeOwnership.get(prediction.match_id)} key={prediction.match_id} />;
         const free = prediction.match_id ? freeFor.get(prediction.match_id) : undefined;
-        return <MatchRow pricingV2 prediction={prediction} freePrediction={free && prediction.match_id && sameFreeFixture(free, { ...prediction, match_id: prediction.match_id }) ? free : undefined} key={prediction.prediction_id} />;
+        return <MatchRow owner={owner} pricingV2 prediction={prediction} freePrediction={free && prediction.match_id && sameFreeFixture(free, { ...prediction, match_id: prediction.match_id }) ? free : undefined} key={prediction.prediction_id} />;
       })}</div></section>)}
     </div>}
     <p className="matches-disclaimer">Probabilities describe possible outcomes, not guarantees. All kickoff times are shown in Ghana time (GMT).</p>
   </div>;
-  return <MatchBasket choices={choices}>{content}</MatchBasket>;
+  return owner ? content : <MatchBasket choices={choices}>{content}</MatchBasket>;
 }
