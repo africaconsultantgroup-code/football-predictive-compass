@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("server-only", () => ({}));
-const mocks = vi.hoisted(() => ({ user: vi.fn(), quote: vi.fn(), pending: vi.fn() }));
+const mocks = vi.hoisted(() => ({ user: vi.fn(), quote: vi.fn(), pending: vi.fn(), access: vi.fn() }));
+vi.mock("@/lib/auth/access", () => ({ getCustomerAccess: mocks.access }));
 vi.mock("@/lib/payments/pending-checkout", () => ({ loadPendingMatchCheckouts: mocks.pending }));
 vi.mock("@/lib/auth/session", () => ({ getCurrentUser: mocks.user }));
 vi.mock("@/lib/supabase/server", () => ({ getServerSupabaseClient: () => ({}) }));
@@ -13,6 +14,12 @@ const request = (body: unknown) => new Request("https://example.test/api/payment
 beforeEach(() => { vi.clearAllMocks(); mocks.pending.mockResolvedValue([]); vi.stubEnv("PREDICTIVE_CUSTOMER_PRICING_VERSION", "v2"); mocks.user.mockResolvedValue({ id: "owner", email: "owner@example.test" }); });
 afterEach(() => vi.unstubAllEnvs());
 describe("basket quote authentication and boundary", () => {
+  it("prevents an owner quote before any payment/reservation work", async () => {
+    mocks.access.mockResolvedValueOnce({ owner: true });
+    const response = await POST(request({ match_ids: [id] }));
+    expect(response.status).toBe(409); expect(await response.json()).toEqual({ error: "PREMIUM_ALREADY_UNLOCKED" });
+    expect(mocks.quote).not.toHaveBeenCalled(); expect(mocks.pending).not.toHaveBeenCalled();
+  });
   it("returns 401 before querying quotes for anonymous users", async () => {
     mocks.user.mockResolvedValue(null);
     expect((await POST(request({ match_ids: [id] }))).status).toBe(401);

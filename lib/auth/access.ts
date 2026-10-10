@@ -4,6 +4,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { createCustomerAuthServerClient } from "../supabase/auth-server";
 import { getCurrentUser, type CurrentCustomer } from "./session";
+import { resolveAdmin } from "../admin/auth";
+import { getServerSupabaseClient } from "../supabase/server";
 
 export const capabilities = {
   prematchFull: "football.prematch.full",
@@ -14,6 +16,7 @@ export const capabilities = {
 export type CustomerCapability = (typeof capabilities)[keyof typeof capabilities];
 
 export type CustomerAccess = {
+  owner?: boolean;
   customer: CurrentCustomer | null;
   subscription: null | {
     name: string;
@@ -37,9 +40,15 @@ export async function getCustomerAccessWith(
   customer: CurrentCustomer | null,
   supabase: SupabaseClient,
   now = new Date(),
+  admin?: SupabaseClient,
 ): Promise<CustomerAccess> {
   if (!customer) {
     return { customer: null, subscription: null, capabilities: new Set() };
+  }
+
+  // Service-side database role only; never trust browser or user metadata.
+  if (admin && (await resolveAdmin(customer, admin))?.role === "owner") {
+    return { customer, owner: true, subscription: null, capabilities: new Set(Object.values(capabilities)) };
   }
 
   const instant = now.toISOString();
@@ -83,7 +92,7 @@ export async function getCustomerAccessWith(
 export async function getCustomerAccess() {
   const customer = await getCurrentUser();
   const supabase = await createCustomerAuthServerClient();
-  return getCustomerAccessWith(customer, supabase);
+  return getCustomerAccessWith(customer, supabase, new Date(), customer ? getServerSupabaseClient() : undefined);
 }
 
 export function accessHasCapability(

@@ -1,4 +1,5 @@
 import { getCurrentUser } from "@/lib/auth/session";
+import { getCustomerAccess } from "@/lib/auth/access";
 import { calculateMatchBasketPrice, verifyBasketPayment } from "@/lib/payments/basket-service";
 import { createPaystackClient } from "@/lib/payments/paystack";
 import { BasketError, matchSelectionSchema } from "@/lib/payments/match-pricing";
@@ -13,6 +14,7 @@ export async function POST(request: Request) {
   const parsed = matchSelectionSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return Response.json({ error: "INVALID_SELECTION" }, { status: 400 });
   try {
+    if ((await getCustomerAccess())?.owner) return Response.json({ error: "PREMIUM_ALREADY_UNLOCKED" }, { status: 409, headers: { "Cache-Control": "private, no-store" } });
     const admin = getServerSupabaseClient();
     const pending = (await loadPendingMatchCheckouts(admin, user.id, { matchIds: parsed.data.match_ids, reconcile: reference => verifyBasketPayment({ admin, paystack: createPaystackClient(), reference }) })).find(item => item.matchIds.some(id => parsed.data.match_ids.includes(id)));
     if (pending) return Response.json({ pending_checkout: pending }, { headers: { "Cache-Control": "private, no-store" } });

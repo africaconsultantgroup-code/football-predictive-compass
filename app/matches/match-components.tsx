@@ -40,18 +40,18 @@ export function FreePredictionSummary({ prediction, freePrediction }: { predicti
   </section>;
 }
 
-export function FreeOnlyMatchRow({ free, owned = false }: { free: FreePrematchPrediction; owned?: boolean }) {
+export function FreeOnlyMatchRow({ free, owned = false, owner = false }: { free: FreePrematchPrediction; owned?: boolean; owner?: boolean }) {
   const label = `${free.home_team} vs ${free.away_team}`;
   const time = free.kickoff_at ? new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Africa/Accra" }).format(new Date(free.kickoff_at)) : "TBC";
   return <article className="matches-row" id={free.match_id} aria-label={label}>
     <div className="matches-match"><small>{free.competition}</small><div className="matches-row-stage">Pre-Match</div><TeamIdentity name={free.home_team} team={free.home_team_identity} /><span className="matches-versus">vs</span><TeamIdentity name={free.away_team} team={free.away_team_identity} /></div>
     <div className="matches-kickoff"><span className="matches-mobile-label">Kickoff</span><time dateTime={free.kickoff_at ?? undefined}>{time}</time><small>GMT · Ghana time</small></div>
     <FreePredictionSummary prediction={free} freePrediction={free} />
-    <section className="matches-premium" aria-label="Premium options"><div className="matches-premium-option"><h3>Premium Match Intelligence</h3>{owned ? <strong>Premium Intelligence Unlocked</strong> : null}<p>Premium intelligence being prepared</p><Link className="matches-option-link" href={`/matches/${free.match_id}`}>{owned ? "View Match Intelligence" : "View Premium Intelligence"} &rarr;</Link></div></section>
+    <section className="matches-premium" aria-label="Premium options"><div className="matches-premium-option"><h3>Premium Match Intelligence</h3>{owned ? <strong>{owner ? "Premium Unlocked" : "Premium Intelligence Unlocked"}</strong> : null}<p>Premium intelligence being prepared</p><Link className="matches-option-link" href={`/matches/${free.match_id}`}>{owned && !owner ? "View Match Intelligence" : "View Premium Intelligence"} &rarr;</Link></div></section>
   </article>;
 }
 
-export function MatchRow({ prediction, freePrediction }: { prediction: PredictionView; freePrediction?: FreePrematchPrediction; pricingV2?: boolean }) {
+export function MatchRow({ prediction, freePrediction, owner = false }: { prediction: PredictionView; freePrediction?: FreePrematchPrediction; pricingV2?: boolean; owner?: boolean }) {
   const locked = "locked" in prediction;
   const href = prediction.match_id ? `/matches/${prediction.match_id}` : undefined;
   const label = `${prediction.home_team} vs ${prediction.away_team}`;
@@ -60,7 +60,7 @@ export function MatchRow({ prediction, freePrediction }: { prediction: Predictio
     <div className="matches-match"><small>{prediction.competition}</small><div className="matches-row-stage">{formatFootballStage(prediction.stage)}{!locked ? <span>Access active</span> : null}</div><TeamIdentity name={prediction.home_team} team={prediction.home_team_identity} /><span className="matches-versus">vs</span><TeamIdentity name={prediction.away_team} team={prediction.away_team_identity} /></div>
     <div className="matches-kickoff"><span className="matches-mobile-label">Kickoff</span><time dateTime={prediction.kickoff_at ?? undefined}>{time}</time><small>GMT · Ghana time</small></div>
     <FreePredictionSummary prediction={prediction} freePrediction={freePrediction} />
-    <section className="matches-premium" aria-label="Premium options"><div className="matches-premium-option"><h3>{href ? <Link href={href}>Premium Match Intelligence</Link> : "Premium Match Intelligence"}</h3>{!locked ? <><strong>Premium Intelligence Unlocked</strong>{href ? <Link className="matches-option-link" href={href}>View Match Intelligence &rarr;</Link> : null}</> : <>
+    <section className="matches-premium" aria-label="Premium options"><div className="matches-premium-option"><h3>{href ? <Link href={href}>Premium Match Intelligence</Link> : "Premium Match Intelligence"}</h3>{!locked ? <><strong>{owner ? "Premium Unlocked" : "Premium Intelligence Unlocked"}</strong>{href ? <Link className="matches-option-link" href={href}>{owner ? "View Premium Intelligence" : "View Match Intelligence"} &rarr;</Link> : null}</> : <>
       <p>{formatPesewas(MATCH_PRICING_POLICY.standardUnit)} single-match starting price</p><small>All available stages and historical review.</small>
       {prediction.match_id && prediction.stage === "PREMATCH" && prediction.kickoff_at ? <MatchSelection matchId={prediction.match_id} kickoffAt={prediction.kickoff_at} label={label} /> : <><button type="button" disabled>Purchase closed</button><p>Purchasing has closed for this match.</p></>}
     </>}{!href ? <p>Match details unavailable</p> : null}{prediction.stage === "FINAL" ? <p>Completed</p> : null}</div></section>

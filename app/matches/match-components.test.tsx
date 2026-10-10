@@ -17,6 +17,11 @@ const prediction: FootballPrediction = {
 };
 
 describe("Matches dashboard access and product boundaries", () => {
+  it("offers an owner a direct Premium link without payment controls",()=>{
+    const html=renderToStaticMarkup(<MatchRow owner prediction={prediction}/>);
+    expect(html).toContain("Premium Unlocked");expect(html).toContain("View Premium Intelligence");
+    expect(html).not.toContain("Add to Basket");expect(html).not.toContain("GH₵8");
+  });
   it("keeps premium probabilities out of the free summary even with paid access", () => {
     const html = renderToStaticMarkup(<MatchRow prediction={prediction} />);
     expect(html).not.toContain("58%");
