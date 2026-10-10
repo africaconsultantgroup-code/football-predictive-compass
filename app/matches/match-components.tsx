@@ -26,9 +26,9 @@ export function DateSelector({ selected, filter }: { selected?: string; filter: 
   return <details className="matches-date-selector"><summary><span aria-hidden="true">▦</span>{filter === "all" ? "All dates" : filter === "week" ? "This week" : filter === "today" ? "Today" : "Tomorrow"}<span aria-hidden="true">⌄</span></summary><nav aria-label="Date filters">{(["all", "today", "tomorrow", "week"] as const).map(value => <Link key={value} href={matchesHref(value, selected)} aria-current={filter === value ? "true" : undefined}>{value === "all" ? "All dates" : value === "week" ? "This week" : value === "today" ? "Today" : "Tomorrow"}</Link>)}</nav></details>;
 }
 
-export function OutcomeProbabilityBar({ probabilities }: { probabilities: FootballPrediction["probabilities"] }) {
+export function OutcomeProbabilityBar({ probabilities, teamNames }: { probabilities: FootballPrediction["probabilities"]; teamNames?: { home: string; away: string } }) {
   const outcomes = [["Home", probabilities.home_win], ["Draw", probabilities.draw], ["Away", probabilities.away_win]] as const;
-  return <div className="matches-probabilities"><div className="matches-probability-track" aria-hidden="true">{outcomes.map(([label, value]) => <span key={label} className={`matches-probability-${label.toLowerCase()}`} style={{ flexBasis: `${value}%` }} />)}</div><dl>{outcomes.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{formatProbability(value)}</dd></div>)}</dl></div>;
+  return <div className="matches-probabilities"><div className="matches-probability-track" aria-hidden="true">{outcomes.map(([label, value]) => <span key={label} className={`matches-probability-${label.toLowerCase()}`} style={{ flexBasis: `${value}%` }} />)}</div><dl>{outcomes.map(([label, value]) => <div key={label}><dt>{teamNames && label !== "Draw" ? teamNames[label === "Home" ? "home" : "away"] : label}</dt><dd>{formatProbability(value)}</dd></div>)}</dl></div>;
 }
 
 export function FreePredictionSummary({ prediction, freePrediction }: { prediction: Pick<PredictionView, "match_id" | "competition" | "home_team" | "away_team" | "kickoff_at" | "stage">; freePrediction?: FreePrematchPrediction }) {

@@ -54,7 +54,7 @@ describe("Actual match page premium branches", () => {
   it("renders purchased premium and separate free content without checkout or internal data", async () => {
     const markup = await html();
     expect(markup).toContain("Purchased ✓"); expect(markup).toContain("Premium Intelligence Unlocked");
-    expect(markup).toContain("58%"); expect(markup).toContain("50%"); expect(markup).not.toContain("Forecast Change");
+    expect(markup).toContain("58%"); expect(markup).toContain("50%"); expect(markup).toContain("Forecast Change");
     expect(mocks.premium).toHaveBeenCalledWith("stored", id);
     expect(markup).not.toContain("private-raw"); expect(markup).not.toContain("unlock-button");
     expect(mocks.offers).not.toHaveBeenCalled();
@@ -95,7 +95,7 @@ describe("Actual match page premium branches", () => {
     mocks.freshness.mockResolvedValue({ ...freshness, prediction: { ...prediction, kickoff_at: "2026-10-08T14:00:00Z" }, freshness_status: "unavailable" });
     const markup = await html();
     expect(markup).toContain("Compass Pick"); expect(markup).toContain("58%");
-    expect(markup).toContain("Why Compass Thinks This"); expect(markup).toContain("Most Likely Score");
+    expect(markup).toContain("Why Compass Thinks This"); expect(markup).toContain("Score Forecast");
     expect(markup).not.toContain("Add to Basket");
   });
   it("offers unowned stored Premium after a freshness outage without exposing paid contents", async () => {

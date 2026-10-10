@@ -1,0 +1,111 @@
+{
+  "match_id": "fm_6d661c9077f0cedf9051792906c29bc9",
+  "competition": "Premier League",
+  "home_team": "Arsenal",
+  "away_team": "Leeds",
+  "kickoff_at": "2026-10-10T11:30:00Z",
+  "stage": "PREMATCH",
+  "premium_intelligence": {
+    "primary_forecast": {
+      "probabilities": {
+        "home_win": 55.95,
+        "draw": 33.13,
+        "away_win": 10.92
+      },
+      "most_likely_outcome": "home_win",
+      "generated_at": "2026-10-09T09:30:41.479335Z",
+      "status": "updated"
+    },
+    "compass_pick": {
+      "market": "Match Result",
+      "selection": "Arsenal to win",
+      "model_probability": 55.95,
+      "strength": "Cautious",
+      "generated_at": "2026-10-09T09:30:41.479335Z"
+    },
+    "market_opportunities": [
+      {
+        "rank": 1,
+        "market": "Match Result",
+        "selection": "Arsenal to win",
+        "probability": 55.95,
+        "strength": "Cautious",
+        "preferred": true
+      },
+      {
+        "rank": 2,
+        "market": "Match Result",
+        "selection": "Draw",
+        "probability": 33.13,
+        "strength": "Cautious",
+        "preferred": false
+      },
+      {
+        "rank": 3,
+        "market": "Match Result",
+        "selection": "Leeds to win",
+        "probability": 10.92,
+        "strength": "Cautious",
+        "preferred": false
+      }
+    ],
+    "bookmaker_comparison": [
+      {
+        "selection": "Arsenal to win",
+        "bookmaker_implied_probability": 68.29,
+        "bookmaker_consensus_fair_odds": 1.46,
+        "compass_probability": 55.95,
+        "compass_fair_odds": 1.79,
+        "probability_difference": -12.34
+      },
+      {
+        "selection": "Draw",
+        "bookmaker_implied_probability": 19.63,
+        "bookmaker_consensus_fair_odds": 5.09,
+        "compass_probability": 33.13,
+        "compass_fair_odds": 3.02,
+        "probability_difference": 13.5
+      },
+      {
+        "selection": "Leeds to win",
+        "bookmaker_implied_probability": 12.08,
+        "bookmaker_consensus_fair_odds": 8.28,
+        "compass_probability": 10.92,
+        "compass_fair_odds": 9.16,
+        "probability_difference": -1.16
+      }
+    ],
+    "intelligence_reasons": [],
+    "forecast_change": {
+      "available": false,
+      "free_leading_outcome": null,
+      "free_probability": null,
+      "premium_leading_outcome": null,
+      "premium_probability": null,
+      "probability_point_change": null,
+      "leading_outcome_changed": null,
+      "reasons": []
+    },
+    "recommendation_strength": {
+      "label": "Cautious",
+      "score": 93.6
+    },
+    "score_forecast": {
+      "status": "unavailable",
+      "most_likely_score": null,
+      "score_probability": 10.6,
+      "alternative_scorelines": []
+    },
+    "generated_at": "2026-10-09T09:30:41.479335Z",
+    "availability": {
+      "compass_pick": "available",
+      "market_opportunities": "available",
+      "bookmaker_comparison": "available",
+      "intelligence_reasons": "unavailable",
+      "forecast_change": "unavailable",
+      "score_forecast": "unavailable"
+    }
+  },
+  "tier": "premium",
+  "status": "available"
+}

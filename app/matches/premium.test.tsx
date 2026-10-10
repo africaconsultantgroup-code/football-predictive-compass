@@ -86,7 +86,7 @@ describe("Approved Premium rendering", () => {
   });
   it("shows actual safe reasons, exact strength and supported score probability", () => {
     const html = render(); expect(html).toContain("Team Strength"); expect(html).toContain(intelligence.intelligence_reasons[0].summary);
-    expect(html).toContain("Moderate · 65/100"); expect(html).toContain("Home FC 2–1 Away FC"); expect(html).toContain("Exact-score probability: 14%");
+    expect(html).toContain("Moderate · 65/100"); expect(html).toContain("Home FC 2–1 Away FC"); expect(html).toContain("Exact Score Probability: 14%");
   });
   it("does not invent optional score probability or confidence score", () => {
     const value = premiumCustomerSchema.parse({ ...premium, premium_intelligence: { ...intelligence, score_forecast: { ...intelligence.score_forecast, score_probability: null }, recommendation_strength: { label: "Cautious", score: null } } });
@@ -99,7 +99,7 @@ describe("Approved Premium rendering", () => {
     expect(html).not.toContain("14%");
   });
   it("honors unavailable change even with different stored Free and Premium vectors", () => {
-    const html = render(); expect(html).not.toContain("Forecast Change"); expect(html).not.toContain("percentage points");
+    const html = render(); expect(html).toContain("Forecast Change"); expect(html).not.toContain("percentage points");
     expect(html).not.toContain("+8"); expect(html).toContain("50%"); expect(html).toContain("58%");
   });
   it("renders a future available change verbatim from the same documented shape", () => {
@@ -112,12 +112,12 @@ describe("Approved Premium rendering", () => {
     expect(premiumIntelligenceSchema.safeParse({ ...intelligence, availability: { ...intelligence.availability, bookmaker_comparison: "unavailable" } }).success).toBe(false);
   });
   it("keeps the prescribed order for desktop and mobile", () => {
-    const html = render(); const headings = ["Premium forecast", "Compass Pick", "Bookmaker vs Compass", "Ranked 1X2 Opportunities", "Why Compass Thinks This", "Recommendation Strength", "Most Likely Score", "Forecast Freshness", "Your Free Pre-Match View"];
+    const html = render(); const headings = ["Premium forecast", "Compass Pick", "Bookmaker vs Compass", "Ranked 1X2 Opportunities", "Why Compass Thinks This", "Recommendation Strength", "Score Forecast", "Forecast Freshness", "Your Free Pre-Match View"];
     headings.slice(1).forEach((heading, index) => expect(html.indexOf(headings[index])).toBeLessThan(html.indexOf(heading)));
   });
   it("keeps paid preparing separate from genuine Free", () => {
     const html = renderToStaticMarkup(<PremiumMatchExperience prediction={null} free={free} now={now} />);
-    expect(html).toContain("No new purchase is required"); expect(html).toContain("FREE PRE-MATCH"); expect(html).not.toContain("Forecast Change");
+    expect(html).toContain("No new purchase is required"); expect(html).toContain("FREE PRE-MATCH"); expect(html).toContain("Forecast Change");
     expect(html.slice(0, html.indexOf("</section>"))).not.toContain("50%");
   });
   it("uses the shared Pricing V2 authority without stage-only checkout", () => {
