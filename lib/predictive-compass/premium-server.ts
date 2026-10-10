@@ -3,7 +3,6 @@ import { getCustomerAccess } from "../auth/access";
 import { hasPredictionAccess } from "../auth/match-access";
 import { createCustomerAuthServerClient } from "../supabase/auth-server";
 import { CoreClientError, requestPrematchFreshness, getUpcomingFootballPredictions, getPremiumFootballPrediction } from "./server";
-import { paidPrematchSnapshot } from "./prematch";
 
 export async function authorizePremiumMatch(matchId: string) {
   const access = await getCustomerAccess();
@@ -16,11 +15,12 @@ export async function loadPremiumMatch(matchId: string) {
   let prediction;
   try {
     const freshness = await requestPrematchFreshness(matchId);
-    prediction = paidPrematchSnapshot(freshness);
+    // Ownership survives kickoff and freshness state; these only gate a new sale.
+    prediction = freshness.prediction;
   } catch (error) {
     if (!(error instanceof CoreClientError)) throw error;
     prediction = (await getUpcomingFootballPredictions({ syncProducts: false }))
-      .find(item => item.match_id === matchId && item.stage === "PREMATCH" && item.kickoff_at !== null && new Date(item.kickoff_at) > new Date());
+      .find(item => item.match_id === matchId && item.stage === "PREMATCH");
   }
-  return prediction ? getPremiumFootballPrediction(prediction.prediction_id, matchId) : null;
+  return prediction?.match_id === matchId && prediction.stage === "PREMATCH" ? getPremiumFootballPrediction(prediction.prediction_id, matchId) : null;
 }

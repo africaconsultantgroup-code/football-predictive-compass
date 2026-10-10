@@ -107,7 +107,7 @@ export function createFootballCoreClient({
   return {
     async getPremiumFootballPrediction(predictionId: string, matchId: string) {
       try {
-        const value = await request(`api/v1/domains/football/predictions/${encodeURIComponent(predictionId)}`);
+        const value = await inventoryRequest(`api/v1/domains/football/predictions/${encodeURIComponent(predictionId)}`);
         const prediction = toPremiumCustomerPrediction(value);
         if (!value || typeof value !== "object" || !("prediction_id" in value) || value.prediction_id !== predictionId || prediction.match_id !== matchId) throw new CoreClientError("malformed");
         return prediction;

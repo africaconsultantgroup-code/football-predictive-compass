@@ -15,6 +15,18 @@ export const premiumCustomerSchema = z.object({
 }).strict();
 export type PremiumCustomerPrediction = z.infer<typeof premiumCustomerSchema>;
 
+// An unavailable score can carry a residual probability in Core snapshots.
+// Discard that unavailable section rather than losing all valid intelligence.
+export function normalizePremiumAvailability(value: unknown): unknown {
+  if (!value || typeof value !== "object" || !("premium_intelligence" in value)) return value;
+  const intelligence = value.premium_intelligence;
+  if (!intelligence || typeof intelligence !== "object" || !("availability" in intelligence) || !("score_forecast" in intelligence)) return value;
+  const availability = intelligence.availability;
+  const score = intelligence.score_forecast;
+  if (!availability || typeof availability !== "object" || !("score_forecast" in availability) || availability.score_forecast !== "unavailable" || !score || typeof score !== "object" || !("status" in score) || score.status !== "unavailable") return value;
+  return { ...value, premium_intelligence: { ...intelligence, score_forecast: { ...score, most_likely_score: null, score_probability: null, alternative_scorelines: [] } } };
+}
+
 export function toPremiumCustomerPrediction(value: unknown): PremiumCustomerPrediction {
   const source = footballPredictionSchema.extend({
     competition_code: z.enum(["premier-league", "uefa-champions-league"]),
@@ -23,7 +35,7 @@ export function toPremiumCustomerPrediction(value: unknown): PremiumCustomerPred
     last_intelligence_refresh_at: z.string().datetime({ offset: true }).nullable(),
     refresh_reason: z.string().nullable(),
     premium_intelligence: premiumIntelligenceSchema,
-  }).parse(withTeamIdentities(value));
+  }).parse(withTeamIdentities(normalizePremiumAvailability(value)));
   return premiumCustomerSchema.parse({
     ...(source.home_team_identity ? {home_team_identity:source.home_team_identity} : {}), ...(source.away_team_identity ? {away_team_identity:source.away_team_identity} : {}),
     match_id: source.match_id, competition: source.competition, home_team: source.home_team,

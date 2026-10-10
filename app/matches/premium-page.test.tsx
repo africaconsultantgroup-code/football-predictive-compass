@@ -59,7 +59,7 @@ describe("Actual match page premium branches", () => {
     expect(markup).toContain("GH₵8"); expect(markup).toContain("Unlock Premium");
     expect(markup).not.toContain("PREMIUM MATCH INTELLIGENCE");
     expect(mocks.purchase).not.toHaveBeenCalled();
-    expect(mocks.premium).not.toHaveBeenCalled();
+    expect(mocks.premium).toHaveBeenCalledWith("stored", id);
   });
   it("does not claim a subscription/grant is a purchase without payment evidence", async () => {
     mocks.purchase.mockResolvedValue(false);
@@ -83,6 +83,29 @@ describe("Actual match page premium branches", () => {
     mocks.free.mockResolvedValue(null);
     const markup = await html();
     expect(markup).toContain("58%"); expect(markup).not.toContain("What Changed");
+  });
+  it("shows owned stored intelligence after kickoff even when freshness is unavailable", async () => {
+    mocks.freshness.mockResolvedValue({ ...freshness, prediction: { ...prediction, kickoff_at: "2026-10-08T14:00:00Z" }, freshness_status: "unavailable" });
+    const markup = await html();
+    expect(markup).toContain("Compass Pick"); expect(markup).toContain("58%");
+    expect(markup).toContain("Why Compass Thinks This"); expect(markup).toContain("Most Likely Score");
+    expect(markup).not.toContain("Add to Basket");
+  });
+  it("offers unowned stored Premium after a freshness outage without exposing paid contents", async () => {
+    mocks.grants.mockResolvedValue(false); mocks.freshness.mockRejectedValue(new CoreClientError("unavailable")); mocks.upcoming.mockResolvedValue([prediction]);
+    const markup = await html();
+    expect(markup).toContain("Add to Basket"); expect(markup).toContain("GH₵8"); expect(markup).not.toContain("58%");
+  });
+  it("retains a usable purchase panel when Free is absent", async () => {
+    mocks.grants.mockResolvedValue(false); mocks.free.mockResolvedValue(null);
+    const markup = await html();
+    expect(markup).toContain("Add to Basket"); expect(markup).toContain("GH₵8");
+  });
+  it("shows preparing rather than checkout when Premium cannot be read", async () => {
+    mocks.grants.mockResolvedValue(false); mocks.premium.mockRejectedValue(new CoreClientError("unavailable"));
+    const markup = await html();
+    expect(markup).toContain("Premium intelligence being prepared"); expect(markup).not.toContain("Add to Basket");
+    expect(markup).not.toContain("Core request failed");
   });
   it("preserves completed-match expiry and checkout delivery protection", async () => {
     mocks.grants.mockResolvedValue(false);
