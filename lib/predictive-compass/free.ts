@@ -1,7 +1,9 @@
 import { z } from "zod";
 import { footballMatchIdSchema, footballProbabilitiesSchema } from "./schema";
+import { teamIdentityFields } from "../teams/schema";
 
 const identity = {
+  ...teamIdentityFields,
   match_id: footballMatchIdSchema,
   competition: z.string().min(1),
   home_team: z.string().min(1),
@@ -25,11 +27,12 @@ export const freePrematchSchema = z.discriminatedUnion("status", [
 ]);
 
 export type FreePrematchPrediction = z.infer<typeof freePrematchSchema>;
-export type FreeMatchIdentity = Pick<FreePrematchPrediction, "match_id" | "competition" | "home_team" | "away_team" | "kickoff_at">;
+export type FreeMatchIdentity = Pick<FreePrematchPrediction, "match_id" | "competition" | "home_team" | "away_team" | "kickoff_at" | "home_team_identity" | "away_team_identity">;
 
 export function unavailableFreePrematch(match: FreeMatchIdentity): FreePrematchPrediction {
   // Explicit identity projection: never spread a premium prediction into this response.
   return freePrematchSchema.parse({ match_id: match.match_id, competition: match.competition,
+    ...(match.home_team_identity ? {home_team_identity:match.home_team_identity} : {}), ...(match.away_team_identity ? {away_team_identity:match.away_team_identity} : {}),
     home_team: match.home_team, away_team: match.away_team, kickoff_at: match.kickoff_at,
     stage: "PREMATCH", tier: "free", status: "unavailable", probabilities: null,
     predicted_outcome: null, generated_at: null });

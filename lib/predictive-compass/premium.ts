@@ -1,9 +1,12 @@
 import { z } from "zod";
 import { footballMatchIdSchema, footballPredictionSchema } from "./schema";
 import { premiumIntelligenceSchema } from "./premium-contract";
+import { teamIdentityFields } from "../teams/schema";
+import { withTeamIdentities } from "../teams/identity";
 
 // Fixture identity wraps the exact ten-field Premium DTO; engine envelope stays server-side.
 export const premiumCustomerSchema = z.object({
+  ...teamIdentityFields,
   match_id: footballMatchIdSchema,
   competition: z.string().min(1), home_team: z.string().min(1), away_team: z.string().min(1),
   kickoff_at: z.string().datetime({ offset: true }).nullable(),
@@ -20,8 +23,9 @@ export function toPremiumCustomerPrediction(value: unknown): PremiumCustomerPred
     last_intelligence_refresh_at: z.string().datetime({ offset: true }).nullable(),
     refresh_reason: z.string().nullable(),
     premium_intelligence: premiumIntelligenceSchema,
-  }).parse(value);
+  }).parse(withTeamIdentities(value));
   return premiumCustomerSchema.parse({
+    ...(source.home_team_identity ? {home_team_identity:source.home_team_identity} : {}), ...(source.away_team_identity ? {away_team_identity:source.away_team_identity} : {}),
     match_id: source.match_id, competition: source.competition, home_team: source.home_team,
     away_team: source.away_team, kickoff_at: source.kickoff_at, stage: source.stage,
     tier: "premium", status: "available", premium_intelligence: source.premium_intelligence,

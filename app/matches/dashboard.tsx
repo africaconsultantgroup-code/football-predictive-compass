@@ -36,7 +36,7 @@ export async function MatchesDashboard({ filter, competition }: { filter: Upcomi
   }
   if (rows.length && !visible.length) reportInventory("filter", "FILTERED_TO_ZERO", rows.length);
   const now = new Date();
-  const choices = predictions.filter(item => item.match_id && item.kickoff_at && item.stage === "PREMATCH" && Date.parse(item.kickoff_at) > now.getTime()).map(item => ({ matchId: item.match_id!, kickoffAt: item.kickoff_at!, label: `${item.competition}: ${item.home_team} vs ${item.away_team}`, owned: !("locked" in item), pendingCheckout: pendingCheckouts.find(pending => pending.matchIds.includes(item.match_id!)) }));
+  const choices = predictions.filter(item => item.match_id && item.kickoff_at && item.stage === "PREMATCH" && Date.parse(item.kickoff_at) > now.getTime()).map(item => ({ matchId: item.match_id!, kickoffAt: item.kickoff_at!, label: `${item.competition}: ${item.home_team} vs ${item.away_team}`, homeTeam: item.home_team, awayTeam: item.away_team, homeIdentity: item.home_team_identity, awayIdentity: item.away_team_identity, owned: !("locked" in item), pendingCheckout: pendingCheckouts.find(pending => pending.matchIds.includes(item.match_id!)) }));
   const groups = new Map<string, typeof visible>();
   for (const prediction of visible) {
     const label = fixtureDateLabel(prediction.kickoff_at);

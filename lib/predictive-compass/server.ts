@@ -1,5 +1,6 @@
 import "server-only";
 import { freePrematchSchema } from "./free";
+import { normalizeFixtureTeamMetadata } from "../teams/identity";
 import { toPremiumCustomerPrediction } from "./premium";
 
 import {
@@ -81,7 +82,7 @@ export function createFootballCoreClient({
         throw new CoreClientError(mapStatus(response.status));
       }
 
-      return await parseJson(response);
+      return normalizeFixtureTeamMetadata(await parseJson(response));
     } catch (error) {
       if (error instanceof CoreClientError) throw error;
       if (error instanceof Error && error.name === "AbortError") {
@@ -108,7 +109,7 @@ export function createFootballCoreClient({
       try {
         const value = await request(`api/v1/domains/football/predictions/${encodeURIComponent(predictionId)}`);
         const prediction = toPremiumCustomerPrediction(value);
-        if (value.prediction_id !== predictionId || prediction.match_id !== matchId) throw new CoreClientError("malformed");
+        if (!value || typeof value !== "object" || !("prediction_id" in value) || value.prediction_id !== predictionId || prediction.match_id !== matchId) throw new CoreClientError("malformed");
         return prediction;
       } catch (error) {
         if (error instanceof CoreClientError) throw error;
@@ -129,7 +130,7 @@ export function createFootballCoreClient({
       const query = new URLSearchParams({ from: start.toISOString().slice(0,10), to: end.toISOString().slice(0,10) });
       const value = await inventoryRequest(`api/v1/domains/football/free/upcoming?${query}`, true);
       if (value === null) return [];
-      if (typeof value !== "object" || !Array.isArray(value.predictions)) throw new CoreClientError("malformed");
+      if (!value || typeof value !== "object" || !("predictions" in value) || !Array.isArray(value.predictions)) throw new CoreClientError("malformed");
       const predictions: unknown[] = value.predictions;
       return predictions.map(item => freePrematchSchema.parse(item));
     },

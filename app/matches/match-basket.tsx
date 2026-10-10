@@ -1,11 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import { TeamIdentity } from "../team-identity";
+import type { TeamIdentityRecord } from "../../lib/teams/identity";
 import { createContext, useContext, useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { formatPesewas, formatEffectivePrice, ghanaDate, MATCH_PRICING_POLICY, type BasketQuote } from "../../lib/payments/match-pricing";
 import { openPaystackCheckout, paymentStatusHref, safePaystackCheckoutUrl, type PendingMatchCheckout } from "../../lib/payments/checkout-link";
 
-type Choice = { matchId: string; kickoffAt: string; label: string; owned: boolean; pendingCheckout?: PendingMatchCheckout };
+type Choice = { matchId: string; kickoffAt: string; label: string; homeTeam?: string; awayTeam?: string; homeIdentity?: TeamIdentityRecord; awayIdentity?: TeamIdentityRecord; owned: boolean; pendingCheckout?: PendingMatchCheckout };
 type CheckoutResult = { key: string; quote?: Omit<BasketQuote, "user_id">; pending?: PendingMatchCheckout; error?: string };
 type BasketContext = { choices: Choice[]; selected: string[]; now: number; pending?: PendingMatchCheckout; reviewed: boolean; toggle: (id: string) => void; review: (id: string) => void; basketId: string };
 const Selection = createContext<BasketContext | null>(null);
@@ -89,8 +91,8 @@ export function BasketCheckout({ matchIds, onResult, refreshKey = 0 }: { matchId
   return <section className="match-basket-summary" aria-label="Your Match Selection" aria-live="polite">
     <h2>Your Match Selection</h2>
     <p>{matchIds.length} {matchIds.length === 1 ? "match" : "matches"} selected · One Ghana calendar day, across competitions.</p>
-    {current?.pending ? <><h3>Existing checkout</h3>{current.pending.fixtures.length ? <ul>{current.pending.fixtures.map(item => <li key={item.match_id}>{item.home_team} vs {item.away_team}</li>)}</ul> : null}{current.pending.totalPesewas !== null ? <p>Existing checkout total: <strong>{formatPesewas(current.pending.totalPesewas)}</strong></p> : null}<PendingCheckoutAction checkout={current.pending} onReview={refreshQuote} /></> : quote ? <>
-      <p>Authoritative server quote</p><ul aria-label="Quoted fixtures">{quote.fixtures.map(item => <li key={item.match_id}>{item.home_team} vs {item.away_team}<small>{item.competition} · {new Date(item.kickoff_at).toLocaleString("en-GB", { timeZone: "Africa/Accra" })} GMT</small></li>)}</ul><dl><div><dt>Regular price</dt><dd>{formatPesewas(quote.regular_pesewas)}</dd></div><div><dt>Multi-match discount</dt><dd>{formatPesewas(quote.discount_pesewas)}</dd></div><div><dt>Effective price per match</dt><dd>{formatEffectivePrice(quote)}</dd></div><div><dt>Total</dt><dd><strong>{formatPesewas(quote.total_pesewas)}</strong></dd></div></dl>
+    {current?.pending ? <><h3>Existing checkout</h3>{current.pending.fixtures.length ? <ul>{current.pending.fixtures.map(item => <li key={item.match_id}><TeamIdentity inline name={item.home_team} team={item.home_team_identity} /><span> vs </span><TeamIdentity inline name={item.away_team} team={item.away_team_identity} /></li>)}</ul> : null}{current.pending.totalPesewas !== null ? <p>Existing checkout total: <strong>{formatPesewas(current.pending.totalPesewas)}</strong></p> : null}<PendingCheckoutAction checkout={current.pending} onReview={refreshQuote} /></> : quote ? <>
+      <p>Authoritative server quote</p><ul aria-label="Quoted fixtures">{quote.fixtures.map(item => <li key={item.match_id}><TeamIdentity inline name={item.home_team} team={item.home_team_identity} /><span> vs </span><TeamIdentity inline name={item.away_team} team={item.away_team_identity} /><small>{item.competition} · {new Date(item.kickoff_at).toLocaleString("en-GB", { timeZone: "Africa/Accra" })} GMT</small></li>)}</ul><dl><div><dt>Regular price</dt><dd>{formatPesewas(quote.regular_pesewas)}</dd></div><div><dt>Multi-match discount</dt><dd>{formatPesewas(quote.discount_pesewas)}</dd></div><div><dt>Effective price per match</dt><dd>{formatEffectivePrice(quote)}</dd></div><div><dt>Total</dt><dd><strong>{formatPesewas(quote.total_pesewas)}</strong></dd></div></dl>
       <small>Quote valid until {new Date(quote.expires_at).toLocaleTimeString("en-GB", { timeZone: "Africa/Accra" })} GMT.</small>
       <button className="checkout-button" type="button" disabled={busy || Boolean(expired || closed)} onClick={checkout}>{busy ? "Opening secure checkout…" : "Continue to Payment"}</button>
       {closed ? <p role="alert">Purchasing has closed for this match. Remove it from your basket.</p> : expired ? <><p role="alert">Your quote expired. Review a new quote before paying.</p><button type="button" onClick={refreshQuote}>Review new quote</button></> : null}
@@ -123,7 +125,7 @@ export function MatchBasket({ choices, children }: { choices: Choice[]; children
   return <Selection.Provider value={{ choices, selected, toggle, review, now, pending: current?.pending, reviewed: Boolean(current?.quote), basketId }}><div className="match-basket-layout">{children}
     <aside id={basketId} tabIndex={-1} className="match-basket-panel" aria-label="Match basket">
       {message ? <p role="alert">{message}</p> : null}
-      {selected.length ? <><ul aria-label="Selected fixtures">{selected.map(id => <li key={id}>{choices.find(item => item.matchId === id)?.label ?? "Match details being prepared"}<button type="button" onClick={() => toggle(id)} aria-label={`Remove ${choices.find(item => item.matchId === id)?.label ?? "match"}`}>Remove</button></li>)}</ul><button type="button" onClick={() => setSelected([])}>Clear selection</button></> : null}
+      {selected.length ? <><ul aria-label="Selected fixtures">{selected.map(id => <li key={id}>{choices.find(item => item.matchId === id)?.homeTeam && choices.find(item => item.matchId === id)?.awayTeam ? <><TeamIdentity inline name={choices.find(item => item.matchId === id)!.homeTeam!} team={choices.find(item => item.matchId === id)?.homeIdentity} /><span> vs </span><TeamIdentity inline name={choices.find(item => item.matchId === id)!.awayTeam!} team={choices.find(item => item.matchId === id)?.awayIdentity} /></> : choices.find(item => item.matchId === id)?.label ?? "Match details being prepared"}<button type="button" onClick={() => toggle(id)} aria-label={`Remove ${choices.find(item => item.matchId === id)?.label ?? "match"}`}>Remove</button></li>)}</ul><button type="button" onClick={() => setSelected([])}>Clear selection</button></> : null}
       {selected.length !== active.length ? <p role="alert">Purchasing has closed for a selected match. Remove it from your basket.</p> : null}
       <BasketCheckout matchIds={active} onResult={setResult} refreshKey={reviewRevision} />
     </aside>

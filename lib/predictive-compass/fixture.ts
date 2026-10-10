@@ -1,6 +1,7 @@
 import { canonicalCompetition } from "./inventory";
+import { resolveTeamIdentity, type TeamIdentityRecord } from "../teams/identity";
 
-type Identity = { match_id: string | null; home_team: string; away_team: string; competition: string; kickoff_at: string | null; stage: string };
+type Identity = { match_id: string | null; home_team: string; away_team: string; competition: string; kickoff_at: string | null; stage: string; home_team_identity?: TeamIdentityRecord; away_team_identity?: TeamIdentityRecord };
 // Display metadata is independent of paid forecast contents. A provider can
 // supply these explicit metadata values; never infer a crest URL from a name.
 export type TeamDisplayMetadata = { shortName?: string; crest?: string };
@@ -10,14 +11,18 @@ export function safeCrestUrl(value?: string): string | null {
 }
 export function customerFixture(identity: Identity, state: { freeAvailable: boolean; premiumAvailable: boolean; owned: boolean }, metadata?: { home?: TeamDisplayMetadata; away?: TeamDisplayMetadata }) {
   const competition = canonicalCompetition(identity.competition);
+  const home=resolveTeamIdentity(identity.home_team,identity.home_team_identity ?? {shortName:metadata?.home?.shortName,crestUrl:metadata?.home?.crest});
+  const away=resolveTeamIdentity(identity.away_team,identity.away_team_identity ?? {shortName:metadata?.away?.shortName,crestUrl:metadata?.away?.crest});
   return {
     matchId: identity.match_id,
     homeTeamName: identity.home_team,
     awayTeamName: identity.away_team,
-    homeTeamShortName: metadata?.home?.shortName ?? null,
-    awayTeamShortName: metadata?.away?.shortName ?? null,
-    homeTeamLogo: safeCrestUrl(metadata?.home?.crest),
-    awayTeamLogo: safeCrestUrl(metadata?.away?.crest),
+    homeTeamShortName: home.shortName,
+    awayTeamShortName: away.shortName,
+    homeTeamLogo: home.crestUrl,
+    awayTeamLogo: away.crestUrl,
+    homeTeamIdentity: home,
+    awayTeamIdentity: away,
     competitionName: competition,
     competitionCode: competition === "Premier League" ? "EPL" : competition === "UEFA Champions League" ? "UCL" : null,
     kickoff: identity.kickoff_at,

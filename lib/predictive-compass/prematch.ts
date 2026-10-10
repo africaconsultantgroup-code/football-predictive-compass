@@ -1,4 +1,5 @@
 import type { FootballPrematchFreshness, FootballPrediction } from "./schema";
+import type { TeamIdentityRecord } from "../teams/identity";
 
 export type PrematchReadiness = Pick<
   FootballPrematchFreshness,
@@ -7,6 +8,8 @@ export type PrematchReadiness = Pick<
   competition: string;
   home_team: string;
   away_team: string;
+  home_team_identity?: TeamIdentityRecord;
+  away_team_identity?: TeamIdentityRecord;
   kickoff_at: string | null;
   updated_at: string | null;
   deliverable: boolean;
@@ -35,6 +38,7 @@ export function toPrematchReadiness(
     competition: prediction.competition,
     home_team: prediction.home_team,
     away_team: prediction.away_team,
+    ...(prediction.home_team_identity ? {home_team_identity:prediction.home_team_identity} : {}), ...(prediction.away_team_identity ? {away_team_identity:prediction.away_team_identity} : {}),
     kickoff_at: prediction.kickoff_at,
     updated_at: prediction.last_intelligence_refresh_at ?? prediction.updated_at ?? prediction.generated_at ?? null,
     freshness_status: result.freshness_status,
