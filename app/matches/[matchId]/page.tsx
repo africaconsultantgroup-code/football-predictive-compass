@@ -6,6 +6,7 @@ import { connection } from "next/server";
 
 import { FreeMatchDetail } from "../free-detail";
 import { getFreePrematchPrediction } from "../../../lib/predictive-compass/free-server";
+import { unavailableFreePrematch } from "../../../lib/predictive-compass/free";
 import "../dashboard.css";
 import "../free-detail.css";
 import { PremiumMatchExperience } from "../premium-components";
@@ -14,7 +15,7 @@ import "../premium.css";
 import { CustomerShell } from "../../customer-shell";
 import { getCustomerAccess } from "../../../lib/auth/access";
 import { getPredictionOffers, hasPredictionAccess } from "../../../lib/auth/match-access";
-import { paidPrematchSnapshot, toPrematchReadiness, type PrematchReadiness } from "../../../lib/predictive-compass/prematch";
+import { toPrematchReadiness, type PrematchReadiness } from "../../../lib/predictive-compass/prematch";
 import { footballMatchIdSchema } from "../../../lib/predictive-compass/schema";
 import { CoreClientError, getUpcomingFootballPredictions, requestPrematchFreshness, getPremiumFootballPrediction } from "../../../lib/predictive-compass/server";
 import { createCustomerAuthServerClient } from "../../../lib/supabase/auth-server";
@@ -45,23 +46,24 @@ export default async function MatchPage({ params }: { params: Promise<{ matchId:
     try {
       freshness = await requestPrematchFreshness(parsed.data);
     } catch (error) {
-      if (!(error instanceof CoreClientError) || !unlocked) throw error;
-      const fallback = (await getUpcomingFootballPredictions()).find((item) => item.match_id === parsed.data && item.stage === "PREMATCH");
-      if (!fallback?.kickoff_at || new Date(fallback.kickoff_at) <= new Date()) throw error;
+      if (!(error instanceof CoreClientError)) throw error;
+      const fallback = (await getUpcomingFootballPredictions({ syncProducts: false })).find((item) => item.match_id === parsed.data && item.stage === "PREMATCH");
+      if (!fallback) throw error;
+      const storedPremium = await getPremiumFootballPrediction(fallback.prediction_id, parsed.data).catch(() => null);
       const readiness: PrematchReadiness = {
         match_id: parsed.data, competition: fallback.competition, home_team: fallback.home_team,
         away_team: fallback.away_team, kickoff_at: fallback.kickoff_at, home_team_identity: fallback.home_team_identity, away_team_identity: fallback.away_team_identity,
         updated_at: fallback.last_intelligence_refresh_at ?? fallback.updated_at ?? fallback.generated_at ?? null,
         freshness_status: "unavailable", refresh_status: "failed", maximum_age_seconds: null,
-        snapshot_age_seconds: null, deliverable: false,
+        snapshot_age_seconds: null, deliverable: Boolean(storedPremium && fallback.kickoff_at && new Date(fallback.kickoff_at) > new Date()),
       };
-      pageData = { readiness, access, unlocked: true, prediction: fallback, offers: [] };
+      pageData = { readiness, access, unlocked, prediction: fallback, offers: [], storedPremium };
     }
     if (!freshness) {
       // A paid customer is using the last valid snapshot after a freshness failure.
     } else {
       const readiness = toPrematchReadiness(freshness);
-      const prediction = unlocked ? paidPrematchSnapshot(freshness) : null;
+      const prediction = freshness.prediction;
       const offers = !unlocked && readiness.deliverable ? await getPredictionOffers(supabase, parsed.data, "prematch") : [];
       pageData = { readiness, access, unlocked, prediction, offers };
     }
@@ -80,16 +82,16 @@ export default async function MatchPage({ params }: { params: Promise<{ matchId:
   }
 
   const { readiness, access, unlocked, prediction, offers } = pageData;
-  const free = await getFreePrematchPrediction(parsed.data, readiness);
+  const free = await getFreePrematchPrediction(parsed.data, readiness).catch(() => null);
   const label = `${readiness.home_team} vs ${readiness.away_team}`;
-  let premium = null;
-  if (unlocked && prediction) {
-    try { premium = await getPremiumFootballPrediction(prediction.prediction_id, parsed.data); } catch { /* Preserve access; never relabel Free. */ }
+  let premium = pageData.storedPremium ?? null;
+  if (!premium && prediction) {
+    try { premium = await getPremiumFootballPrediction(prediction.prediction_id, parsed.data); } catch { console.warn("[customer-premium] Stored intelligence unavailable", { matchId: parsed.data }); }
   }
   const matchStatus = !readiness.kickoff_at ? "Kickoff to be confirmed" : new Date(readiness.kickoff_at) > new Date() ? "Upcoming · Pre-Match" : "Kickoff reached";
   return <CustomerShell authenticated={Boolean(access.customer)} theme="matches"><div className="match-page">
     <nav className="match-breadcrumb" aria-label="Breadcrumb"><Link href="/matches">Upcoming Matches</Link><span aria-hidden="true">›</span><span>{label}</span></nav>
     <section className="match-intelligence-header"><span className={unlocked ? "premium-badge" : "matches-summary-badge"}>{unlocked ? "PREMIUM MATCH INTELLIGENCE" : "FREE PRE-MATCH"}</span><h1 className="team-identity-heading"><TeamIdentity inline name={readiness.home_team} team={readiness.home_team_identity} /><span>vs</span><TeamIdentity inline name={readiness.away_team} team={readiness.away_team_identity} /></h1><p>{readiness.competition} · {formatKickoff(readiness.kickoff_at)}</p><p>{matchStatus}</p>{unlocked ? <div className="premium-access-state"><strong>Premium Intelligence Unlocked</strong>{purchased ? <span>Purchased ✓</span> : <span>Access active</span>}</div> : null}</section>
-    {unlocked ? <LiveMatches matchId={parsed.data}><PremiumMatchExperience prediction={premium} free={free} updating={["queued", "in_progress"].includes(readiness.refresh_status)} /></LiveMatches> : free ? <FreeMatchDetail free={free} unlocked={false} offers={offers} deliverable={readiness.deliverable} pricingV2={matchPricingV2Enabled()} /> : null}
+    {unlocked ? <LiveMatches matchId={parsed.data}><PremiumMatchExperience prediction={premium} free={free} updating={["queued", "in_progress"].includes(readiness.refresh_status)} /></LiveMatches> : <FreeMatchDetail free={free ?? unavailableFreePrematch(readiness)} unlocked={false} offers={offers} deliverable={Boolean(premium && readiness.kickoff_at && new Date(readiness.kickoff_at) > new Date())} pricingV2={matchPricingV2Enabled()} />}
   </div></CustomerShell>;
 }

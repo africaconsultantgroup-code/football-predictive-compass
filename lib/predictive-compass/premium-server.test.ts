@@ -54,14 +54,14 @@ describe("Existing premium access and snapshot policy", () => {
     expect((await loadPremiumMatch(id))?.premium_intelligence.primary_forecast.probabilities).toEqual(prediction.probabilities);
     expect(mocks.upcoming).toHaveBeenCalledWith({ syncProducts: false });
   });
-  it("does not substitute a free/live/different-match or expired snapshot", async () => {
+  it("does not substitute a live or different-match snapshot", async () => {
     mocks.freshness.mockRejectedValue(new CoreClientError("unavailable"));
-    mocks.upcoming.mockResolvedValue([{ ...prediction, stage: "HALFTIME" }, { ...prediction, match_id: `fm_${"b".repeat(32)}` }, { ...prediction, kickoff_at: "2026-10-08T14:00:00Z" }]);
+    mocks.upcoming.mockResolvedValue([{ ...prediction, stage: "HALFTIME" }, { ...prediction, match_id: `fm_${"b".repeat(32)}` }]);
     expect(await loadPremiumMatch(id)).toBeNull();
   });
-  it("retains current completed-match delivery protection", async () => {
+  it("keeps an owned pre-match snapshot available after kickoff", async () => {
     mocks.freshness.mockResolvedValue({ ...freshness, prediction: { ...prediction, kickoff_at: "2026-10-08T14:00:00Z" }, freshness_status: "frozen" });
-    expect(await loadPremiumMatch(id)).toBeNull();
+    expect((await loadPremiumMatch(id))?.premium_intelligence).toEqual(premiumIntelligenceFixture);
   });
 });
 

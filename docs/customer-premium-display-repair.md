@@ -1,0 +1,7 @@
+# Premium Match Intelligence display repair
+
+Production Core returned HTTP 200 with valid primary intelligence, but an unavailable score forecast retained a residual `score_probability`. Customer strict consistency validation rejected the entire Premium DTO. The page swallowed the read failure, showing preparing instead of the valid forecast. Separately, owned reads were gated by new-purchase kickoff/freshness restrictions, and missing Free content could leave an unowned Premium panel absent.
+
+The adapter now clears only the unavailable score section before strict validation. Available forecasts, scorelines, probabilities and reasons are preserved exactly. Owned access no longer expires because kickoff passed or freshness is unavailable; match identity and stage checks remain. Premium reads use the existing bounded read retry/timeout. Unowned customers receive only the existing GH₵8 basket controls when a valid Premium forecast exists and kickoff is upcoming, including when Free data is absent. Unavailable Premium retains explicit recovery/preparing messaging and no checkout.
+
+Entitlement authorization, Pricing V2 amounts and one-purchase lifecycle access are unchanged. No ML changes or real payment. A captured production HTTP 200 payload passed the repaired adapter during diagnosis. Available score/reasons render; when Core explicitly marks them unavailable, the UI honestly reports that status rather than inventing data.
