@@ -1,0 +1,20 @@
+import {describe,it,expect,vi} from "vitest";
+vi.mock("server-only",()=>({}));
+import {loadPerformanceReport,projectPerformance} from "./performance-server";
+import {officialPerformanceSchema} from "./performance-contract";
+import {officialPerformanceFixture as row} from "./performance.fixture";
+import {performanceWindow} from "./performance";
+const now=new Date("2026-10-11T12:00:00Z");
+const envelope=(records:unknown[])=>({domain:"football",metric_source:"official_premium_prematch",records});
+const load=(body:unknown,status=200)=>{const fetch=vi.fn().mockResolvedValue(Response.json(body,{status}));return {fetch,promise:loadPerformanceReport("7d",{now,fetch,baseUrl:"https://core.example",apiKey:"server-only-test-key"})};};
+describe("official reporting contract and transport",()=>{
+ it("reads only the official endpoint with server-side header and matching period",async()=>{const request=load(envelope([row]));const report=await request.promise;expect(report.summary).toEqual({settled:1,correct:1,accuracy:100,exact:0,exactAccuracy:0});expect(request.fetch).toHaveBeenCalledWith(new URL("https://core.example/api/v1/domains/football/performance/official?from=2026-10-05&to=2026-10-11"),expect.objectContaining({method:"GET",cache:"no-store",headers:{Accept:"application/json","x-api-key":"server-only-test-key"}}));expect(JSON.stringify(report)).not.toMatch(/server-only-test-key|evidence_cutoff_at|premium_readiness_status|released_at/);});
+ it("accepts expected empty production records",async()=>{expect((await load(envelope([])).promise).summary.settled).toBe(0);});
+ it("uses Core correctness flags, not locally recalculated prediction eligibility or results",async()=>{const unusual={...row,generated_at:"2026-10-12T00:00:00Z",released_at:"2026-10-12T00:00:00Z",settlement:{...row.settlement!,compass_pick_correct:false,exact_score_correct:true}};const report=await load(envelope([row,unusual])).promise;expect(report.summary).toEqual({settled:2,correct:1,accuracy:50,exact:1,exactAccuracy:50});});
+ it("presents only settled rows from the official source",async()=>{const report=await load(envelope([row,{...row,settlement:null}])).promise;expect(report.matches).toHaveLength(1);expect(report.summary.settled).toBe(1);});
+ it("strictly rejects an unexpected legacy/non-READY row rather than including it in any denominator",async()=>{await expect(load(envelope([row,{...row,premium_readiness_status:"PREPARING"}])).promise).rejects.toThrow("temporarily unavailable");expect(officialPerformanceSchema.safeParse(envelope([{home_team:"Legacy",away_team:"Fixture"}])).success).toBe(false);});
+ it.each([null,{},envelope([{}]),{...envelope([]),metric_source:"free"},envelope([{...row,world_state:{private:"secret"}}]),envelope([{...row,compass_pick:{...row.compass_pick,policy_id:"private"}}]),envelope([{...row,settlement:{...row.settlement!,shadow:true}}])])("fails closed for malformed or unsafe Core response %j",async body=>{await expect(load(body).promise).rejects.toThrow("temporarily unavailable");});
+ it.each([401,403,500,503])("handles Core HTTP %s without leaking response details",async status=>{await expect(load({secret:"provider-detail"},status).promise).rejects.toThrow("Official performance is temporarily unavailable.");});
+ it("handles network failure",async()=>{await expect(loadPerformanceReport("today",{fetch:vi.fn().mockRejectedValue(Error("secret server error")),baseUrl:"https://core.example",apiKey:"test"})).rejects.toThrow("Official performance is temporarily unavailable.");});
+ it("filters UI periods inclusively in Ghana time",()=>{const source=officialPerformanceSchema.parse(envelope([row,{...row,kickoff_at:"2026-10-05T00:00:00Z"},{...row,kickoff_at:"2026-10-04T23:59:59Z"},{...row,kickoff_at:"2026-10-12T00:00:00Z"},{...row,kickoff_at:"2026-10-12T00:30:00+01:00"}]));expect(projectPerformance(source,performanceWindow("7d",now)).matches).toHaveLength(3);expect(projectPerformance(source,performanceWindow("today",now)).matches).toHaveLength(1);});
+});

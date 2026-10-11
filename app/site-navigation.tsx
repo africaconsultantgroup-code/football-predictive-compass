@@ -6,7 +6,7 @@ import { useState } from "react";
 
 import { BrandMark } from "./experience-components";
 
-export const customerNavigation = [["Home", "/"], ["Matches", "/matches"], ["My Predictions", "/my-predictions"], ["Competitions", "/matches#competitions"], ["How It Works", "/how-it-works"], ["Account", "/account"]] as const;
+export const customerNavigation = [["Home", "/"], ["Matches", "/matches"], ["My Predictions", "/my-predictions"], ["Performance", "/performance"], ["Competitions", "/matches#competitions"], ["How It Works", "/how-it-works"], ["Account", "/account"]] as const;
 const mobileDestinations = [
   ["Home", "/", "M3 10 12 3l9 7v11h-6v-7H9v7H3Z"],
   ["Matches", "/matches", "M4 4h16v16H4ZM4 9h16M9 9v11M15 9v11"],
