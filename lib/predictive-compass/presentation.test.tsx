@@ -12,6 +12,7 @@ import type { FootballPrediction } from "./schema";
 import { formatPredictedOutcome } from "./presentation";
 
 const prediction: FootballPrediction = {
+  premium_intelligence: {readiness:{status:"READY",customer_visible:true,reason:"PREMIUM_READY",release_at:null,last_late_refresh_at:null,missing_requirements:[]}},
   match_id: "fm_0123456789abcdef0123456789abcdef",
   prediction_id: "pred-001",
   competition: "Premier League",

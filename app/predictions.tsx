@@ -1,3 +1,4 @@
+import { premiumIntelligenceReady, PREMIUM_PREPARING_MESSAGE } from "../lib/predictive-compass/premium-readiness";
 import { connection } from "next/server";
 import Link from "next/link";
 import { TeamIdentity } from "./team-identity";
@@ -89,6 +90,7 @@ function ProbabilityBars({ prediction }: { prediction: FootballPrediction }) {
 }
 
 export function PredictionCard({ prediction }: { prediction: FootballPrediction }) {
+  if (!premiumIntelligenceReady(prediction)) return <article className="prediction-card unlocked-card"><h3>{prediction.home_team} vs {prediction.away_team}</h3><p>{prediction.competition}</p><strong>Premium Intelligence Unlocked</strong><p>{PREMIUM_PREPARING_MESSAGE}</p>{prediction.match_id ? <Link href={`/matches/${prediction.match_id}`}>View Match Intelligence</Link> : null}</article>;
   const factors = prediction.customer_key_factors.slice(0, 3);
   return (
     <article id={prediction.match_id ?? prediction.prediction_id} className="prediction-card unlocked-card">

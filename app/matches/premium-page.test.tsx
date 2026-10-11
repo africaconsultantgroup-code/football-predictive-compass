@@ -23,7 +23,7 @@ const id = `fm_${"a".repeat(32)}`;
 const identity = { match_id: id, competition: "Premier League", home_team: "Home", away_team: "Away", kickoff_at: "2026-10-10T14:00:00Z" };
 const prediction = { ...identity, prediction_id: "stored", stage: "PREMATCH", predicted_outcome: "home_win", probabilities: { home_win: 58, draw: 25, away_win: 17 }, predicted_score: null, reliability: { label: "Moderate", score: 65 }, verification_status: "verified", important_information_pending: false, customer_summary: "private-raw", customer_key_factors: [], generated_at: "2026-10-09T10:00:00Z", updated_at: null, world_state: { secret: "private-raw" } };
 const free = { ...identity, stage: "PREMATCH", tier: "free", status: "available", predicted_outcome: "home_win", probabilities: { home_win: 50, draw: 32, away_win: 18 }, generated_at: "2026-10-08T10:00:00Z" };
-const freshness = { match_id: id, prediction, freshness_status: "fresh", refresh_status: "not_required", maximum_age_seconds: 600, snapshot_age_seconds: 20 };
+const freshness = { match_id: id, prediction: { ...prediction, premium_intelligence: { readiness: {status:"READY" as const,customer_visible:true,reason:"PREMIUM_READY",release_at:null,last_late_refresh_at:null,missing_requirements:[]} } }, freshness_status: "fresh", refresh_status: "not_required", maximum_age_seconds: 600, snapshot_age_seconds: 20 };
 async function html() { return renderToStaticMarkup(await MatchPage({ params: Promise.resolve({ matchId: id }) })); }
 
 beforeEach(() => {
@@ -37,6 +37,19 @@ beforeEach(() => {
 afterEach(() => vi.useRealTimers());
 
 describe("Actual match page premium branches", () => {
+  it.each([false,true])("keeps owned/owner access unlocked while current Core visibility is false (owner=%s)",async owner=>{
+    mocks.access.mockResolvedValue({customer:{id:"customer"},owner,capabilities:new Set()});
+    mocks.freshness.mockResolvedValue({...freshness,prediction:{...freshness.prediction,premium_intelligence:{readiness:{...premiumIntelligenceFixture.readiness,status:"PREPARING",customer_visible:false}}}});
+    const markup=await html();
+    expect(markup).toContain("Premium Intelligence Unlocked");expect(markup).toContain("Final match intelligence is being prepared");
+    expect(markup).not.toContain("58%");expect(markup).not.toContain("View Prediction Timeline");
+    expect(mocks.premium).not.toHaveBeenCalled();
+  });
+  it("keeps early unowned purchase eligible without exposing PREPARING content",async()=>{
+    mocks.grants.mockResolvedValue(false);
+    mocks.freshness.mockResolvedValue({...freshness,prediction:{...freshness.prediction,premium_intelligence:{readiness:{...premiumIntelligenceFixture.readiness,status:"PREPARING",customer_visible:false}}}});
+    const markup=await html();expect(markup).toContain("Add to Basket");expect(markup).toContain("GH₵8");expect(markup).not.toContain("58%");expect(mocks.premium).not.toHaveBeenCalled();
+  });
   it("opens owner intelligence without a purchase or checkout", async () => {
     mocks.access.mockResolvedValue({customer:{id:"owner"},owner:true,capabilities:new Set(["football.prematch.full"])});
     const markup=await html();
@@ -77,14 +90,14 @@ describe("Actual match page premium branches", () => {
   it("preserves paid state and shows preparing when premium is unavailable", async () => {
     mocks.freshness.mockRejectedValue(new CoreClientError("unavailable"));
     const markup = await html();
-    expect(markup).toContain("Premium forecast is being prepared");
+    expect(markup).toContain("Final match intelligence is being prepared");
     expect(markup).toContain("Premium Intelligence Unlocked"); expect(markup).toContain("Purchased ✓");
     expect(markup).toContain("50%"); expect(markup).not.toContain("What Changed");
     expect(markup).not.toContain("unlock-button");
   });
-  it("retains the last valid premium snapshot after a freshness failure", async () => {
+  it("does not resurrect an old premium snapshot after a freshness failure", async () => {
     mocks.freshness.mockRejectedValue(new CoreClientError("unavailable")); mocks.upcoming.mockResolvedValue([prediction]);
-    expect(await html()).toContain("58%");
+    expect(await html()).not.toContain("58%");
   });
   it("does not break premium when free is absent", async () => {
     mocks.free.mockResolvedValue(null);
@@ -92,7 +105,7 @@ describe("Actual match page premium branches", () => {
     expect(markup).toContain("58%"); expect(markup).not.toContain("What Changed");
   });
   it("shows owned stored intelligence after kickoff even when freshness is unavailable", async () => {
-    mocks.freshness.mockResolvedValue({ ...freshness, prediction: { ...prediction, kickoff_at: "2026-10-08T14:00:00Z" }, freshness_status: "unavailable" });
+    mocks.freshness.mockResolvedValue({ ...freshness, prediction: { ...freshness.prediction, kickoff_at: "2026-10-08T14:00:00Z" }, freshness_status: "unavailable" });
     const markup = await html();
     expect(markup).toContain("Compass Pick"); expect(markup).toContain("58%");
     expect(markup).toContain("Why Compass Thinks This"); expect(markup).toContain("Score Forecast");
@@ -101,22 +114,22 @@ describe("Actual match page premium branches", () => {
   it("offers unowned stored Premium after a freshness outage without exposing paid contents", async () => {
     mocks.grants.mockResolvedValue(false); mocks.freshness.mockRejectedValue(new CoreClientError("unavailable")); mocks.upcoming.mockResolvedValue([prediction]);
     const markup = await html();
-    expect(markup).toContain("Add to Basket"); expect(markup).toContain("GH₵8"); expect(markup).not.toContain("58%");
+    expect(markup).not.toContain("Add to Basket"); expect(markup).not.toContain("58%");
   });
   it("retains a usable purchase panel when Free is absent", async () => {
     mocks.grants.mockResolvedValue(false); mocks.free.mockResolvedValue(null);
     const markup = await html();
     expect(markup).toContain("Add to Basket"); expect(markup).toContain("GH₵8");
   });
-  it("shows preparing rather than checkout when Premium cannot be read", async () => {
+  it("keeps purchase eligibility separate when content cannot be read", async () => {
     mocks.grants.mockResolvedValue(false); mocks.premium.mockRejectedValue(new CoreClientError("unavailable"));
     const markup = await html();
-    expect(markup).toContain("Premium intelligence being prepared"); expect(markup).not.toContain("Add to Basket");
+    expect(markup).toContain("Add to Basket"); expect(markup).not.toContain("58%");
     expect(markup).not.toContain("Core request failed");
   });
   it("preserves completed-match expiry and checkout delivery protection", async () => {
     mocks.grants.mockResolvedValue(false);
-    mocks.freshness.mockResolvedValue({ ...freshness, prediction: { ...prediction, kickoff_at: "2026-10-08T14:00:00Z" }, freshness_status: "frozen" });
+    mocks.freshness.mockResolvedValue({ ...freshness, prediction: { ...freshness.prediction, kickoff_at: "2026-10-08T14:00:00Z" }, freshness_status: "frozen" });
     const markup = await html();
     expect(markup).toContain("Kickoff reached");
     expect(markup).not.toContain("58%"); expect(markup).not.toContain("unlock-button");
