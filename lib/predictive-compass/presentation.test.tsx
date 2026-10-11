@@ -42,7 +42,7 @@ it("offers Premier League and Champions League in the existing competition flow"
 
 describe("customer prediction presentation", () => {
   it("exposes the complete customer information architecture without admin navigation", () => {
-    expect(customerNavigation.map(([label]) => label)).toEqual(["Home", "Matches", "My Predictions", "Competitions", "How It Works", "Account"]);
+    expect(customerNavigation.map(([label]) => label)).toEqual(["Home", "Matches", "My Predictions", "Performance", "Competitions", "How It Works", "Account"]);
     const html = renderToStaticMarkup(<SiteNavigation authenticated={false} />);
     for (const [, href] of customerNavigation) expect(html).toContain(`href="${href}"`);
     expect(html).not.toMatch(/admin/i);
