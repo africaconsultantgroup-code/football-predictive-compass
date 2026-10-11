@@ -2,7 +2,8 @@ import "server-only";
 import { getCustomerAccess } from "../auth/access";
 import { hasPredictionAccess } from "../auth/match-access";
 import { createCustomerAuthServerClient } from "../supabase/auth-server";
-import { CoreClientError, requestPrematchFreshness, getUpcomingFootballPredictions, getPremiumFootballPrediction } from "./server";
+import { CoreClientError, requestPrematchFreshness, getPremiumFootballPrediction } from "./server";
+import { premiumIntelligenceReady } from "./premium-readiness";
 
 export async function authorizePremiumMatch(matchId: string) {
   const access = await getCustomerAccess();
@@ -19,8 +20,10 @@ export async function loadPremiumMatch(matchId: string) {
     prediction = freshness.prediction;
   } catch (error) {
     if (!(error instanceof CoreClientError)) throw error;
-    prediction = (await getUpcomingFootballPredictions({ syncProducts: false }))
-      .find(item => item.match_id === matchId && item.stage === "PREMATCH");
+    // No current lifecycle decision: do not resurrect an older stored snapshot.
+    return null;
   }
-  return prediction?.match_id === matchId && prediction.stage === "PREMATCH" ? getPremiumFootballPrediction(prediction.prediction_id, matchId) : null;
+  if (prediction?.match_id !== matchId || !premiumIntelligenceReady(prediction)) return null;
+  const premium = await getPremiumFootballPrediction(prediction.prediction_id, matchId);
+  return premiumIntelligenceReady(premium) ? premium : null;
 }

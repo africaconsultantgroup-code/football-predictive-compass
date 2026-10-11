@@ -1,6 +1,7 @@
 // Contract-shaped illustrative values for tests only; never used as a forecast source.
 import type { PremiumIntelligence } from "./premium-contract";
 export const premiumIntelligenceFixture: PremiumIntelligence = {
+  readiness: {status:"READY",customer_visible:true,reason:"PREMIUM_READY",release_at:null,last_late_refresh_at:null,missing_requirements:[]},
   primary_forecast: { probabilities: { home_win: 58, draw: 25, away_win: 17 }, most_likely_outcome: "home_win", generated_at: "2026-10-09T10:00:00Z", status: "verified" },
   compass_pick: { market: "Match Result", selection: "Home FC to win", model_probability: 58, strength: "Moderate", generated_at: "2026-10-09T10:00:00Z" },
   market_opportunities: [

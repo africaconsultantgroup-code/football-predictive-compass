@@ -117,7 +117,7 @@ describe("Approved Premium rendering", () => {
   });
   it("keeps paid preparing separate from genuine Free", () => {
     const html = renderToStaticMarkup(<PremiumMatchExperience prediction={null} free={free} now={now} />);
-    expect(html).toContain("No new purchase is required"); expect(html).toContain("FREE PRE-MATCH"); expect(html).toContain("Forecast Change");
+    expect(html).toContain("No new purchase is required"); expect(html).toContain("FREE PRE-MATCH"); expect(html).not.toContain("Forecast Change");
     expect(html.slice(0, html.indexOf("</section>"))).not.toContain("50%");
   });
   it("uses the shared Pricing V2 authority without stage-only checkout", () => {

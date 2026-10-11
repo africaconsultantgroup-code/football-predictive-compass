@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { teamIdentityFields } from "../teams/schema";
 import { withTeamIdentities } from "../teams/identity";
+import { premiumReadinessSchema } from "./premium-readiness";
 
 export const footballStageSchema = z.enum([
   "PREMATCH",
@@ -66,6 +67,7 @@ export const footballPredictionSchema = z
     evidence_cutoff_at: z.string().datetime({ offset: true }).nullable().optional(),
     last_intelligence_refresh_at: z.string().datetime({ offset: true }).nullable().optional(),
     refresh_reason: z.string().nullable().optional(),
+    premium_intelligence: z.object({ readiness: premiumReadinessSchema.nullable().optional() }).strip().optional(),
   })
   .strip();
 

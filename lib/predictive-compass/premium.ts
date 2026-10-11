@@ -3,6 +3,7 @@ import { footballMatchIdSchema, footballPredictionSchema } from "./schema";
 import { premiumIntelligenceSchema } from "./premium-contract";
 import { teamIdentityFields } from "../teams/schema";
 import { withTeamIdentities } from "../teams/identity";
+import { premiumIntelligenceReady } from "./premium-readiness";
 
 // Fixture identity wraps the exact ten-field Premium DTO; engine envelope stays server-side.
 export const premiumCustomerSchema = z.object({
@@ -53,6 +54,7 @@ export function createPremiumMatchHandler(authorize: (matchId: string) => Promis
       if (access !== "entitled") return Response.json({ error: access === "anonymous" ? "Authentication required." : "Premium access required." }, { status: access === "anonymous" ? 401 : 403, headers });
       const prediction = premiumCustomerSchema.parse(await load(matchId));
       if (prediction.match_id !== matchId) throw new Error("Mismatched fixture");
+      if (!premiumIntelligenceReady(prediction)) return Response.json({ match_id: matchId, tier: "premium", status: "preparing" }, { status: 503, headers });
       return Response.json(prediction, { headers });
     } catch {
       return Response.json({ match_id: matchId, tier: "premium", status: "preparing" }, { status: 503, headers });

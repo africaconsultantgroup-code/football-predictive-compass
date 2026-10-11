@@ -4,6 +4,7 @@ import type { PremiumCustomerPrediction } from "../../lib/predictive-compass/pre
 import type { PremiumIntelligence } from "../../lib/predictive-compass/premium-contract";
 import { OutcomeProbabilityBar } from "./match-components";
 import { FreeForecastCard } from "./free-detail";
+import { premiumIntelligenceReady, PREMIUM_PREPARING_MESSAGE } from "../../lib/predictive-compass/premium-readiness";
 
 type SectionProps = { intelligence: PremiumIntelligence | null };
 function outcomeLabel(outcome: "home_win" | "draw" | "away_win", prediction: PremiumCustomerPrediction) {
@@ -63,6 +64,7 @@ export function ForecastFreshness({ prediction, updating = false, now = new Date
 }
 
 export function PremiumMatchExperience({ prediction, free, updating = false, now = new Date() }: { prediction: PremiumCustomerPrediction | null; free: FreePrematchPrediction | null; updating?: boolean; now?: Date }) {
+  if (!premiumIntelligenceReady(prediction)) return <div className="premium-experience"><section className="premium-panel" role="status"><h2>Premium Intelligence Unlocked</h2><p>{PREMIUM_PREPARING_MESSAGE}</p><small>Your access remains active. No new purchase is required.</small></section>{free ? <section className="premium-free-reference" aria-label="Separate free forecast"><h2>Your Free Pre-Match View</h2><FreeForecastCard free={free} /></section> : null}</div>;
   const intelligence = prediction?.premium_intelligence ?? null;
   return <div className="premium-experience"><PremiumForecastHero prediction={prediction} updating={updating} /><CompassPickCard intelligence={intelligence} /><BookmakerComparisonCard intelligence={intelligence} /><MarketOpportunityList intelligence={intelligence} /><IntelligenceReasonList intelligence={intelligence} /><RecommendationStrength intelligence={intelligence} /><ScoreForecastCard prediction={prediction} /><ForecastComparison prediction={prediction} /><ForecastFreshness prediction={prediction} updating={updating} now={now} />
     {free ? <section className="premium-free-reference" aria-label="Separate free forecast"><h2>Your Free Pre-Match View</h2><FreeForecastCard free={free} /></section> : null}

@@ -16,12 +16,21 @@ import { premiumIntelligenceFixture } from "./premium.fixture";
 
 const id = `fm_${"a".repeat(32)}`;
 const prediction = { match_id: id, prediction_id: "stored", competition: "Premier League", home_team: "Home", away_team: "Away", kickoff_at: "2026-10-10T14:00:00Z", stage: "PREMATCH", predicted_outcome: "home_win", probabilities: { home_win: 58, draw: 25, away_win: 17 }, predicted_score: null, reliability: { label: "Moderate", score: 65 }, verification_status: "verified", important_information_pending: false, customer_summary: "summary", customer_key_factors: [], generated_at: "2026-10-09T10:00:00Z", updated_at: null };
-const freshness = { match_id: id, prediction, freshness_status: "fresh", refresh_status: "not_required", maximum_age_seconds: 600, snapshot_age_seconds: 20 };
+const freshness = { match_id: id, prediction: { ...prediction, premium_intelligence: { readiness: {status:"READY" as const,customer_visible:true,reason:"PREMIUM_READY",release_at:null,last_late_refresh_at:null,missing_requirements:[]} } }, freshness_status: "fresh", refresh_status: "not_required", maximum_age_seconds: 600, snapshot_age_seconds: 20 };
 
 beforeEach(() => { vi.clearAllMocks(); vi.useFakeTimers(); vi.setSystemTime(new Date("2026-10-09T12:00:00Z")); mocks.premium.mockResolvedValue({ premium_intelligence: premiumIntelligenceFixture }); });
 afterEach(() => vi.useRealTimers());
 
 describe("Existing premium access and snapshot policy", () => {
+  it("does not fetch an older ready snapshot when the current readiness is PREPARING",async()=>{
+    mocks.freshness.mockResolvedValue({...freshness,prediction:{...freshness.prediction,premium_intelligence:{readiness:{...premiumIntelligenceFixture.readiness,status:"PREPARING",customer_visible:false}}}});
+    expect(await loadPremiumMatch(id)).toBeNull();expect(mocks.premium).not.toHaveBeenCalled();expect(mocks.upcoming).not.toHaveBeenCalled();
+  });
+  it("honors a newer hidden detail even if the earlier freshness decision was visible",async()=>{
+    mocks.freshness.mockResolvedValue(freshness);
+    mocks.premium.mockResolvedValue({premium_intelligence:{...premiumIntelligenceFixture,readiness:{...premiumIntelligenceFixture.readiness,status:"READY",customer_visible:false}}});
+    expect(await loadPremiumMatch(id)).toBeNull();expect(mocks.upcoming).not.toHaveBeenCalled();
+  });
   it("does not switch snapshots when the approved Premium contract is malformed", async () => {
     mocks.freshness.mockResolvedValue(freshness);
     mocks.premium.mockRejectedValueOnce(new CoreClientError("malformed"));
@@ -44,15 +53,16 @@ describe("Existing premium access and snapshot policy", () => {
   });
   it("uses the current approved paid snapshot and no alternate source", async () => {
     mocks.freshness.mockResolvedValue(freshness);
-    expect((await loadPremiumMatch(id))?.premium_intelligence.primary_forecast.probabilities).toEqual(prediction.probabilities);
+    expect((await loadPremiumMatch(id))?.premium_intelligence.primary_forecast?.probabilities).toEqual(prediction.probabilities);
     expect(mocks.premium).toHaveBeenCalledWith("stored", id);
     expect(mocks.upcoming).not.toHaveBeenCalled();
   });
-  it("preserves the existing valid stored fallback after a freshness failure", async () => {
+  it("blocks stored fallback without a current readiness decision", async () => {
     mocks.freshness.mockRejectedValue(new CoreClientError("unavailable"));
     mocks.upcoming.mockResolvedValue([prediction]);
-    expect((await loadPremiumMatch(id))?.premium_intelligence.primary_forecast.probabilities).toEqual(prediction.probabilities);
-    expect(mocks.upcoming).toHaveBeenCalledWith({ syncProducts: false });
+    expect(await loadPremiumMatch(id)).toBeNull();
+    expect(mocks.upcoming).not.toHaveBeenCalled();
+    expect(mocks.premium).not.toHaveBeenCalled();
   });
   it("does not substitute a live or different-match snapshot", async () => {
     mocks.freshness.mockRejectedValue(new CoreClientError("unavailable"));
@@ -60,7 +70,7 @@ describe("Existing premium access and snapshot policy", () => {
     expect(await loadPremiumMatch(id)).toBeNull();
   });
   it("keeps an owned pre-match snapshot available after kickoff", async () => {
-    mocks.freshness.mockResolvedValue({ ...freshness, prediction: { ...prediction, kickoff_at: "2026-10-08T14:00:00Z" }, freshness_status: "frozen" });
+    mocks.freshness.mockResolvedValue({ ...freshness, prediction: { ...freshness.prediction, kickoff_at: "2026-10-08T14:00:00Z" }, freshness_status: "frozen" });
     expect((await loadPremiumMatch(id))?.premium_intelligence).toEqual(premiumIntelligenceFixture);
   });
 });
