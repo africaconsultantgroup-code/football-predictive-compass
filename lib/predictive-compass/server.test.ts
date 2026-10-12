@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 vi.mock("server-only", () => ({}));
 
 import { createFootballCoreClient, CoreClientError } from "./server";
+import historical from "../reports/historical-arsenal.fixture.json";
 
 const apiKey = "football-service-secret";
 const baseUrl = "https://core.example.test/";
@@ -44,6 +45,23 @@ function clientWithResponse(status: number, body: unknown) {
 }
 
 describe("Football Core client", () => {
+  it("allows a slow stored historical read without relaxing the freshness POST deadline", async () => {
+    vi.useFakeTimers();
+    try {
+      const fetchMock = vi.fn<typeof fetch>().mockImplementation((_url, init) => new Promise((resolve, reject) => {
+        const timer = setTimeout(() => resolve(new Response(JSON.stringify(historical))), 14_800);
+        init?.signal?.addEventListener("abort", () => { clearTimeout(timer); reject(new DOMException("aborted", "AbortError")); });
+      }));
+      const client = createFootballCoreClient({ baseUrl, apiKey, fetch: fetchMock });
+      const pending = client.getLiveFootballPrediction(historical.match_id);
+      await vi.advanceTimersByTimeAsync(14_800);
+      expect((await pending).premium_prematch?.compass_pick?.selection).toBe("Arsenal to win");
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      const freshness = expect(client.requestPrematchFreshness(historical.match_id)).rejects.toMatchObject({kind:"timeout"});
+      await vi.advanceTimersByTimeAsync(8_000);await freshness;
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+    } finally {vi.useRealTimers();}
+  });
   it("accepts a 14.8-second stored inventory response without widening the freshness POST deadline", async () => {
     vi.useFakeTimers();
     try {
