@@ -4,7 +4,7 @@ vi.mock("server-only", () => ({}));
 vi.mock("next/server", () => ({ connection: async () => undefined }));
 vi.mock("next/navigation", () => ({ notFound: () => { throw new Error("not found"); }, usePathname: () => "/matches", useRouter: () => ({ push: vi.fn() }) }));
 vi.mock("../customer-shell", () => ({ CustomerShell: ({ children }: { children: React.ReactNode }) => children }));
-const mocks = vi.hoisted(() => ({ access: vi.fn(), grants: vi.fn(), client: vi.fn(), freshness: vi.fn(), upcoming: vi.fn(), free: vi.fn(), offers: vi.fn(), purchase: vi.fn(), premium: vi.fn() }));
+const mocks = vi.hoisted(() => ({ access: vi.fn(), grants: vi.fn(), client: vi.fn(), freshness: vi.fn(), upcoming: vi.fn(), free: vi.fn(), offers: vi.fn(), purchase: vi.fn(), premium: vi.fn(), historical: vi.fn(), report: vi.fn() }));
 vi.mock("../../lib/auth/access", () => ({ getCustomerAccess: mocks.access }));
 vi.mock("../../lib/auth/match-access", () => ({ hasPredictionAccess: mocks.grants, getPredictionOffers: mocks.offers }));
 vi.mock("../../lib/supabase/auth-server", () => ({ createCustomerAuthServerClient: mocks.client }));
@@ -12,8 +12,10 @@ vi.mock("../../lib/predictive-compass/free-server", () => ({ getFreePrematchPred
 vi.mock("../../lib/predictive-compass/premium-purchase", () => ({ hasSuccessfulPrematchPurchase: mocks.purchase }));
 vi.mock("../../lib/predictive-compass/server", () => {
   class CoreClientError extends Error { constructor(readonly kind: string) { super(kind); } }
-  return { CoreClientError, requestPrematchFreshness: mocks.freshness, getUpcomingFootballPredictions: mocks.upcoming, getPremiumFootballPrediction: mocks.premium };
+  return { CoreClientError, requestPrematchFreshness: mocks.freshness, getUpcomingFootballPredictions: mocks.upcoming, getPremiumFootballPrediction: mocks.premium, getLiveFootballPrediction: mocks.historical };
 });
+vi.mock("../../lib/reports/post-match", async importOriginal => ({...await importOriginal<typeof import("../../lib/reports/post-match")>(),loadPostMatchReport:mocks.report}));
+import historicalFixture from "../../lib/reports/historical-arsenal.fixture.json";
 import MatchPage from "./[matchId]/page";
 import { CoreClientError } from "../../lib/predictive-compass/server";
 import { toPremiumCustomerPrediction } from "../../lib/predictive-compass/premium";
@@ -27,7 +29,7 @@ const freshness = { match_id: id, prediction: { ...prediction, premium_intellige
 async function html() { return renderToStaticMarkup(await MatchPage({ params: Promise.resolve({ matchId: id }) })); }
 
 beforeEach(() => {
-  vi.clearAllMocks(); vi.useFakeTimers(); vi.setSystemTime(new Date("2026-10-09T12:00:00Z"));
+  vi.clearAllMocks(); mocks.historical.mockResolvedValue(null); vi.useFakeTimers(); vi.setSystemTime(new Date("2026-10-09T12:00:00Z"));
   mocks.access.mockResolvedValue({ customer: { id: "user" }, capabilities: new Set() });
   mocks.client.mockResolvedValue({}); mocks.grants.mockResolvedValue(true); mocks.purchase.mockResolvedValue(true);
   mocks.freshness.mockResolvedValue(freshness); mocks.free.mockResolvedValue(free); mocks.upcoming.mockResolvedValue([]);
@@ -37,6 +39,14 @@ beforeEach(() => {
 afterEach(() => vi.useRealTimers());
 
 describe("Actual match page premium branches", () => {
+  it("opens the historical match report before current readiness for a completed owned match",async()=>{
+    mocks.historical.mockResolvedValue(historicalFixture);
+    mocks.report.mockResolvedValue({homeTeam:"Arsenal",awayTeam:"Leeds",competition:"Premier League",finalScore:{home:2,away:1},kickoffAt:historicalFixture.kickoff_at,premium:historicalFixture.premium_prematch,premiumUnlocked:true,history:historicalFixture.history});
+    const markup=await html();expect(markup).toContain("Arsenal to win");expect(markup).toContain("LEGACY PRE-MATCH INTELLIGENCE");expect(mocks.freshness).not.toHaveBeenCalled();expect(mocks.premium).not.toHaveBeenCalled();
+  });
+  it("shows a safe recovery state if the completed report cannot be loaded",async()=>{
+    mocks.historical.mockResolvedValue(historicalFixture);mocks.report.mockRejectedValue(new Error("private database error"));const markup=await html();expect(markup).toContain("Match report temporarily unavailable");expect(markup).not.toContain("private database error");
+  });
   it.each([false,true])("keeps owned/owner access unlocked while current Core visibility is false (owner=%s)",async owner=>{
     mocks.access.mockResolvedValue({customer:{id:"customer"},owner,capabilities:new Set()});
     mocks.freshness.mockResolvedValue({...freshness,prediction:{...freshness.prediction,premium_intelligence:{readiness:{...premiumIntelligenceFixture.readiness,status:"PREPARING",customer_visible:false}}}});

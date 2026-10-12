@@ -1,0 +1,124 @@
+{
+  "match_id": "fm_6d661c9077f0cedf9051792906c29bc9",
+  "competition": "Premier League",
+  "home_team": "Arsenal",
+  "away_team": "Leeds",
+  "kickoff_at": "2026-10-10T11:30:00Z",
+  "status": "FINAL",
+  "minute": 90,
+  "added_time": null,
+  "current_score": {
+    "home": 2,
+    "away": 1
+  },
+  "stage": "FINAL",
+  "prediction": {
+    "predicted_outcome": "home_win",
+    "predicted_score": null,
+    "probabilities": {
+      "home_win": 55.95,
+      "draw": 33.13,
+      "away_win": 10.92
+    },
+    "reliability": {
+      "score": 93.6,
+      "label": "High"
+    },
+    "verification_status": "updated",
+    "important_information_pending": true,
+    "customer_summary": "Arsenal are our pick for this match. We expect a clearer edge, with Arsenal having the strongest overall chance of the result.",
+    "customer_key_factors": [
+      "Arsenal have the highest result probability.",
+      "The result probabilities suggest a clearer advantage."
+    ]
+  },
+  "premium_prematch": {
+    "access_status": "LEGACY_PREMATCH",
+    "label": "Legacy Pre-Match Intelligence",
+    "official_performance_eligible": false,
+    "probabilities": {
+      "home_win": 55.95,
+      "draw": 33.13,
+      "away_win": 10.92
+    },
+    "compass_pick": {
+      "market": "Match Result",
+      "selection": "Arsenal to win",
+      "model_probability": 55.95,
+      "strength": "Cautious",
+      "generated_at": "2026-10-09T09:30:41.479335Z"
+    },
+    "recommendation_strength": {
+      "label": "Cautious",
+      "score": 93.6
+    },
+    "score_forecast": {
+      "status": "available",
+      "most_likely_score": {
+        "home": 2,
+        "away": 0
+      },
+      "score_probability": 10.6,
+      "alternative_scorelines": []
+    },
+    "bookmaker_comparison": [
+      {
+        "selection": "Arsenal to win",
+        "bookmaker_implied_probability": 68.29,
+        "bookmaker_consensus_fair_odds": 1.46,
+        "compass_probability": 58.71,
+        "compass_fair_odds": 1.7,
+        "probability_difference": -9.58
+      },
+      {
+        "selection": "Draw",
+        "bookmaker_implied_probability": 19.63,
+        "bookmaker_consensus_fair_odds": 5.09,
+        "compass_probability": 25.24,
+        "compass_fair_odds": 3.96,
+        "probability_difference": 5.61
+      },
+      {
+        "selection": "Leeds to win",
+        "bookmaker_implied_probability": 12.08,
+        "bookmaker_consensus_fair_odds": 8.28,
+        "compass_probability": 16.05,
+        "compass_fair_odds": 6.23,
+        "probability_difference": 3.97
+      }
+    ],
+    "intelligence_reasons": [
+      {
+        "category": "Player Availability",
+        "summary": "Player availability is relevant to this forecast."
+      }
+    ],
+    "generated_at": "2026-10-09T09:30:41.479335Z",
+    "evidence_cutoff_at": "2026-10-09T09:30:41.479335Z"
+  },
+  "history": [
+    {
+      "stage": "FINAL",
+      "minute": 90,
+      "current_score": {
+        "home": 2,
+        "away": 1
+      },
+      "predicted_outcome": "home_win",
+      "predicted_score": null,
+      "probabilities": {
+        "home_win": 55.95,
+        "draw": 33.13,
+        "away_win": 10.92
+      },
+      "reliability": {
+        "score": 93.6,
+        "label": "High"
+      },
+      "generated_at": "2026-10-10T13:44:33.958907Z",
+      "change_reason": "final",
+      "change_description": "Final match result."
+    }
+  ],
+  "updated_at": "2026-10-10T13:44:34.116612Z"
+}

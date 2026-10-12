@@ -1,4 +1,7 @@
 import "server-only";
+import { getFreePrematchPrediction } from "../predictive-compass/free-server";
+import type { FreePrematchPrediction } from "../predictive-compass/free";
+import type { HistoricalPremium } from "../predictive-compass/historical-contract";
 import type { TeamIdentityRecord } from "../teams/identity";
 
 import { createHash } from "node:crypto";
@@ -17,7 +20,7 @@ export class ReportAccessError extends Error {
   constructor(public code: "not_final" | "unavailable") { super(code); }
 }
 export type StageReview={stage:"PREMATCH"|"LIVE"|"HALFTIME";snapshot:FootballPredictionHistoryEntry|null;outcomeResult:"CORRECT"|"INCORRECT"|"NOT APPLICABLE";exactResult:"CORRECT"|"INCORRECT"|"NOT APPLICABLE";scoreStrength:number|null;actualRank:number|null;marketResult:"NOT APPLICABLE"};
-export type PostMatchReport={reportId:string;matchId:string;competition:string;homeTeam:string;awayTeam:string;kickoffAt:string|null;finalScore:FootballScore;finalStatus:"FINAL";generatedAt:string;purchase:{amount:number;currency:string;stages:string[]}|null;reviews:StageReview[];snapshotTimestamps:string[];summary:string};
+export type PostMatchReport={reportId:string;matchId:string;competition:string;homeTeam:string;awayTeam:string;kickoffAt:string|null;finalScore:FootballScore;finalStatus:"FINAL";generatedAt:string;purchase:{amount:number;currency:string;stages:string[]}|null;reviews:StageReview[];snapshotTimestamps:string[];summary:string;premium?:HistoricalPremium|null;free?:FreePrematchPrediction|null;history?:FootballPredictionHistoryEntry[];premiumUnlocked?:boolean;homeIdentity?:TeamIdentityRecord;awayIdentity?:TeamIdentityRecord};
 type PaymentSnapshot={amount:number;currency:string;status:string};
 type MatchSeed={matchId:string;kickoffAt:string;purchased:boolean;purchasedStages:Set<string>;amount:number|null;currency:string|null};
 
@@ -70,8 +73,8 @@ export async function listCustomerMatches(userId:string,now=new Date()){
   }
   const unresolved: MatchSeed[] = [];
   const resolved=await Promise.all([...matches.values()].map(async item=>{
-    try{const current=await getLiveFootballPrediction(item.matchId);return{...item,purchasedStages:[...item.purchasedStages],competition:current.competition,homeTeam:current.home_team,awayTeam:current.away_team,homeIdentity:current.home_team_identity,awayIdentity:current.away_team_identity,status:current.status,isFinal:isAuthoritativeFinal(current),finalScore:current.current_score}}
-    catch{unresolved.push(item);return{...item,purchasedStages:[...item.purchasedStages],competition:"",homeTeam:"",awayTeam:"",homeIdentity:undefined as TeamIdentityRecord | undefined,awayIdentity:undefined as TeamIdentityRecord | undefined,status:"Intelligence being prepared",isFinal:false,finalScore:null}}
+    try{const current=await getLiveFootballPrediction(item.matchId);return{...item,purchasedStages:[...item.purchasedStages],competition:current.competition,homeTeam:current.home_team,awayTeam:current.away_team,homeIdentity:current.home_team_identity,awayIdentity:current.away_team_identity,status:current.status,isFinal:isAuthoritativeFinal(current),finalScore:current.current_score,historicalPremiumAvailable:Boolean(current.premium_prematch)}}
+    catch{unresolved.push(item);return{...item,purchasedStages:[...item.purchasedStages],competition:"",homeTeam:"",awayTeam:"",homeIdentity:undefined as TeamIdentityRecord | undefined,awayIdentity:undefined as TeamIdentityRecord | undefined,status:"Intelligence being prepared",isFinal:false,finalScore:null,historicalPremiumAvailable:false}}
   }));
   if (unresolved.length) {
     const identities = unresolved.some(item => !purchasedIdentities.has(item.matchId)) ? await loadFixtureIdentities() : new Map();
@@ -83,7 +86,8 @@ export async function listCustomerMatches(userId:string,now=new Date()){
 }
 
 export async function loadPostMatchReport(userId:string,matchId:string,now=new Date()):Promise<PostMatchReport>{
-  const [current,timeline]=await Promise.all([getLiveFootballPrediction(matchId),getLiveFootballPredictionHistory(matchId)]);
+  const current=await getLiveFootballPrediction(matchId);
+  const timeline=current.history ? {...current,history:current.history} : await getLiveFootballPredictionHistory(matchId);
   if(!isAuthoritativeFinal(current)||!current.current_score)throw new ReportAccessError("not_final");
   const admin=getServerSupabaseClient();
   let permanentPurchase: { amount: number; currency: string; stages: string[] } | null = null;
@@ -105,14 +109,16 @@ export async function loadPostMatchReport(userId:string,matchId:string,now=new D
       for (const stage of ["prematch","live","halftime"] as const) if (await hasPredictionAccess({ access, supabase:client,matchId,stage })) allowedStages.add(stage);
     }
   }
+  const free=await getFreePrematchPrediction(matchId,current).catch(()=>null);
+  const premiumUnlocked=owned||allowedStages.has("prematch");
   const history=timeline.history.filter((entry):entry is FootballPredictionHistoryEntry=>!("locked" in entry)&&(owned||allowedStages.has(commercialStage(entry.stage)??""))),finalScore=current.current_score;
   const stages:[StageReview["stage"],FootballPredictionHistoryEntry|null][]=[["PREMATCH",choose(history,"PREMATCH")],["LIVE",choose(history,"LIVE")],["HALFTIME",choose(history,"HALFTIME")]];
-  const reviews=stages.map(([stage,snapshot])=>({stage,snapshot,outcomeResult:evaluateOutcome(snapshot?.predicted_outcome,finalScore),exactResult:evaluateExact(snapshot?.predicted_score,finalScore),scoreStrength:snapshot?.predicted_score?100:null,actualRank:snapshot?.predicted_score&&evaluateExact(snapshot.predicted_score,finalScore)==="CORRECT"?1:null,marketResult:"NOT APPLICABLE" as const}));
+  const reviews=stages.map(([stage,snapshot])=>({stage,snapshot,outcomeResult:evaluateOutcome(snapshot?.predicted_outcome,finalScore),exactResult:evaluateExact(snapshot?.predicted_score,finalScore),scoreStrength:null,actualRank:snapshot?.predicted_score&&evaluateExact(snapshot.predicted_score,finalScore)==="CORRECT"?1:null,marketResult:"NOT APPLICABLE" as const}));
   const {data:payments}=await admin.from("prediction_payments").select("amount,currency,prediction_access_products!inner(prediction_stage,prediction_access_product_matches!inner(match_id))").eq("user_id",userId).eq("status","successful").eq("prediction_access_products.prediction_access_product_matches.match_id",matchId);
   const paid=payments as unknown as {amount:number;currency:string;prediction_access_products:{prediction_stage:string}}[]|null;
   const outcome=outcomeForScore(finalScore),winner=outcome==="draw"?"a draw":outcome==="home_win"?`${timeline.home_team} winning`:`${timeline.away_team} winning`;
   const available=reviews.filter(review=>review.snapshot);
   const summary=available.length?`Predictive Compass recorded ${available.length} historical prediction stage${available.length===1?"":"s"} for this match. The verified match result was ${timeline.home_team} ${finalScore.home}-${finalScore.away} ${timeline.away_team}, with ${winner}.`:"No historical prediction snapshots are available for this completed match. The verified final result is preserved below.";
   const timestamps=history.map(entry=>entry.generated_at).filter((value):value is string=>Boolean(value));
-  return{reportId:`PCR-${current.kickoff_at?.slice(0,4)||now.getUTCFullYear()}-${createHash("sha256").update(matchId+timestamps.join("|")).digest("hex").slice(0,8).toUpperCase()}`,matchId,competition:timeline.competition,homeTeam:timeline.home_team,awayTeam:timeline.away_team,kickoffAt:timeline.kickoff_at,finalScore,finalStatus:"FINAL",generatedAt:now.toISOString(),purchase:permanentPurchase??(paid?.length?{amount:Number(paid[0].amount),currency:paid[0].currency,stages:[...new Set(paid.map(payment=>payment.prediction_access_products.prediction_stage))]}:null),reviews,snapshotTimestamps:timestamps,summary}
+  return{reportId:`PCR-${current.kickoff_at?.slice(0,4)||now.getUTCFullYear()}-${createHash("sha256").update(matchId+timestamps.join("|")).digest("hex").slice(0,8).toUpperCase()}`,matchId,competition:timeline.competition,homeTeam:timeline.home_team,awayTeam:timeline.away_team,kickoffAt:timeline.kickoff_at,finalScore,finalStatus:"FINAL",generatedAt:now.toISOString(),purchase:permanentPurchase??(paid?.length?{amount:Number(paid[0].amount),currency:paid[0].currency,stages:[...new Set(paid.map(payment=>payment.prediction_access_products.prediction_stage))]}:null),reviews,snapshotTimestamps:timestamps,summary,premium:premiumUnlocked?current.premium_prematch??null:null,free,history,premiumUnlocked,homeIdentity:current.home_team_identity,awayIdentity:current.away_team_identity}
 }

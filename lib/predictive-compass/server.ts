@@ -7,6 +7,7 @@ import {
   footballLiveMatchListSchema,
   footballMatchIdSchema,
   footballMatchPredictionSchema,
+  footballHistoricalMatchSchema,
   footballPrematchFreshnessSchema,
   footballPredictionHistorySchema,
   footballPredictionSchema,
@@ -202,11 +203,9 @@ export function createFootballCoreClient({
       const validMatchId = footballMatchIdSchema.safeParse(matchId);
       if (!validMatchId.success) throw new CoreClientError("malformed");
       try {
-        return footballMatchPredictionSchema.parse(
-          await request(
-            `api/v1/domains/football/matches/${encodeURIComponent(validMatchId.data)}/prediction`,
-          ),
-        );
+        const value = await request(`api/v1/domains/football/matches/${encodeURIComponent(validMatchId.data)}/prediction`);
+        return value && typeof value === "object" && ("premium_prematch" in value || "history" in value)
+          ? footballHistoricalMatchSchema.parse(value) : footballMatchPredictionSchema.parse(value);
       } catch (error) {
         if (error instanceof CoreClientError) throw error;
         throw new CoreClientError("malformed");

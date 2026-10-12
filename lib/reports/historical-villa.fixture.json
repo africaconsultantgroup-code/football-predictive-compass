@@ -1,0 +1,168 @@
+{
+  "match_id": "fm_771b2eb95a390b85947bb991ff8a1d2c",
+  "competition": "Premier League",
+  "home_team": "Aston Villa",
+  "away_team": "Brentford",
+  "kickoff_at": "2026-10-10T14:00:00Z",
+  "status": "FINAL",
+  "minute": 90,
+  "added_time": null,
+  "current_score": {
+    "home": 2,
+    "away": 2
+  },
+  "stage": "FINAL",
+  "prediction": {
+    "predicted_outcome": "draw",
+    "predicted_score": null,
+    "probabilities": {
+      "home_win": 37.7,
+      "draw": 38.39,
+      "away_win": 23.92
+    },
+    "reliability": {
+      "score": 93.23,
+      "label": "High"
+    },
+    "verification_status": "updated",
+    "important_information_pending": true,
+    "customer_summary": "A draw is our pick for this match. We expect a competitive game between the two teams.",
+    "customer_key_factors": [
+      "A Draw have the highest result probability.",
+      "The match is still expected to be competitive."
+    ]
+  },
+  "premium_prematch": {
+    "access_status": "LEGACY_PREMATCH",
+    "label": "Legacy Pre-Match Intelligence",
+    "official_performance_eligible": false,
+    "probabilities": {
+      "home_win": 52.86,
+      "draw": 23.93,
+      "away_win": 23.21
+    },
+    "compass_pick": {
+      "market": "Match Result",
+      "selection": "Aston Villa to win",
+      "model_probability": 52.86,
+      "strength": "Cautious",
+      "generated_at": "2026-10-09T10:18:21.905464Z"
+    },
+    "recommendation_strength": {
+      "label": "Cautious",
+      "score": 93.23
+    },
+    "score_forecast": {
+      "status": "available",
+      "most_likely_score": {
+        "home": 2,
+        "away": 1
+      },
+      "score_probability": 9.57,
+      "alternative_scorelines": []
+    },
+    "bookmaker_comparison": [
+      {
+        "selection": "Aston Villa to win",
+        "bookmaker_implied_probability": 35.94,
+        "bookmaker_consensus_fair_odds": 2.78,
+        "compass_probability": 52.86,
+        "compass_fair_odds": 1.89,
+        "probability_difference": 16.92
+      },
+      {
+        "selection": "Draw",
+        "bookmaker_implied_probability": 27.14,
+        "bookmaker_consensus_fair_odds": 3.68,
+        "compass_probability": 23.93,
+        "compass_fair_odds": 4.18,
+        "probability_difference": -3.21
+      },
+      {
+        "selection": "Brentford to win",
+        "bookmaker_implied_probability": 36.92,
+        "bookmaker_consensus_fair_odds": 2.71,
+        "compass_probability": 23.21,
+        "compass_fair_odds": 4.31,
+        "probability_difference": -13.71
+      }
+    ],
+    "intelligence_reasons": [
+      {
+        "category": "Player Availability",
+        "summary": "Player availability is relevant to this forecast."
+      }
+    ],
+    "generated_at": "2026-10-09T10:18:21.905464Z",
+    "evidence_cutoff_at": "2026-10-09T10:18:21.905464Z"
+  },
+  "history": [
+    {
+      "stage": "FIRST_HALF_LIVE",
+      "minute": 41,
+      "current_score": {
+        "home": 1,
+        "away": 1
+      },
+      "predicted_outcome": "draw",
+      "predicted_score": null,
+      "probabilities": {
+        "home_win": 37.7,
+        "draw": 38.39,
+        "away_win": 23.92
+      },
+      "reliability": {
+        "score": 93.23,
+        "label": "High"
+      },
+      "generated_at": "2026-10-10T14:42:51.547908Z",
+      "change_reason": "goal",
+      "change_description": "Prediction updated after a goal."
+    },
+    {
+      "stage": "SECOND_HALF_LIVE",
+      "minute": 59,
+      "current_score": {
+        "home": 1,
+        "away": 1
+      },
+      "predicted_outcome": "draw",
+      "predicted_score": null,
+      "probabilities": {
+        "home_win": 37.7,
+        "draw": 38.39,
+        "away_win": 23.92
+      },
+      "reliability": {
+        "score": 93.23,
+        "label": "High"
+      },
+      "generated_at": "2026-10-10T15:23:09.233867Z",
+      "change_reason": "interval_update",
+      "change_description": "Regular live update."
+    },
+    {
+      "stage": "FINAL",
+      "minute": 90,
+      "current_score": {
+        "home": 2,
+        "away": 2
+      },
+      "predicted_outcome": "draw",
+      "predicted_score": null,
+      "probabilities": {
+        "home_win": 37.7,
+        "draw": 38.39,
+        "away_win": 23.92
+      },
+      "reliability": {
+        "score": 93.23,
+        "label": "High"
+      },
+      "generated_at": "2026-10-10T19:27:18.759289Z",
+      "change_reason": "interval_update",
+      "change_description": "Regular live update."
+    }
+  ],
+  "updated_at": "2026-10-10T19:27:18.804858Z"
+}

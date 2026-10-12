@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { historicalPremiumSchema } from "./historical-contract";
 import { teamIdentityFields } from "../teams/schema";
 import { withTeamIdentities } from "../teams/identity";
 import { premiumReadinessSchema } from "./premium-readiness";
@@ -151,24 +152,6 @@ export const footballCustomerLiveMatchListSchema = z
     ),
   }));
 
-export const footballMatchPredictionSchema = z
-  .object({
-    ...teamIdentityFields,
-    match_id: footballMatchIdSchema,
-    competition: z.string().min(1),
-    home_team: z.string().min(1),
-    away_team: z.string().min(1),
-    kickoff_at: z.string().datetime({ offset: true }).nullable(),
-    status: z.string().min(1),
-    minute: z.number().int().min(0).max(130).nullable(),
-    added_time: z.number().int().min(0).max(30).nullable(),
-    current_score: footballScoreSchema.nullable(),
-    stage: footballStageSchema,
-    prediction: footballLivePredictionSchema,
-    updated_at: z.string().datetime({ offset: true }).nullable(),
-  })
-  .strip();
-
 export const footballPredictionHistoryEntrySchema = z
   .object({
     stage: footballStageSchema,
@@ -193,6 +176,40 @@ export const footballPredictionHistoryEntrySchema = z
     change_description: z.string().min(1),
   })
   .strip();
+
+export const footballMatchPredictionSchema = z
+  .object({
+    ...teamIdentityFields,
+    match_id: footballMatchIdSchema,
+    competition: z.string().min(1),
+    home_team: z.string().min(1),
+    away_team: z.string().min(1),
+    kickoff_at: z.string().datetime({ offset: true }).nullable(),
+    status: z.string().min(1),
+    minute: z.number().int().min(0).max(130).nullable(),
+    added_time: z.number().int().min(0).max(30).nullable(),
+    current_score: footballScoreSchema.nullable(),
+    stage: footballStageSchema,
+    prediction: footballLivePredictionSchema,
+    premium_prematch: historicalPremiumSchema.nullable().optional(),
+    history: z.array(footballPredictionHistoryEntrySchema.strict()).optional(),
+    updated_at: z.string().datetime({ offset: true }).nullable(),
+  })
+  .strip();
+
+// Strict production historical envelope; older live payloads retain their existing parser.
+export const footballHistoricalMatchSchema = footballMatchPredictionSchema.extend({
+  premium_prematch: historicalPremiumSchema.nullable(),
+  history: z.array(footballPredictionHistoryEntrySchema.extend({
+    probabilities: footballProbabilitiesSchema.strict(), reliability: footballReliabilitySchema.strict(),
+    current_score: footballScoreSchema.strict().nullable(), predicted_score: footballScoreSchema.strict().nullable(),
+  }).strict()),
+  current_score: footballScoreSchema.strict().nullable(),
+  prediction: footballLivePredictionSchema.extend({
+    probabilities: footballProbabilitiesSchema.strict(), reliability: footballReliabilitySchema.strict(),
+    predicted_score: footballScoreSchema.strict().nullable(),
+  }).strict(),
+}).strict();
 
 export const footballLockedHistoryEntrySchema = z.object({
   stage: footballStageSchema,
