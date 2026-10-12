@@ -203,7 +203,9 @@ export function createFootballCoreClient({
       const validMatchId = footballMatchIdSchema.safeParse(matchId);
       if (!validMatchId.success) throw new CoreClientError("malformed");
       try {
-        const value = await request(`api/v1/domains/football/matches/${encodeURIComponent(validMatchId.data)}/prediction`);
+        // This endpoint retrieves persisted historical snapshots as well as live state.
+        // Give the read the same bounded budget as stored forecast inventory.
+        const value = await request(`api/v1/domains/football/matches/${encodeURIComponent(validMatchId.data)}/prediction`, "GET", false, inventoryTimeoutMs);
         return value && typeof value === "object" && ("premium_prematch" in value || "history" in value)
           ? footballHistoricalMatchSchema.parse(value) : footballMatchPredictionSchema.parse(value);
       } catch (error) {

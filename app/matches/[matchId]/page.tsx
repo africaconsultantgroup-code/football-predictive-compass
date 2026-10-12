@@ -40,7 +40,10 @@ export default async function MatchPage({ params }: { params: Promise<{ matchId:
   let premiumUnlocked = false;
   let purchased = false;
   try {
-    const [access, supabase, historical] = await Promise.all([getCustomerAccess(), createCustomerAuthServerClient(), Promise.resolve().then(() => getLiveFootballPrediction(parsed.data)).catch(() => null)]);
+    const [access, supabase, historical] = await Promise.all([getCustomerAccess(), createCustomerAuthServerClient(), Promise.resolve().then(() => getLiveFootballPrediction(parsed.data)).catch((error: unknown) => {
+      console.warn("[customer-history] Stored match read unavailable", { kind: error instanceof CoreClientError ? error.kind : "unavailable" });
+      return null;
+    })]);
     if (historical && isAuthoritativeFinal(historical)) {
       if (!access.customer) return <CustomerShell authenticated={false} theme="matches"><div className="match-page"><h1>{historical.home_team} {historical.current_score?.home}–{historical.current_score?.away} {historical.away_team}</h1><p>{historical.competition} · FINAL</p><Link href={`/login?next=${encodeURIComponent(`/matches/${parsed.data}`)}`}>Sign in to view your match report</Link></div></CustomerShell>;
       const report = await loadPostMatchReport(access.customer.id, parsed.data).catch(() => null);

@@ -12,6 +12,7 @@ vi.mock("../auth/match-access",()=>({hasPredictionAccess:mocks.allowed,commercia
 import arsenal from "./historical-arsenal.fixture.json";
 import villa from "./historical-villa.fixture.json";
 import {footballHistoricalMatchSchema,footballMatchPredictionSchema} from "../predictive-compass/schema";
+import {normalizeFixtureTeamMetadata} from "../teams/identity";
 import {historicalPremiumSchema} from "../predictive-compass/historical-contract";
 import {loadPostMatchReport,evaluateExact,evaluateOutcome} from "./post-match";
 import {pickOutcome} from "./historical";
@@ -21,7 +22,7 @@ function database(owned:boolean,matchId=arsenal.match_id){return {from:(table:st
 beforeEach(()=>{vi.clearAllMocks();vi.stubEnv("PREDICTIVE_CUSTOMER_PRICING_VERSION","v2");mocks.current.mockResolvedValue(footballMatchPredictionSchema.parse(arsenal));mocks.admin.mockReturnValue(database(true));mocks.free.mockResolvedValue(null);mocks.access.mockResolvedValue({customer:{id:"customer"}});mocks.allowed.mockResolvedValue(false);});
 afterEach(()=>vi.unstubAllEnvs());
 describe("frozen historical Premium",()=>{
- it.each([arsenal,villa])("parses the production historical DTO for $home_team",raw=>{const p=footballHistoricalMatchSchema.parse(raw);expect(p.stage).toBe("FINAL");expect(p.premium_prematch?.access_status).toBe("LEGACY_PREMATCH");expect(p.history?.length).toBeGreaterThan(0);});
+ it.each([arsenal,villa])("parses the production historical DTO for $home_team",raw=>{const p=footballHistoricalMatchSchema.parse(normalizeFixtureTeamMetadata(raw));expect(p.stage).toBe("FINAL");expect(p.premium_prematch?.access_status).toBe("LEGACY_PREMATCH");expect(p.history?.length).toBeGreaterThan(0);});
  it("rejects unknown historical fields",()=>{expect(footballHistoricalMatchSchema.safeParse({...arsenal,internal_evidence:{}}).success).toBe(false);expect(historicalPremiumSchema.safeParse({...arsenal.premium_prematch,shadow:{}}).success).toBe(false);});
  it("shows Arsenal frozen pick, correct outcome and incorrect exact score",async()=>{const r=await loadPostMatchReport("customer",arsenal.match_id);const html=renderToStaticMarkup(<HistoricalMatchView report={r}/>);expect(html).toContain("Arsenal to win");expect(html).toContain("55.95");expect(html).toContain("CORRECT");expect(html).toContain("INCORRECT");expect(html).toContain("LEGACY PRE-MATCH INTELLIGENCE");expect(html).toContain("excluded from official Premium");expect(html).toContain("Player Availability");expect(html).not.toContain(arsenal.match_id);expect(mocks.timeline).not.toHaveBeenCalled();});
  it("shows Villa final 2-2 and its original incorrect pick",async()=>{mocks.admin.mockReturnValue(database(true,villa.match_id));mocks.current.mockResolvedValue(footballMatchPredictionSchema.parse(villa));const r=await loadPostMatchReport("customer",villa.match_id);const html=renderToStaticMarkup(<HistoricalMatchView report={r}/>);expect(html).toContain("Aston Villa to win");expect(html).toContain("52.86");expect(html).toContain("INCORRECT");expect(r.finalScore).toEqual({home:2,away:2});});
