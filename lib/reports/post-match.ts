@@ -1,4 +1,5 @@
 import "server-only";
+import { historicalClassification } from "./historical";
 import { getFreePrematchPrediction } from "../predictive-compass/free-server";
 import type { FreePrematchPrediction } from "../predictive-compass/free";
 import type { HistoricalPremium } from "../predictive-compass/historical-contract";
@@ -73,8 +74,8 @@ export async function listCustomerMatches(userId:string,now=new Date()){
   }
   const unresolved: MatchSeed[] = [];
   const resolved=await Promise.all([...matches.values()].map(async item=>{
-    try{const current=await getLiveFootballPrediction(item.matchId);return{...item,purchasedStages:[...item.purchasedStages],competition:current.competition,homeTeam:current.home_team,awayTeam:current.away_team,homeIdentity:current.home_team_identity,awayIdentity:current.away_team_identity,status:current.status,isFinal:isAuthoritativeFinal(current),finalScore:current.current_score,historicalPremiumAvailable:Boolean(current.premium_prematch)}}
-    catch{unresolved.push(item);return{...item,purchasedStages:[...item.purchasedStages],competition:"",homeTeam:"",awayTeam:"",homeIdentity:undefined as TeamIdentityRecord | undefined,awayIdentity:undefined as TeamIdentityRecord | undefined,status:"Intelligence being prepared",isFinal:false,finalScore:null,historicalPremiumAvailable:false}}
+    try{const current=await getLiveFootballPrediction(item.matchId);return{...item,purchasedStages:[...item.purchasedStages],competition:current.competition,homeTeam:current.home_team,awayTeam:current.away_team,homeIdentity:current.home_team_identity,awayIdentity:current.away_team_identity,status:current.status,isFinal:isAuthoritativeFinal(current),finalScore:current.current_score,historicalPremiumAvailable:Boolean(current.premium_prematch),historicalPremiumClassification:current.premium_prematch?historicalClassification(current.premium_prematch):null}}
+    catch{unresolved.push(item);return{...item,purchasedStages:[...item.purchasedStages],competition:"",homeTeam:"",awayTeam:"",homeIdentity:undefined as TeamIdentityRecord | undefined,awayIdentity:undefined as TeamIdentityRecord | undefined,status:"Intelligence being prepared",isFinal:false,finalScore:null,historicalPremiumAvailable:false,historicalPremiumClassification:null}}
   }));
   if (unresolved.length) {
     const identities = unresolved.some(item => !purchasedIdentities.has(item.matchId)) ? await loadFixtureIdentities() : new Map();

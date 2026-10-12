@@ -1,3 +1,4 @@
+import { HistoricalPremiumBadge } from "../historical-premium-status";
 import Link from "next/link";
 import { CustomerShell, EmptyState, PageHeader } from "../customer-shell";
 import { getCustomerAccess } from "@/lib/auth/access";
@@ -39,7 +40,7 @@ export default async function MyPredictionsPage(){
         <time>{new Date(match.kickoffAt).toLocaleString("en-GB")}</time>
         <b>FINAL · Match Report Available</b>
         {match.amount!==null&&match.currency?<small>Purchased for {formatProductPrice(match.amount,match.currency)}</small>:<small>{match.purchased ? "Owned · Premium Intelligence" : "Free post-match report"}</small>}
-        <p>{match.historicalPremiumAvailable?"Frozen Premium pre-match recorded":"Historical Premium unavailable"}</p><div><Link href={`/my-predictions/${match.matchId}/report`}>View Match Report</Link><a href={`/api/reports/matches/${match.matchId}/pdf`}>Download PDF</a></div>
+        {match.historicalPremiumAvailable?<HistoricalPremiumBadge classification={match.historicalPremiumClassification}/>:<p>Historical Premium unavailable</p>}<div><Link href={`/my-predictions/${match.matchId}/report`}>{match.historicalPremiumAvailable?"View Match Intelligence":"View Match Report"}</Link><a href={`/api/reports/matches/${match.matchId}/pdf`}>Download PDF</a></div>
       </article>)}</div>:<EmptyState title="No completed reports yet." description="Every match appears here after Core verifies its official FINAL result."/>}
     </section>
   </CustomerShell>

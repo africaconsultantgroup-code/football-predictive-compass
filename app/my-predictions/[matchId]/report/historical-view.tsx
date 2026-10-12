@@ -1,3 +1,4 @@
+import { HistoricalPremiumBadge } from "../../../historical-premium-status";
 import { TeamIdentity } from "../../../team-identity";
 import type { PostMatchReport } from "../../../../lib/reports/post-match";
 import { evaluateExact, evaluateOutcome } from "../../../../lib/reports/post-match";
@@ -8,7 +9,7 @@ export function HistoricalMatchView({report:r}:{report:PostMatchReport}) {
   const score=p?.score_forecast?.most_likely_score;
   const unavailable=<p>Historical snapshot unavailable</p>;
   return <div className="historical-report">
-    <header><p>{r.competition}</p><h1><TeamIdentity inline name={r.homeTeam} team={r.homeIdentity}/><span>{r.finalScore.home} – {r.finalScore.away}</span><TeamIdentity inline name={r.awayTeam} team={r.awayIdentity}/></h1><strong>FINAL</strong><p>{r.kickoffAt?new Date(r.kickoffAt).toUTCString():"Kickoff unavailable"}</p></header>
+    <header><p>{r.competition}</p><h1><TeamIdentity inline name={r.homeTeam} team={r.homeIdentity}/><span>{r.finalScore.home} – {r.finalScore.away}</span><TeamIdentity inline name={r.awayTeam} team={r.awayIdentity}/></h1><strong>FINAL</strong>{p?<div className="historical-premium-heading"><p>Premium Pre-Match Intelligence</p><HistoricalPremiumBadge classification={historicalClassification(p)}/></div>:null}<p>{r.kickoffAt?new Date(r.kickoffAt).toUTCString():"Kickoff unavailable"}</p></header>
     <ol className="historical-lifecycle" aria-label="Match lifecycle"><li>FREE PRE-MATCH</li><li>PREMIUM PRE-MATCH</li><li>LIVE / HALFTIME</li><li>FINAL RESULT</li></ol>
     <section><h2>Premium Pre-Match Intelligence</h2>{p?<>
       <strong>{historicalClassification(p)}</strong><p>{p.access_status==="LEGACY_PREMATCH"?legacyNote:officialNote}</p>

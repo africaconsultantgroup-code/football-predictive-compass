@@ -1,3 +1,4 @@
+import historical from "./historical-arsenal.fixture.json";
 import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 vi.mock("server-only", () => ({}));
 const mocks = vi.hoisted(() => ({ current:vi.fn(),history:vi.fn(),free:vi.fn(),premium:vi.fn(),admin:vi.fn() }));
@@ -15,6 +16,9 @@ function database(owned: unknown[] = []) {
 beforeEach(() => {vi.clearAllMocks();vi.stubEnv("PREDICTIVE_CUSTOMER_PRICING_VERSION","");mocks.admin.mockReturnValue(database());mocks.premium.mockResolvedValue([]);mocks.free.mockResolvedValue([]);mocks.history.mockRejectedValue(new Error("unavailable"));});
 afterEach(()=>vi.unstubAllEnvs());
 describe("My Predictions owns identity independently of forecast delivery",()=>{
+  it("projects Core historical classification onto cards without Premium payloads",async()=>{
+    mocks.current.mockResolvedValue(historical);const [match]=await listCustomerMatches("owner");expect(match.historicalPremiumAvailable).toBe(true);expect(match.historicalPremiumClassification).toBe("LEGACY PRE-MATCH INTELLIGENCE");expect(match).not.toHaveProperty("premium_prematch");expect(JSON.stringify(match)).not.toContain("55.95");
+  });
   it("resolves a purchased fixture from stored Free identity after the live endpoint fails",async()=>{
     mocks.current.mockRejectedValue(new Error("404"));mocks.free.mockResolvedValue([{match_id:id,home_team:"Arsenal",away_team:"Chelsea",competition:"Premier League",probabilities:{home_win:45}}]);
     const [match]=await listCustomerMatches("owner");
