@@ -37,9 +37,9 @@ export default async function MyPredictionsPage(){
         <h3 className={match.homeTeam && match.awayTeam ? "sr-only" : undefined}>{fixtureTitle(match.homeTeam, match.awayTeam)}</h3>
         <div className="owned-teams"><TeamIdentity name={match.homeTeam} team={match.homeIdentity} /><span>{match.finalScore?.home} - {match.finalScore?.away}</span><TeamIdentity name={match.awayTeam} team={match.awayIdentity} /></div>
         <time>{new Date(match.kickoffAt).toLocaleString("en-GB")}</time>
-        <b>Completed · Prediction Review Available</b>
+        <b>FINAL · Match Report Available</b>
         {match.amount!==null&&match.currency?<small>Purchased for {formatProductPrice(match.amount,match.currency)}</small>:<small>{match.purchased ? "Owned · Premium Intelligence" : "Free post-match report"}</small>}
-        <div><Link href={`/my-predictions/${match.matchId}/report`}>View Report</Link><a href={`/api/reports/matches/${match.matchId}/pdf`}>Download PDF</a></div>
+        <p>{match.historicalPremiumAvailable?"Frozen Premium pre-match recorded":"Historical Premium unavailable"}</p><div><Link href={`/my-predictions/${match.matchId}/report`}>View Match Report</Link><a href={`/api/reports/matches/${match.matchId}/pdf`}>Download PDF</a></div>
       </article>)}</div>:<EmptyState title="No completed reports yet." description="Every match appears here after Core verifies its official FINAL result."/>}
     </section>
   </CustomerShell>

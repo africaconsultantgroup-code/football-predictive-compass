@@ -8,7 +8,11 @@ import { footballMatchPredictionSchema } from "@/lib/predictive-compass/schema";
 export const dynamic = "force-dynamic";
 
 const handle = createLiveMatchHandler(
-  getLiveFootballPrediction,
+  async (matchId) => {
+    const match = await getLiveFootballPrediction(matchId);
+    // Historical paid content is served by the separately authorized match report.
+    return { ...match, premium_prematch: null, history: [] };
+  },
   getCustomerAccess,
   capabilities.liveFull,
   async (value, access) => {

@@ -1,3 +1,5 @@
+import { ReportView } from "../../my-predictions/[matchId]/report/report-view";
+import { isAuthoritativeFinal, loadPostMatchReport } from "../../../lib/reports/post-match";
 import LiveMatches from "../../live-matches";
 import { premiumIntelligenceReady } from "../../../lib/predictive-compass/premium-readiness";
 import Link from "next/link";
@@ -18,7 +20,7 @@ import { getCustomerAccess } from "../../../lib/auth/access";
 import { getPredictionOffers, hasPredictionAccess } from "../../../lib/auth/match-access";
 import { toPrematchReadiness, type PrematchReadiness } from "../../../lib/predictive-compass/prematch";
 import { footballMatchIdSchema } from "../../../lib/predictive-compass/schema";
-import { CoreClientError, getUpcomingFootballPredictions, requestPrematchFreshness, getPremiumFootballPrediction } from "../../../lib/predictive-compass/server";
+import { CoreClientError, getLiveFootballPrediction, getUpcomingFootballPredictions, requestPrematchFreshness, getPremiumFootballPrediction } from "../../../lib/predictive-compass/server";
 import { createCustomerAuthServerClient } from "../../../lib/supabase/auth-server";
 import { matchPricingV2Enabled } from "../../../lib/payments/pricing-version";
 
@@ -38,7 +40,13 @@ export default async function MatchPage({ params }: { params: Promise<{ matchId:
   let premiumUnlocked = false;
   let purchased = false;
   try {
-    const [access, supabase] = await Promise.all([getCustomerAccess(), createCustomerAuthServerClient()]);
+    const [access, supabase, historical] = await Promise.all([getCustomerAccess(), createCustomerAuthServerClient(), Promise.resolve().then(() => getLiveFootballPrediction(parsed.data)).catch(() => null)]);
+    if (historical && isAuthoritativeFinal(historical)) {
+      if (!access.customer) return <CustomerShell authenticated={false} theme="matches"><div className="match-page"><h1>{historical.home_team} {historical.current_score?.home}–{historical.current_score?.away} {historical.away_team}</h1><p>{historical.competition} · FINAL</p><Link href={`/login?next=${encodeURIComponent(`/matches/${parsed.data}`)}`}>Sign in to view your match report</Link></div></CustomerShell>;
+      const report = await loadPostMatchReport(access.customer.id, parsed.data).catch(() => null);
+      if (!report) return <CustomerShell authenticated theme="matches"><div className="match-page" role="alert"><h1>Match report temporarily unavailable</h1><p>Please try again shortly. Your match ownership is preserved.</p><Link href="/my-predictions">Return to My Predictions</Link></div></CustomerShell>;
+      return <CustomerShell authenticated theme="matches"><div className="match-page"><Link href="/my-predictions">← My Predictions</Link><p><a href={`/api/reports/matches/${parsed.data}/pdf`}>Download PDF</a></p><ReportView report={report}/></div></CustomerShell>;
+    }
     const unlocked = await hasPredictionAccess({ access, supabase, matchId: parsed.data, stage: "prematch" });
     authenticated = Boolean(access.customer);
     premiumUnlocked = unlocked;
