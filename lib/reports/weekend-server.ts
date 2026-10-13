@@ -14,7 +14,11 @@ type Options={fetch?:typeof fetch;baseUrl?:string;apiKey?:string;now?:Date;canRe
 export async function loadWeekendReport(requested:DateRange|null,options:Options={}) {
  const base=options.baseUrl??process.env.PREDICTIVE_COMPASS_CORE_URL,key=options.apiKey??process.env.PREDICTIVE_COMPASS_FOOTBALL_API_KEY;
  if(!base||!key)throw new WeekendUnavailable();
- const get=async(path:string)=>{const response=await(options.fetch??fetch)(new URL(path,base),{headers:{Accept:"application/json","x-api-key":key},cache:"no-store",signal:AbortSignal.timeout(20000)});if(!response.ok)throw new WeekendUnavailable();return response.json();};
+ // Cache only the service's football data, never access decisions or projected
+ // customer responses. Next stores HTTP 200 responses only, keyed by URL and
+ // headers (including the server credential), with a bounded five-minute TTL.
+ // Page/PDF/social reuse frozen reads; every request still rechecks entitlement.
+ const get=async(path:string)=>{const response=await(options.fetch??fetch)(new URL(path,base),{headers:{Accept:"application/json","x-api-key":key},cache:"force-cache",next:{revalidate:300},signal:AbortSignal.timeout(20000)});if(!response.ok)throw new WeekendUnavailable();return response.json();};
  const now=options.now??new Date(),end=now.toISOString().slice(0,10),start=new Date(now.getTime()-30*86400000).toISOString().slice(0,10);
  let range=requested??{from:start,to:end};validRange(range.from,range.to);
  let fixtures:CompletedFixture[];

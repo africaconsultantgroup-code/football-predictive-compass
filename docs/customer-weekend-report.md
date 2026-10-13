@@ -24,6 +24,8 @@ The historical detail link retains the existing authorized lifecycle/timeline UI
 
 PDF and social downloads are private/no-store. Source failures retain page rows with a clear unavailable state, but withhold downloads with HTTP 503 until the complete accessible data is available. Social PNGs are 1080×1350, ten fixtures per image; larger selected ranges expose every numbered download. Exports contain no Core credentials, evidence payloads or paid details beyond the authenticated account's access. Core reads are bounded, with two fixture workers and 20-second request deadlines.
 
+Production verification measured an initial complete page at 24.4 seconds, a successful PDF at 15.6 seconds and a successful social PNG at 22.8 seconds, with intermittent master-inventory reads failing in between. The report's football-data fetches therefore use Next's server Data Cache with a five-minute revalidation period. Its key includes URL and headers; only HTTP 200 responses are cached. Authorization and customer projections are never cached. A previously fetched Premium snapshot cannot bypass a subsequent user's access check. This cache is limited to the new weekend report and does not change the pending Matches performance proposal.
+
 ## Verified transition weekend: 10–12 October 2026
 
 - Authenticated Core inventory: HTTP 200, ten unique FINAL fixtures. Missing credentials: HTTP 401.
