@@ -1,0 +1,527 @@
+[
+  {
+    "match_id": "fm_6d661c9077f0cedf9051792906c29bc9",
+    "free": {
+      "match_id": "fm_6d661c9077f0cedf9051792906c29bc9",
+      "competition": "Premier League",
+      "home_team": "Arsenal",
+      "away_team": "Leeds",
+      "kickoff_at": "2026-10-10T11:30:00+00:00",
+      "stage": "PREMATCH",
+      "tier": "free",
+      "status": "available",
+      "probabilities": {
+        "home_win": 73.38,
+        "draw": 16.69,
+        "away_win": 9.93
+      },
+      "predicted_outcome": "home_win",
+      "generated_at": "2026-10-09T08:39:03.769443+00:00"
+    },
+    "premium": {
+      "access_status": "LEGACY_PREMATCH",
+      "label": "Legacy Pre-Match Intelligence",
+      "official_performance_eligible": false,
+      "probabilities": {
+        "home_win": 55.95,
+        "draw": 33.13,
+        "away_win": 10.92
+      },
+      "compass_pick": {
+        "market": "Match Result",
+        "selection": "Arsenal to win",
+        "model_probability": 55.95,
+        "strength": "Cautious",
+        "generated_at": "2026-10-09T09:30:41.479335Z"
+      },
+      "recommendation_strength": {
+        "label": "Cautious",
+        "score": 93.6
+      },
+      "score_forecast": {
+        "status": "available",
+        "most_likely_score": {
+          "home": 2,
+          "away": 0
+        },
+        "score_probability": 10.6,
+        "alternative_scorelines": []
+      },
+      "bookmaker_comparison": [
+        {
+          "selection": "Arsenal to win",
+          "bookmaker_implied_probability": 68.29,
+          "bookmaker_consensus_fair_odds": 1.46,
+          "compass_probability": 58.71,
+          "compass_fair_odds": 1.7,
+          "probability_difference": -9.58
+        },
+        {
+          "selection": "Draw",
+          "bookmaker_implied_probability": 19.63,
+          "bookmaker_consensus_fair_odds": 5.09,
+          "compass_probability": 25.24,
+          "compass_fair_odds": 3.96,
+          "probability_difference": 5.61
+        },
+        {
+          "selection": "Leeds to win",
+          "bookmaker_implied_probability": 12.08,
+          "bookmaker_consensus_fair_odds": 8.28,
+          "compass_probability": 16.05,
+          "compass_fair_odds": 6.23,
+          "probability_difference": 3.97
+        }
+      ],
+      "intelligence_reasons": [
+        {
+          "category": "Player Availability",
+          "summary": "Player availability is relevant to this forecast."
+        }
+      ],
+      "generated_at": "2026-10-09T09:30:41.479335Z",
+      "evidence_cutoff_at": "2026-10-09T09:30:41.479335Z"
+    }
+  },
+  {
+    "match_id": "fm_10281b717471df0c89bac6bfa8cf8440",
+    "free": {
+      "match_id": "fm_10281b717471df0c89bac6bfa8cf8440",
+      "competition": "Premier League",
+      "home_team": "Chelsea",
+      "away_team": "Bournemouth",
+      "kickoff_at": "2026-10-10T14:00:00+00:00",
+      "stage": "PREMATCH",
+      "tier": "free",
+      "status": "available",
+      "probabilities": {
+        "home_win": 35.76,
+        "draw": 27.37,
+        "away_win": 36.87
+      },
+      "predicted_outcome": "away_win",
+      "generated_at": "2026-10-09T08:39:05.813375+00:00"
+    },
+    "premium": {
+      "access_status": "LEGACY_PREMATCH",
+      "label": "Legacy Pre-Match Intelligence",
+      "official_performance_eligible": false,
+      "probabilities": {
+        "home_win": 43.76,
+        "draw": 26.48,
+        "away_win": 29.75
+      },
+      "compass_pick": {
+        "market": "Match Result",
+        "selection": "Chelsea to win",
+        "model_probability": 43.76,
+        "strength": "Cautious",
+        "generated_at": "2026-10-08T14:03:34.671212Z"
+      },
+      "recommendation_strength": {
+        "label": "Cautious",
+        "score": 93.64
+      },
+      "score_forecast": {
+        "status": "available",
+        "most_likely_score": {
+          "home": 2,
+          "away": 1
+        },
+        "score_probability": 8.5,
+        "alternative_scorelines": []
+      },
+      "bookmaker_comparison": [
+        {
+          "selection": "Chelsea to win",
+          "bookmaker_implied_probability": 55.52,
+          "bookmaker_consensus_fair_odds": 1.8,
+          "compass_probability": 43.76,
+          "compass_fair_odds": 2.29,
+          "probability_difference": -11.76
+        },
+        {
+          "selection": "Draw",
+          "bookmaker_implied_probability": 23.15,
+          "bookmaker_consensus_fair_odds": 4.32,
+          "compass_probability": 26.48,
+          "compass_fair_odds": 3.78,
+          "probability_difference": 3.33
+        },
+        {
+          "selection": "Bournemouth to win",
+          "bookmaker_implied_probability": 21.33,
+          "bookmaker_consensus_fair_odds": 4.69,
+          "compass_probability": 29.75,
+          "compass_fair_odds": 3.36,
+          "probability_difference": 8.42
+        }
+      ],
+      "intelligence_reasons": [
+        {
+          "category": "Player Availability",
+          "summary": "Player availability is relevant to this forecast."
+        }
+      ],
+      "generated_at": "2026-10-08T14:03:34.671212Z",
+      "evidence_cutoff_at": "2026-10-08T14:03:34.671212Z"
+    }
+  },
+  {
+    "match_id": "fm_204a6dc6f82e0ab5a5685777eb3d354a",
+    "free": {
+      "match_id": "fm_204a6dc6f82e0ab5a5685777eb3d354a",
+      "competition": "Premier League",
+      "home_team": "Sunderland",
+      "away_team": "Brighton",
+      "kickoff_at": "2026-10-10T14:00:00+00:00",
+      "stage": "PREMATCH",
+      "tier": "free",
+      "status": "available",
+      "probabilities": {
+        "home_win": 22.59,
+        "draw": 26.24,
+        "away_win": 51.17
+      },
+      "predicted_outcome": "away_win",
+      "generated_at": "2026-10-09T08:39:09.720613+00:00"
+    },
+    "premium": {
+      "access_status": "LEGACY_PREMATCH",
+      "label": "Legacy Pre-Match Intelligence",
+      "official_performance_eligible": false,
+      "probabilities": {
+        "home_win": 35.41,
+        "draw": 27.2,
+        "away_win": 37.39
+      },
+      "compass_pick": {
+        "market": "Match Result",
+        "selection": "Brighton to win",
+        "model_probability": 37.39,
+        "strength": "Cautious",
+        "generated_at": "2026-10-09T10:00:14.502897Z"
+      },
+      "recommendation_strength": {
+        "label": "Cautious",
+        "score": 94
+      },
+      "score_forecast": {
+        "status": "available",
+        "most_likely_score": {
+          "home": 0,
+          "away": 1
+        },
+        "score_probability": 9.01,
+        "alternative_scorelines": []
+      },
+      "bookmaker_comparison": [
+        {
+          "selection": "Sunderland to win",
+          "bookmaker_implied_probability": 31.56,
+          "bookmaker_consensus_fair_odds": 3.17,
+          "compass_probability": 35.41,
+          "compass_fair_odds": 2.82,
+          "probability_difference": 3.85
+        },
+        {
+          "selection": "Draw",
+          "bookmaker_implied_probability": 27.55,
+          "bookmaker_consensus_fair_odds": 3.63,
+          "compass_probability": 27.2,
+          "compass_fair_odds": 3.68,
+          "probability_difference": -0.35
+        },
+        {
+          "selection": "Brighton to win",
+          "bookmaker_implied_probability": 40.88,
+          "bookmaker_consensus_fair_odds": 2.45,
+          "compass_probability": 37.39,
+          "compass_fair_odds": 2.67,
+          "probability_difference": -3.49
+        }
+      ],
+      "intelligence_reasons": [
+        {
+          "category": "Player Availability",
+          "summary": "Player availability is relevant to this forecast."
+        }
+      ],
+      "generated_at": "2026-10-09T10:00:14.502897Z",
+      "evidence_cutoff_at": "2026-10-09T10:00:14.502897Z"
+    }
+  },
+  {
+    "match_id": "fm_771b2eb95a390b85947bb991ff8a1d2c",
+    "free": {
+      "match_id": "fm_771b2eb95a390b85947bb991ff8a1d2c",
+      "competition": "Premier League",
+      "home_team": "Aston Villa",
+      "away_team": "Brentford",
+      "kickoff_at": "2026-10-10T14:00:00+00:00",
+      "stage": "PREMATCH",
+      "tier": "free",
+      "status": "available",
+      "probabilities": {
+        "home_win": 45.64,
+        "draw": 25.73,
+        "away_win": 28.62
+      },
+      "predicted_outcome": "home_win",
+      "generated_at": "2026-10-09T08:39:08.492164+00:00"
+    },
+    "premium": {
+      "access_status": "LEGACY_PREMATCH",
+      "label": "Legacy Pre-Match Intelligence",
+      "official_performance_eligible": false,
+      "probabilities": {
+        "home_win": 52.86,
+        "draw": 23.93,
+        "away_win": 23.21
+      },
+      "compass_pick": {
+        "market": "Match Result",
+        "selection": "Aston Villa to win",
+        "model_probability": 52.86,
+        "strength": "Cautious",
+        "generated_at": "2026-10-09T10:18:21.905464Z"
+      },
+      "recommendation_strength": {
+        "label": "Cautious",
+        "score": 93.23
+      },
+      "score_forecast": {
+        "status": "available",
+        "most_likely_score": {
+          "home": 2,
+          "away": 1
+        },
+        "score_probability": 9.57,
+        "alternative_scorelines": []
+      },
+      "bookmaker_comparison": [
+        {
+          "selection": "Aston Villa to win",
+          "bookmaker_implied_probability": 35.94,
+          "bookmaker_consensus_fair_odds": 2.78,
+          "compass_probability": 52.86,
+          "compass_fair_odds": 1.89,
+          "probability_difference": 16.92
+        },
+        {
+          "selection": "Draw",
+          "bookmaker_implied_probability": 27.14,
+          "bookmaker_consensus_fair_odds": 3.68,
+          "compass_probability": 23.93,
+          "compass_fair_odds": 4.18,
+          "probability_difference": -3.21
+        },
+        {
+          "selection": "Brentford to win",
+          "bookmaker_implied_probability": 36.92,
+          "bookmaker_consensus_fair_odds": 2.71,
+          "compass_probability": 23.21,
+          "compass_fair_odds": 4.31,
+          "probability_difference": -13.71
+        }
+      ],
+      "intelligence_reasons": [
+        {
+          "category": "Player Availability",
+          "summary": "Player availability is relevant to this forecast."
+        }
+      ],
+      "generated_at": "2026-10-09T10:18:21.905464Z",
+      "evidence_cutoff_at": "2026-10-09T10:18:21.905464Z"
+    }
+  },
+  {
+    "match_id": "fm_aa4dbc9a12996b60943f0074ec3cd312",
+    "free": {
+      "match_id": "fm_aa4dbc9a12996b60943f0074ec3cd312",
+      "competition": "Premier League",
+      "home_team": "Ipswich",
+      "away_team": "Fulham",
+      "kickoff_at": "2026-10-10T14:00:00+00:00",
+      "stage": "PREMATCH",
+      "tier": "free",
+      "status": "available",
+      "probabilities": {
+        "home_win": 17.15,
+        "draw": 22.48,
+        "away_win": 60.37
+      },
+      "predicted_outcome": "away_win",
+      "generated_at": "2026-10-09T08:39:07.289246+00:00"
+    },
+    "premium": {
+      "access_status": "LEGACY_PREMATCH",
+      "label": "Legacy Pre-Match Intelligence",
+      "official_performance_eligible": false,
+      "probabilities": {
+        "home_win": 29.94,
+        "draw": 26.75,
+        "away_win": 43.31
+      },
+      "compass_pick": {
+        "market": "Match Result",
+        "selection": "Fulham to win",
+        "model_probability": 43.31,
+        "strength": "Cautious",
+        "generated_at": "2026-10-09T10:34:59.531165Z"
+      },
+      "recommendation_strength": {
+        "label": "Cautious",
+        "score": 93.14
+      },
+      "score_forecast": {
+        "status": "available",
+        "most_likely_score": {
+          "home": 0,
+          "away": 1
+        },
+        "score_probability": 9.8,
+        "alternative_scorelines": []
+      },
+      "bookmaker_comparison": [
+        {
+          "selection": "Ipswich to win",
+          "bookmaker_implied_probability": 33.76,
+          "bookmaker_consensus_fair_odds": 2.96,
+          "compass_probability": 29.94,
+          "compass_fair_odds": 3.34,
+          "probability_difference": -3.82
+        },
+        {
+          "selection": "Draw",
+          "bookmaker_implied_probability": 27.17,
+          "bookmaker_consensus_fair_odds": 3.68,
+          "compass_probability": 26.75,
+          "compass_fair_odds": 3.74,
+          "probability_difference": -0.42
+        },
+        {
+          "selection": "Fulham to win",
+          "bookmaker_implied_probability": 39.07,
+          "bookmaker_consensus_fair_odds": 2.56,
+          "compass_probability": 43.31,
+          "compass_fair_odds": 2.31,
+          "probability_difference": 4.24
+        }
+      ],
+      "intelligence_reasons": [
+        {
+          "category": "Player Availability",
+          "summary": "Player availability is relevant to this forecast."
+        }
+      ],
+      "generated_at": "2026-10-09T10:34:59.531165Z",
+      "evidence_cutoff_at": "2026-10-09T10:34:59.531165Z"
+    }
+  },
+  {
+    "match_id": "fm_8639567894a61458ba6237adc0565e30",
+    "free": {
+      "match_id": "fm_8639567894a61458ba6237adc0565e30",
+      "competition": "Premier League",
+      "home_team": "Man United",
+      "away_team": "Tottenham",
+      "kickoff_at": "2026-10-10T16:30:00+00:00",
+      "stage": "PREMATCH",
+      "tier": "free",
+      "status": "available",
+      "probabilities": {
+        "home_win": 67.63,
+        "draw": 19.94,
+        "away_win": 12.42
+      },
+      "predicted_outcome": "home_win",
+      "generated_at": "2026-10-09T08:39:10.839442+00:00"
+    },
+    "premium": null
+  },
+  {
+    "match_id": "fm_9ef89bb0444782316bd79725a57fac04",
+    "free": {
+      "match_id": "fm_9ef89bb0444782316bd79725a57fac04",
+      "competition": "Premier League",
+      "home_team": "Hull City",
+      "away_team": "Everton",
+      "kickoff_at": "2026-10-11T13:00:00+00:00",
+      "stage": "PREMATCH",
+      "tier": "free",
+      "status": "available",
+      "probabilities": {
+        "home_win": 33.88,
+        "draw": 37.36,
+        "away_win": 28.76
+      },
+      "predicted_outcome": "draw",
+      "generated_at": "2026-10-09T08:39:13.128732+00:00"
+    },
+    "premium": null
+  },
+  {
+    "match_id": "fm_d6a4752d67c196c0469e1e4932b1a9da",
+    "free": {
+      "match_id": "fm_d6a4752d67c196c0469e1e4932b1a9da",
+      "competition": "Premier League",
+      "home_team": "Crystal Palace",
+      "away_team": "Nott'm Forest",
+      "kickoff_at": "2026-10-11T13:00:00+00:00",
+      "stage": "PREMATCH",
+      "tier": "free",
+      "status": "available",
+      "probabilities": {
+        "home_win": 30.67,
+        "draw": 27.81,
+        "away_win": 41.52
+      },
+      "predicted_outcome": "away_win",
+      "generated_at": "2026-10-09T08:39:12.024699+00:00"
+    },
+    "premium": null
+  },
+  {
+    "match_id": "fm_41b5da514305bf91c1dc4faa2dceef4a",
+    "free": {
+      "match_id": "fm_41b5da514305bf91c1dc4faa2dceef4a",
+      "competition": "Premier League",
+      "home_team": "Liverpool",
+      "away_team": "Man City",
+      "kickoff_at": "2026-10-11T15:30:00+00:00",
+      "stage": "PREMATCH",
+      "tier": "free",
+      "status": "available",
+      "probabilities": {
+        "home_win": 27.28,
+        "draw": 31.49,
+        "away_win": 41.23
+      },
+      "predicted_outcome": "away_win",
+      "generated_at": "2026-10-09T08:39:14.338594+00:00"
+    },
+    "premium": null
+  },
+  {
+    "match_id": "fm_2887a864cb0b74701aa6abd1d9cf50d0",
+    "free": {
+      "match_id": "fm_2887a864cb0b74701aa6abd1d9cf50d0",
+      "competition": "Premier League",
+      "home_team": "Coventry",
+      "away_team": "Newcastle",
+      "kickoff_at": "2026-10-12T19:00:00+00:00",
+      "stage": "PREMATCH",
+      "tier": "free",
+      "status": "available",
+      "probabilities": {
+        "home_win": 25.43,
+        "draw": 32.89,
+        "away_win": 41.68
+      },
+      "predicted_outcome": "away_win",
+      "generated_at": "2026-10-09T08:39:15.458644+00:00"
+    },
+    "premium": null
+  }
+]
