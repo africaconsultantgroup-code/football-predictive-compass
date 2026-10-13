@@ -45,6 +45,16 @@ function clientWithResponse(status: number, body: unknown) {
 }
 
 describe("Football Core client", () => {
+  it("can disable inventory retries only for Matches while preserving the default policy", async () => {
+    const fetchMock=vi.fn<typeof fetch>().mockResolvedValue(new Response("unavailable",{status:503}));
+    const client=createFootballCoreClient({baseUrl,apiKey,fetch:fetchMock});
+    await expect(client.getUpcomingFootballPredictions({syncProducts:false,retryInventory:false})).rejects.toMatchObject({kind:"unavailable"});
+    expect(fetchMock).toHaveBeenCalledTimes(1);fetchMock.mockClear();
+    await expect(client.getStoredFreeUpcoming({retryInventory:false})).rejects.toMatchObject({kind:"unavailable"});
+    expect(fetchMock).toHaveBeenCalledTimes(1);fetchMock.mockClear();
+    await expect(client.getUpcomingFootballPredictions({syncProducts:false})).rejects.toMatchObject({kind:"unavailable"});
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
   it("allows a slow stored historical read without relaxing the freshness POST deadline", async () => {
     vi.useFakeTimers();
     try {

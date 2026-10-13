@@ -27,9 +27,9 @@ export async function getFreeUpcomingPredictions() {
   return (await loadFreeUpcoming()).predictions;
 }
 
-export async function loadFreeUpcoming() {
+export async function loadFreeUpcoming(options: {retryInventory?:boolean} = {}) {
   try {
-    const predictions = (await getStoredFreeUpcoming()).map(item => ({ ...item, competition: canonicalCompetition(item.competition) }));
+    const predictions = (await (options.retryInventory === false ? getStoredFreeUpcoming({retryInventory:false}) : getStoredFreeUpcoming())).map(item => ({ ...item, competition: canonicalCompetition(item.competition) }));
     const diagnostic = predictions.length ? "INVENTORY_AVAILABLE" : "CORE_EMPTY";
     reportInventory("free", diagnostic, predictions.length);
     return { predictions, failed: false, diagnostic } as const;

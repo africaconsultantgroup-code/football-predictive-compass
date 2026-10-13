@@ -138,3 +138,5 @@
   .matches-theme .matches-probabilities :is(dt, dd) { font-size: 12px; }.matches-theme .matches-free h3 { font-size: 15px; }.matches-theme .matches-free > p { font-size: 12px; }.matches-theme .matches-summary-badge { font-size: 9px; }
 }
 @media (max-width: 360px) { .matches-theme .matches-premium { grid-template-columns: minmax(0, 1fr); }.matches-theme .matches-row { padding: 14px; }.matches-theme .matches-team { gap: 8px; font-size: 13px; } }
+.matches-inventory-progress{margin:16px 0;padding:12px 16px;border:1px solid #dbe7f6;border-radius:12px;background:#f4f8ff;color:#475467;font-size:14px;line-height:1.5}
+.matches-inventory-progress .inventory-retry{margin-top:8px}
