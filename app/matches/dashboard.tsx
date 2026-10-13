@@ -1,6 +1,6 @@
 import { connection } from "next/server";
 import { loadFreeUpcoming, sameFreeFixture } from "../../lib/predictive-compass/free-server";
-import { CUSTOMER_COMPETITIONS, filterPredictionViews, sortPredictionViews, fixtureDateLabel, loadPredictions, type PredictionView, type UpcomingFilter } from "../predictions";
+import { CUSTOMER_COMPETITIONS, filterPredictionViews, sortPredictionViews, fixtureDateLabel, loadPredictions, type PredictionView, type UpcomingFilter, type PredictionAccessContext } from "../predictions";
 import { CompetitionTabs, DateSelector, MatchRow, FreeOnlyMatchRow } from "./match-components";
 import type { FreePrematchPrediction } from "../../lib/predictive-compass/free";
 import { MatchBasket } from "./match-basket";
@@ -12,10 +12,12 @@ import { InventoryRetry } from "../inventory-retry";
 import { loadPendingMatchCheckouts } from "../../lib/payments/pending-checkout";
 import type { PendingMatchCheckout } from "../../lib/payments/checkout-link";
 
-export async function MatchesDashboard({ filter, competition }: { filter: UpcomingFilter; competition?: string }) {
+export type DashboardSources = { premium: ReturnType<typeof loadPredictions>; free: ReturnType<typeof loadFreeUpcoming>; access: Promise<PredictionAccessContext | null>; pending: Promise<PendingMatchCheckout[]> };
+
+export async function MatchesDashboard({ filter, competition, sources }: { filter: UpcomingFilter; competition?: string; sources?: DashboardSources }) {
   await connection();
   const selected = competition === "all" || !competition ? undefined : CUSTOMER_COMPETITIONS.find(item => item === competition) ?? CUSTOMER_COMPETITIONS[0];
-  const [{ predictions, failed }, freeResult] = await Promise.all([loadPredictions(), loadFreeUpcoming()]);
+  const [{ predictions, failed }, freeResult] = await Promise.all([sources?.premium ?? loadPredictions(), sources?.free ?? loadFreeUpcoming()]);
   const freePredictions = freeResult.predictions;
   const freeFor = new Map(freePredictions.map(item => [item.match_id, item]));
   const premiumIds = new Set(predictions.map(item => item.match_id));
@@ -27,9 +29,11 @@ export async function MatchesDashboard({ filter, competition }: { filter: Upcomi
   const freeOnly = visible.filter((item): item is FreePrematchPrediction => "tier" in item);
   if (rows.length) {
     try {
-      const [access, supabase] = await Promise.all([getCustomerAccess(), createCustomerAuthServerClient()]);
+      const context = sources ? await sources.access : await Promise.all([getCustomerAccess(), createCustomerAuthServerClient()]).then(([access,supabase])=>({access,supabase}));
+      if (!context) throw new Error("Access check unavailable");
+      const {access,supabase}=context;
       owner = access.owner === true;
-      if (access.customer && !owner) pendingCheckouts = await loadPendingMatchCheckouts(supabase, access.customer.id).catch(() => []);
+      if (access.customer && !owner) pendingCheckouts = sources ? await sources.pending : await loadPendingMatchCheckouts(supabase, access.customer.id).catch(() => []);
       await Promise.all(freeOnly.map(async item => {
         try { freeOwnership.set(item.match_id, await hasPredictionAccess({ access, supabase, matchId: item.match_id, stage: "prematch" })); }
         catch { reportInventory("access", "ACCESS_CHECK_FAILED"); }
@@ -47,7 +51,7 @@ export async function MatchesDashboard({ filter, competition }: { filter: Upcomi
   const content = <div className="matches-dashboard">
     <div className="matches-toolbar"><CompetitionTabs selected={selected} filter={filter} /><DateSelector selected={selected} filter={filter} /></div>
     <div className="matches-heading"><div><p className="matches-eyebrow">Football intelligence</p><h1>{selected === "UEFA Champions League" ? "Champions League" : selected ?? "All competitions"}</h1><p>{visible.length ? `${visible.length} ${visible.length === 1 ? "match" : "matches"} · ${groups.size === 1 ? [...groups.keys()][0] : "Upcoming fixtures"}` : "Upcoming fixtures"}</p><span>Clear probabilities. Thoughtful decisions.</span></div></div>
-    {(failed || freeResult.failed) && visible.length ? <div className="service-state" role="status"><p>Some intelligence is temporarily unavailable. Available fixtures remain below.</p><InventoryRetry /></div> : null}
+    {(failed || freeResult.failed) && visible.length ? <div className="matches-inventory-progress" role="status"><p>Some intelligence is temporarily unavailable. Available fixtures remain below.</p><InventoryRetry /></div> : null}
     {(failed || freeResult.failed) && !visible.length ? <div className="matches-empty" role="alert"><h2>Match service temporarily unavailable</h2><p>Please try again shortly.</p><InventoryRetry /></div> : !visible.length ? <div className="matches-empty"><h2>{rows.length ? "No matches in this view" : "No upcoming matches currently available"}</h2><p>{rows.length ? "Try another date or competition." : "New fixtures will appear when the next schedule is available."}</p></div> : <div className="matches-fixtures">
       <div className="matches-columns" aria-hidden="true"><span>Match</span><span>Kickoff</span><span>Free Prediction</span><span>Premium Options</span></div>
       {[...groups].map(([date, fixtures]) => <section key={date} aria-label={`${date} fixtures`}><div className="matches-date-heading"><h2>{date}</h2><span>{fixtures.length} {fixtures.length === 1 ? "match" : "matches"}</span></div><div className="matches-rows">{fixtures.map(prediction => {

@@ -120,10 +120,12 @@ export function PredictionPreviewCard({ prediction }: { prediction: FootballPred
 
 export function PredictionsLoading() { return <div className="inventory-loading" role="status"><p><span className="status-dot" /> Loading genuine match forecasts…</p><div className="inventory-skeleton" aria-hidden="true">{[0, 1, 2].map(index => <div key={index}><span /><span /><span /></div>)}</div></div>; }
 
-export async function loadPredictions() {
+export type PredictionAccessContext = { access: Awaited<ReturnType<typeof getCustomerAccess>>; supabase: Awaited<ReturnType<typeof createCustomerAuthServerClient>> };
+
+export async function loadPredictions(contextPromise?: Promise<PredictionAccessContext | null>, options: {retryInventory?:boolean; inventory?:Promise<FootballPrediction[]>} = {}) {
   let predictions: FootballPrediction[];
   try {
-    predictions = (await getUpcomingFootballPredictions({ syncProducts: false })).map(item => ({ ...item, competition: canonicalCompetition(item.competition) }));
+    predictions = (await (options.inventory ?? getUpcomingFootballPredictions({ syncProducts: false, ...(options.retryInventory === false ? {retryInventory:false} : {}) }))).map(item => ({ ...item, competition: canonicalCompetition(item.competition) }));
   } catch (error) {
     const diagnostic = inventoryFailure(error);
     reportInventory("premium", diagnostic);
@@ -135,7 +137,9 @@ export async function loadPredictions() {
   // fixture identity or release Premium probabilities to an unpaid customer.
   let views: PredictionView[] = predictions.map(item => toPredictionPreview(item, []));
   try {
-    const [access, supabase] = await Promise.all([getCustomerAccess(), createCustomerAuthServerClient()]);
+    const context = contextPromise ? await contextPromise : await Promise.all([getCustomerAccess(), createCustomerAuthServerClient()]).then(([access,supabase])=>({access,supabase}));
+    if (!context) throw new Error("Access check unavailable");
+    const {access,supabase} = context;
     views = await Promise.all(predictions.map(async prediction => {
       try {
         return await hasPredictionAccess({ access, supabase, matchId: prediction.match_id, stage: "prematch" }) ? prediction : toPredictionPreview(prediction, []);

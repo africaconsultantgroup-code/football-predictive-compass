@@ -1,0 +1,1481 @@
+{
+  "date": "2026-10-13",
+  "status": "LOCAL ONLY ? REVIEW REQUIRED",
+  "branch": "perf/customer-matches-loading",
+  "productionBase": "37d9f2b7247422a8f21f94353dd6a9f7305cd0a5",
+  "deploymentPerformed": false,
+  "productionHttp": {
+    "at": "2026-10-13T03:44:58.344Z",
+    "note": "First observation is not proof of a serverless cold start; no production restart performed.",
+    "results": [
+      {
+        "name": "home-0",
+        "status": 200,
+        "headersMs": 768.7826,
+        "firstByteMs": 772.68,
+        "totalMs": 11272.4794,
+        "fixtureMarkupMs": null,
+        "bytes": 70559,
+        "fixtureCount": 0,
+        "cache": "MISS",
+        "region": "cpt1",
+        "serverTiming": null
+      },
+      {
+        "name": "matches-0",
+        "status": 200,
+        "headersMs": 366.8770999999997,
+        "firstByteMs": 376.28160000000025,
+        "totalMs": 18509.1824,
+        "fixtureMarkupMs": 18250.6148,
+        "bytes": 168070,
+        "fixtureCount": 23,
+        "cache": "MISS",
+        "region": "cpt1",
+        "serverTiming": null
+      },
+      {
+        "name": "home-1",
+        "status": 200,
+        "headersMs": 394.1919999999991,
+        "firstByteMs": 403.6320999999989,
+        "totalMs": 9973.064400000003,
+        "fixtureMarkupMs": null,
+        "bytes": 70559,
+        "fixtureCount": 0,
+        "cache": "MISS",
+        "region": "cpt1",
+        "serverTiming": null
+      },
+      {
+        "name": "matches-1",
+        "status": 200,
+        "headersMs": 350.5126999999993,
+        "firstByteMs": 359.4979999999996,
+        "totalMs": 40585.7593,
+        "fixtureMarkupMs": 40376.1257,
+        "bytes": 165185,
+        "fixtureCount": 23,
+        "cache": "MISS",
+        "region": "cpt1",
+        "serverTiming": null
+      },
+      {
+        "name": "home-2",
+        "status": 200,
+        "headersMs": 425.4967999999935,
+        "firstByteMs": 426.1238000000012,
+        "totalMs": 40465.7191,
+        "fixtureMarkupMs": null,
+        "bytes": 53996,
+        "fixtureCount": 0,
+        "cache": "MISS",
+        "region": "cpt1",
+        "serverTiming": null
+      },
+      {
+        "name": "matches-2",
+        "status": 200,
+        "headersMs": 378.8214000000007,
+        "firstByteMs": 388.4472999999998,
+        "totalMs": 40446.27200000001,
+        "fixtureMarkupMs": null,
+        "bytes": 45366,
+        "fixtureCount": 0,
+        "cache": "MISS",
+        "region": "cpt1",
+        "serverTiming": null
+      },
+      {
+        "name": "core-free-0",
+        "status": 503,
+        "headersMs": 61333.53700000001,
+        "firstByteMs": 61334.75840000002,
+        "totalMs": 61335.6293,
+        "fixtureMarkupMs": null,
+        "bytes": 52,
+        "fixtureCount": 0,
+        "cache": "MISS",
+        "region": "cpt1",
+        "serverTiming": null
+      },
+      {
+        "name": "core-predictions-0",
+        "status": 500,
+        "headersMs": 61337.93690000003,
+        "firstByteMs": 61338.294999999984,
+        "totalMs": 61338.39069999999,
+        "fixtureMarkupMs": null,
+        "bytes": 21,
+        "fixtureCount": 0,
+        "cache": "MISS",
+        "region": "cpt1",
+        "serverTiming": null
+      },
+      {
+        "name": "core-free-1",
+        "status": 200,
+        "headersMs": 64926.321600000025,
+        "firstByteMs": 64927.09039999999,
+        "totalMs": 64927.47850000003,
+        "fixtureMarkupMs": null,
+        "bytes": 8704,
+        "fixtureCount": 0,
+        "cache": "MISS",
+        "region": "cpt1",
+        "serverTiming": null
+      },
+      {
+        "name": "core-predictions-1",
+        "status": 500,
+        "headersMs": 29356.920199999993,
+        "firstByteMs": 29357.556900000025,
+        "totalMs": 29357.7132,
+        "fixtureMarkupMs": null,
+        "bytes": 21,
+        "fixtureCount": 0,
+        "cache": "MISS",
+        "region": "cpt1",
+        "serverTiming": null
+      },
+      {
+        "name": "core-free-2",
+        "status": 200,
+        "headersMs": 3541.8127000000095,
+        "firstByteMs": 3542.6367999999784,
+        "totalMs": 3543.6005000000005,
+        "fixtureMarkupMs": null,
+        "bytes": 8704,
+        "fixtureCount": 0,
+        "cache": "MISS",
+        "region": "cpt1",
+        "serverTiming": null
+      },
+      {
+        "name": "core-predictions-2",
+        "status": 200,
+        "headersMs": 17034.46869999997,
+        "firstByteMs": 17035.563800000004,
+        "totalMs": 17035.715199999977,
+        "fixtureMarkupMs": null,
+        "bytes": 11286,
+        "fixtureCount": 0,
+        "cache": "MISS",
+        "region": "cpt1",
+        "serverTiming": null
+      }
+    ]
+  },
+  "productionBrowser": [
+    {
+      "width": 375,
+      "mode": "browser-cold",
+      "fixturesMs": 15673,
+      "shellMs": 837.2999999523163,
+      "ttfb": 266.39999997615814,
+      "responseEnd": 15573.399999976158,
+      "failed": false,
+      "rows": 23,
+      "scroll": 375,
+      "resources": [
+        {
+          "type": "fetch",
+          "duration": 1183.1000000238419,
+          "detail": "route-prefetch"
+        },
+        {
+          "type": "fetch",
+          "duration": 353.2999999523163,
+          "detail": "route-prefetch"
+        },
+        {
+          "type": "fetch",
+          "duration": 1209.9000000357628,
+          "detail": "route-prefetch"
+        },
+        {
+          "type": "fetch",
+          "duration": 1172.2000000476837,
+          "detail": "route-prefetch"
+        },
+        {
+          "type": "fetch",
+          "duration": 345.80000001192093,
+          "detail": "route-prefetch"
+        },
+        {
+          "type": "fetch",
+          "duration": 372.5,
+          "detail": "route-prefetch"
+        },
+        {
+          "type": "fetch",
+          "duration": 351.4000000357628,
+          "detail": "route-prefetch"
+        }
+      ]
+    },
+    {
+      "width": 375,
+      "mode": "browser-warm",
+      "fixturesMs": 10896.200000047684,
+      "shellMs": 508.5,
+      "ttfb": 130.10000002384186,
+      "responseEnd": 10860.800000011921,
+      "failed": false,
+      "rows": 23,
+      "scroll": 375,
+      "resources": [
+        {
+          "type": "fetch",
+          "duration": 378.39999997615814,
+          "detail": "route-prefetch"
+        },
+        {
+          "type": "fetch",
+          "duration": 341.39999997615814,
+          "detail": "route-prefetch"
+        },
+        {
+          "type": "fetch",
+          "duration": 392.19999998807907,
+          "detail": "route-prefetch"
+        },
+        {
+          "type": "fetch",
+          "duration": 352.19999998807907,
+          "detail": "route-prefetch"
+        },
+        {
+          "type": "fetch",
+          "duration": 337.69999998807907,
+          "detail": "route-prefetch"
+        },
+        {
+          "type": "fetch",
+          "duration": 347.9000000357628,
+          "detail": "route-prefetch"
+        },
+        {
+          "type": "fetch",
+          "duration": 343.5,
+          "detail": "route-prefetch"
+        }
+      ]
+    },
+    {
+      "width": 1280,
+      "mode": "browser-cold",
+      "fixturesMs": 10466.800000011921,
+      "shellMs": 715.3000000119209,
+      "ttfb": 255.4000000357628,
+      "responseEnd": 10308.400000035763,
+      "failed": false,
+      "rows": 23,
+      "scroll": 1265,
+      "resources": [
+        {
+          "type": "fetch",
+          "duration": 388.10000002384186,
+          "detail": "route-prefetch"
+        },
+        {
+          "type": "fetch",
+          "duration": 388.7000000476837,
+          "detail": "route-prefetch"
+        },
+        {
+          "type": "fetch",
+          "duration": 399.2000000476837,
+          "detail": "route-prefetch"
+        },
+        {
+          "type": "fetch",
+          "duration": 388.30000001192093,
+          "detail": "route-prefetch"
+        },
+        {
+          "type": "fetch",
+          "duration": 346.9000000357628,
+          "detail": "route-prefetch"
+        },
+        {
+          "type": "fetch",
+          "duration": 661.8000000119209,
+          "detail": "route-prefetch"
+        },
+        {
+          "type": "fetch",
+          "duration": 652.1999999880791,
+          "detail": "route-prefetch"
+        },
+        {
+          "type": "fetch",
+          "duration": 350.5,
+          "detail": "route-prefetch"
+        },
+        {
+          "type": "fetch",
+          "duration": 344.89999997615814,
+          "detail": "route-prefetch"
+        },
+        {
+          "type": "fetch",
+          "duration": 358.80000001192093,
+          "detail": "route-prefetch"
+        },
+        {
+          "type": "fetch",
+          "duration": 401.10000002384186,
+          "detail": "route-prefetch"
+        },
+        {
+          "type": "fetch",
+          "duration": 354.5,
+          "detail": "route-prefetch"
+        },
+        {
+          "type": "fetch",
+          "duration": 380.69999998807907,
+          "detail": "route-prefetch"
+        },
+        {
+          "type": "fetch",
+          "duration": 707.3000000119209,
+          "detail": "route-prefetch"
+        },
+        {
+          "type": "fetch",
+          "duration": 638,
+          "detail": "route-prefetch"
+        }
+      ]
+    },
+    {
+      "width": 1280,
+      "mode": "browser-warm",
+      "fixturesMs": 10552.899999976158,
+      "shellMs": 741.3000000119209,
+      "ttfb": 82.69999998807907,
+      "responseEnd": 10521.699999988079,
+      "failed": false,
+      "rows": 23,
+      "scroll": 1265,
+      "resources": [
+        {
+          "type": "fetch",
+          "duration": 344.0999999642372,
+          "detail": "route-prefetch"
+        },
+        {
+          "type": "fetch",
+          "duration": 337.5,
+          "detail": "route-prefetch"
+        },
+        {
+          "type": "fetch",
+          "duration": 376.19999998807907,
+          "detail": "route-prefetch"
+        },
+        {
+          "type": "fetch",
+          "duration": 355.9000000357628,
+          "detail": "route-prefetch"
+        },
+        {
+          "type": "fetch",
+          "duration": 327.89999997615814,
+          "detail": "route-prefetch"
+        },
+        {
+          "type": "fetch",
+          "duration": 100.5,
+          "detail": "route-prefetch"
+        },
+        {
+          "type": "fetch",
+          "duration": 97.80000001192093,
+          "detail": "route-prefetch"
+        },
+        {
+          "type": "fetch",
+          "duration": 333.30000001192093,
+          "detail": "route-prefetch"
+        },
+        {
+          "type": "fetch",
+          "duration": 332.30000001192093,
+          "detail": "route-prefetch"
+        },
+        {
+          "type": "fetch",
+          "duration": 374.5,
+          "detail": "route-prefetch"
+        },
+        {
+          "type": "fetch",
+          "duration": 335.80000001192093,
+          "detail": "route-prefetch"
+        },
+        {
+          "type": "fetch",
+          "duration": 347.5999999642372,
+          "detail": "route-prefetch"
+        },
+        {
+          "type": "fetch",
+          "duration": 347.5,
+          "detail": "route-prefetch"
+        },
+        {
+          "type": "fetch",
+          "duration": 104.5,
+          "detail": "route-prefetch"
+        },
+        {
+          "type": "fetch",
+          "duration": 109.80000001192093,
+          "detail": "route-prefetch"
+        }
+      ]
+    }
+  ],
+  "corePoolErrors": [
+    {
+      "timestamp": 1791862984047,
+      "level": "error",
+      "error": "(ECHECKOUTTIMEOUT) unable to check out connection from the pool after 60000ms in Transaction mode",
+      "routes": [
+        "upcoming_predictions"
+      ]
+    },
+    {
+      "timestamp": 1791862941100,
+      "level": "error",
+      "error": "(ECHECKOUTTIMEOUT) unable to check out connection from the pool after 60000ms in Transaction mode",
+      "routes": [
+        "upcoming_predictions"
+      ]
+    },
+    {
+      "timestamp": 1791862922691,
+      "level": "error",
+      "error": "(ECHECKOUTTIMEOUT) unable to check out connection from the pool after 60000ms in Transaction mode",
+      "routes": []
+    },
+    {
+      "timestamp": 1791862921098,
+      "level": "error",
+      "error": "(ECHECKOUTTIMEOUT) unable to check out connection from the pool after 60000ms in Transaction mode",
+      "routes": []
+    },
+    {
+      "timestamp": 1791862919874,
+      "level": "error",
+      "error": "(ECHECKOUTTIMEOUT) unable to check out connection from the pool after 60000ms in Transaction mode",
+      "routes": []
+    },
+    {
+      "timestamp": 1791862913101,
+      "level": "error",
+      "error": "(ECHECKOUTTIMEOUT) unable to check out connection from the pool after 60000ms in Transaction mode",
+      "routes": [
+        "upcoming_predictions"
+      ]
+    },
+    {
+      "timestamp": 1791862865103,
+      "level": "error",
+      "error": "(ECHECKOUTTIMEOUT) unable to check out connection from the pool after 60000ms in Transaction mode",
+      "routes": [
+        "live_match_prediction_history"
+      ]
+    },
+    {
+      "timestamp": 1791862861357,
+      "level": "error",
+      "error": "(ECHECKOUTTIMEOUT) unable to check out connection from the pool after 60000ms in Transaction mode",
+      "routes": [
+        "live_match_prediction_history"
+      ]
+    },
+    {
+      "timestamp": 1791862845099,
+      "level": "error",
+      "error": "(ECHECKOUTTIMEOUT) unable to check out connection from the pool after 60000ms in Transaction mode",
+      "routes": [
+        "live_match_prediction_history"
+      ]
+    },
+    {
+      "timestamp": 1791862840910,
+      "level": "error",
+      "error": "(ECHECKOUTTIMEOUT) unable to check out connection from the pool after 60000ms in Transaction mode",
+      "routes": [
+        "live_match_prediction_history"
+      ]
+    },
+    {
+      "timestamp": 1791862820916,
+      "level": "error",
+      "error": "(ECHECKOUTTIMEOUT) unable to check out connection from the pool after 60000ms in Transaction mode",
+      "routes": [
+        "live_match_prediction_history"
+      ]
+    },
+    {
+      "timestamp": 1791862820915,
+      "level": "error",
+      "error": "(ECHECKOUTTIMEOUT) unable to check out connection from the pool after 60000ms in Transaction mode",
+      "routes": [
+        "live_match_prediction_history"
+      ]
+    },
+    {
+      "timestamp": 1791862802344,
+      "level": "error",
+      "error": "(ECHECKOUTTIMEOUT) unable to check out connection from the pool after 60000ms in Transaction mode",
+      "routes": [
+        "live_match_prediction_history"
+      ]
+    },
+    {
+      "timestamp": 1791862802344,
+      "level": "error",
+      "error": "(ECHECKOUTTIMEOUT) unable to check out connection from the pool after 60000ms in Transaction mode",
+      "routes": [
+        "live_match_prediction_history"
+      ]
+    },
+    {
+      "timestamp": 1791862802343,
+      "level": "error",
+      "error": "(ECHECKOUTTIMEOUT) unable to check out connection from the pool after 60000ms in Transaction mode",
+      "routes": [
+        "live_match_prediction_history"
+      ]
+    },
+    {
+      "timestamp": 1791862802343,
+      "level": "error",
+      "error": "(ECHECKOUTTIMEOUT) unable to check out connection from the pool after 60000ms in Transaction mode",
+      "routes": [
+        "live_match_prediction_history"
+      ]
+    },
+    {
+      "timestamp": 1791862802343,
+      "level": "error",
+      "error": "(ECHECKOUTTIMEOUT) unable to check out connection from the pool after 60000ms in Transaction mode",
+      "routes": [
+        "upcoming_predictions"
+      ]
+    },
+    {
+      "timestamp": 1791862802343,
+      "level": "error",
+      "error": "(ECHECKOUTTIMEOUT) unable to check out connection from the pool after 60000ms in Transaction mode",
+      "routes": [
+        "live_match_prediction_history"
+      ]
+    },
+    {
+      "timestamp": 1791862802342,
+      "level": "error",
+      "error": "(ECHECKOUTTIMEOUT) unable to check out connection from the pool after 60000ms in Transaction mode",
+      "routes": [
+        "live_match_prediction_history"
+      ]
+    },
+    {
+      "timestamp": 1791862802340,
+      "level": "error",
+      "error": "(ECHECKOUTTIMEOUT) unable to check out connection from the pool after 60000ms in Transaction mode",
+      "routes": [
+        "live_match_prediction_history"
+      ]
+    },
+    {
+      "timestamp": 1791862802339,
+      "level": "error",
+      "error": "(ECHECKOUTTIMEOUT) unable to check out connection from the pool after 60000ms in Transaction mode",
+      "routes": [
+        "live_match_prediction_history"
+      ]
+    },
+    {
+      "timestamp": 1791862802338,
+      "level": "error",
+      "error": "(ECHECKOUTTIMEOUT) unable to check out connection from the pool after 60000ms in Transaction mode",
+      "routes": []
+    },
+    {
+      "timestamp": 1791862802336,
+      "level": "error",
+      "error": "(ECHECKOUTTIMEOUT) unable to check out connection from the pool after 60000ms in Transaction mode",
+      "routes": [
+        "live_match_prediction_history"
+      ]
+    }
+  ],
+  "databaseStatistics": {
+    "completedPremiumQueryCount": 6,
+    "meanExecutionMs": 1823.25,
+    "maxExecutionMs": 3746.49,
+    "resetWindow": "unknown",
+    "queryTextOrPrivateDataIncluded": false
+  },
+  "controlledReplay": {
+    "genuineCapturedFreeFixtures": 23,
+    "freeDelayMs": 3540,
+    "premiumDelayMs": 17030,
+    "premiumResponse": "empty valid inventory, latency isolation only",
+    "before": [
+      {
+        "width": 375,
+        "mode": "browser-cold",
+        "fixturesMs": 17905.399999976158,
+        "shellMs": 451.10000002384186,
+        "ttfb": 393.10000002384186,
+        "responseEnd": 17771.80000001192,
+        "failed": false,
+        "rows": 23,
+        "scroll": 375,
+        "resources": [
+          {
+            "type": "fetch",
+            "duration": 92,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 92.69999998807907,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 92.90000003576279,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 93.39999997615814,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 29.299999952316284,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 27.399999976158142,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 27.5,
+            "detail": "route-prefetch"
+          }
+        ]
+      },
+      {
+        "width": 375,
+        "mode": "browser-warm",
+        "fixturesMs": 17267.200000047684,
+        "shellMs": 168.4000000357628,
+        "ttfb": 95.10000002384186,
+        "responseEnd": 17221.30000001192,
+        "failed": false,
+        "rows": 23,
+        "scroll": 375,
+        "resources": [
+          {
+            "type": "fetch",
+            "duration": 50.40000003576279,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 51.39999997615814,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 51.59999996423721,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 53.10000002384186,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 41.799999952316284,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 40.5,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 38.89999997615814,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 12.599999964237213,
+            "detail": "match-detail"
+          },
+          {
+            "type": "fetch",
+            "duration": 15,
+            "detail": "match-detail"
+          }
+        ]
+      },
+      {
+        "width": 1280,
+        "mode": "browser-cold",
+        "fixturesMs": 17320.5,
+        "shellMs": 68.89999997615814,
+        "ttfb": 34.19999998807907,
+        "responseEnd": 17176.19999998808,
+        "failed": false,
+        "rows": 23,
+        "scroll": 1265,
+        "resources": [
+          {
+            "type": "fetch",
+            "duration": 52.5,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 52.90000003576279,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 53,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 53.200000047683716,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 41.80000001192093,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 97.80000001192093,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 97.80000001192093,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 40.5,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 24.599999964237213,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 22.69999998807907,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 31,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 30.19999998807907,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 28.5,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 24.900000035762787,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 25.19999998807907,
+            "detail": "route-prefetch"
+          }
+        ]
+      },
+      {
+        "width": 1280,
+        "mode": "browser-warm",
+        "fixturesMs": 17245,
+        "shellMs": 93.5,
+        "ttfb": 32.799999952316284,
+        "responseEnd": 17189.799999952316,
+        "failed": false,
+        "rows": 23,
+        "scroll": 1265,
+        "resources": [
+          {
+            "type": "fetch",
+            "duration": 53.19999998807907,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 58.19999998807907,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 58.700000047683716,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 58.5,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 80.70000004768372,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 73.69999998807907,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 73,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 106.09999996423721,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 52.10000002384186,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 51.80000001192093,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 51.40000003576279,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 17.30000001192093,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 38.10000002384186,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 35.80000001192093,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 34.30000001192093,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 18.899999976158142,
+            "detail": "match-detail"
+          },
+          {
+            "type": "fetch",
+            "duration": 19.30000001192093,
+            "detail": "match-detail"
+          },
+          {
+            "type": "fetch",
+            "duration": 23.400000035762787,
+            "detail": "match-detail"
+          },
+          {
+            "type": "fetch",
+            "duration": 22.80000001192093,
+            "detail": "match-detail"
+          }
+        ]
+      }
+    ],
+    "after": [
+      {
+        "width": 375,
+        "mode": "browser-cold",
+        "fixturesMs": 4234.600000023842,
+        "shellMs": 389.60000002384186,
+        "ttfb": 340.19999998807907,
+        "responseEnd": 0,
+        "failed": false,
+        "rows": 23,
+        "scroll": 375,
+        "resources": [
+          {
+            "type": "fetch",
+            "duration": 96.60000002384186,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 101.89999997615814,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 99.30000001192093,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 174.5,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 77.40000003576279,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 77,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 74.80000001192093,
+            "detail": "route-prefetch"
+          }
+        ]
+      },
+      {
+        "width": 375,
+        "mode": "browser-warm",
+        "fixturesMs": 3756.900000035763,
+        "shellMs": 107.69999998807907,
+        "ttfb": 53.60000002384186,
+        "responseEnd": 0,
+        "failed": false,
+        "rows": 23,
+        "scroll": 375,
+        "resources": [
+          {
+            "type": "fetch",
+            "duration": 56.80000001192093,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 57.39999997615814,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 57.59999996423721,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 93.30000001192093,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 40.59999996423721,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 39.30000001192093,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 37,
+            "detail": "route-prefetch"
+          }
+        ]
+      },
+      {
+        "width": 1280,
+        "mode": "browser-cold",
+        "fixturesMs": 3776.699999988079,
+        "shellMs": 97.19999998807907,
+        "ttfb": 49.09999996423721,
+        "responseEnd": 0,
+        "failed": false,
+        "rows": 23,
+        "scroll": 1265,
+        "resources": [
+          {
+            "type": "fetch",
+            "duration": 58.10000002384186,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 58.299999952316284,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 58.30000001192093,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 58.69999998807907,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 46.39999997615814,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 105.60000002384186,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 107.30000001192093,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 48.10000002384186,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 29.19999998807907,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 26.30000001192093,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 30,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 28.899999976158142,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 33.69999998807907,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 28.5,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 28.69999998807907,
+            "detail": "route-prefetch"
+          }
+        ]
+      },
+      {
+        "width": 1280,
+        "mode": "browser-warm",
+        "fixturesMs": 3699.899999976158,
+        "shellMs": 86.39999997615814,
+        "ttfb": 45.19999998807907,
+        "responseEnd": 0,
+        "failed": false,
+        "rows": 23,
+        "scroll": 1265,
+        "resources": [
+          {
+            "type": "fetch",
+            "duration": 32.10000002384186,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 31.700000047683716,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 31.69999998807907,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 31.700000047683716,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 28,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 27.299999952316284,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 26.600000023841858,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 47.80000001192093,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 43.10000002384186,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 43.19999998807907,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 43.30000001192093,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 22.399999976158142,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 26.19999998807907,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 22.400000035762787,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 23,
+            "detail": "route-prefetch"
+          }
+        ]
+      }
+    ],
+    "comparisons": [
+      {
+        "width": 375,
+        "mode": "browser-cold",
+        "beforeFixtureMs": 17905.399999976158,
+        "afterFixtureMs": 4234.600000023842,
+        "reductionPercent": 76.35
+      },
+      {
+        "width": 375,
+        "mode": "browser-warm",
+        "beforeFixtureMs": 17267.200000047684,
+        "afterFixtureMs": 3756.900000035763,
+        "reductionPercent": 78.24
+      },
+      {
+        "width": 1280,
+        "mode": "browser-cold",
+        "beforeFixtureMs": 17320.5,
+        "afterFixtureMs": 3776.699999988079,
+        "reductionPercent": 78.2
+      },
+      {
+        "width": 1280,
+        "mode": "browser-warm",
+        "beforeFixtureMs": 17245,
+        "afterFixtureMs": 3699.899999976158,
+        "reductionPercent": 78.55
+      }
+    ],
+    "httpAfter": {
+      "status": 200,
+      "headersMs": 100.54509999999999,
+      "firstByteMs": 103.6326,
+      "fixturesMs": 3741.4892999999997,
+      "responseCompleteMs": 17196.0631
+    }
+  },
+  "outage": {
+    "freeDelayMs": 3540,
+    "premiumDelayMs": 60000,
+    "perAttemptCustomerDeadlineMs": 20000,
+    "attemptsPerInventorySource": 1,
+    "browser": [
+      {
+        "width": 320,
+        "mode": "browser-cold",
+        "fixturesMs": 4296.299999952316,
+        "shellMs": 274.69999998807907,
+        "ttfb": 217.79999995231628,
+        "responseEnd": 0,
+        "failed": false,
+        "rows": 23,
+        "scroll": 320,
+        "resources": [
+          {
+            "type": "fetch",
+            "duration": 35.59999996423721,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 36,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 36,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 36.40000003576279,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 16.30000001192093,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 15.700000047683716,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 15.300000011920929,
+            "detail": "route-prefetch"
+          }
+        ],
+        "completionMs": 20310.299999952316,
+        "finalRows": 23,
+        "retry": true,
+        "finalScroll": 320
+      },
+      {
+        "width": 375,
+        "mode": "browser-cold",
+        "fixturesMs": 3906.2999999523163,
+        "shellMs": 126.69999998807907,
+        "ttfb": 59.89999997615814,
+        "responseEnd": 0,
+        "failed": false,
+        "rows": 23,
+        "scroll": 375,
+        "resources": [
+          {
+            "type": "fetch",
+            "duration": 41.30000001192093,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 41.5,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 41.80000001192093,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 43,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 33.09999996423721,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 32.89999997615814,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 32.89999997615814,
+            "detail": "route-prefetch"
+          }
+        ],
+        "completionMs": 20143,
+        "finalRows": 23,
+        "retry": true,
+        "finalScroll": 375
+      },
+      {
+        "width": 1280,
+        "mode": "browser-cold",
+        "fixturesMs": 3804.400000035763,
+        "shellMs": 88,
+        "ttfb": 38.200000047683716,
+        "responseEnd": 0,
+        "failed": false,
+        "rows": 23,
+        "scroll": 1265,
+        "resources": [
+          {
+            "type": "fetch",
+            "duration": 54.19999998807907,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 55.60000002384186,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 56.09999996423721,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 56.5,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 37.59999996423721,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 97.5,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 95.69999998807907,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 42.30000001192093,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 25.600000023841858,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 19.69999998807907,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 34.59999996423721,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 35.09999996423721,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 32.69999998807907,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 28.5,
+            "detail": "route-prefetch"
+          },
+          {
+            "type": "fetch",
+            "duration": 28.19999998807907,
+            "detail": "route-prefetch"
+          }
+        ],
+        "completionMs": 20089.5,
+        "finalRows": 23,
+        "retry": true,
+        "finalScroll": 1265
+      }
+    ]
+  },
+  "validation": {
+    "fullTests": 581,
+    "files": 52,
+    "typescript": "PASS",
+    "lint": "PASS",
+    "productionBuild": "PASS",
+    "mobileWidths": [
+      320,
+      375
+    ],
+    "desktopWidth": 1280
+  },
+  "limits": [
+    "No authenticated production session; auth latency inferred only from code paths and tested controlled access delays.",
+    "Production serverless cold start not forced. Cold browser and local cold process are identified separately.",
+    "No production after-change measurements because deployment awaits review.",
+    "Both inventory feeds unavailable on a cold instance require independent fixture truth or a public schedule cache.",
+    "Railway is not directly awaited; contribution to pool contention is unproven."
+  ],
+  "preserved": [
+    "prediction logic",
+    "historical classifications",
+    "customer entitlements",
+    "payments",
+    "Free/Premium separation",
+    "readiness",
+    "secrets"
+  ]
+}

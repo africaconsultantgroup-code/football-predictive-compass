@@ -40,14 +40,14 @@ export function FreePredictionSummary({ prediction, freePrediction }: { predicti
   </section>;
 }
 
-export function FreeOnlyMatchRow({ free, owned = false, owner = false }: { free: FreePrematchPrediction; owned?: boolean; owner?: boolean }) {
+export function FreeOnlyMatchRow({ free, owned = false, owner = false, premiumLoading = false }: { free: FreePrematchPrediction; owned?: boolean; owner?: boolean; premiumLoading?: boolean }) {
   const label = `${free.home_team} vs ${free.away_team}`;
   const time = free.kickoff_at ? new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Africa/Accra" }).format(new Date(free.kickoff_at)) : "TBC";
   return <article className="matches-row" id={free.match_id} aria-label={label}>
     <div className="matches-match"><small>{free.competition}</small><div className="matches-row-stage">Pre-Match</div><TeamIdentity name={free.home_team} team={free.home_team_identity} /><span className="matches-versus">vs</span><TeamIdentity name={free.away_team} team={free.away_team_identity} /></div>
     <div className="matches-kickoff"><span className="matches-mobile-label">Kickoff</span><time dateTime={free.kickoff_at ?? undefined}>{time}</time><small>GMT · Ghana time</small></div>
     <FreePredictionSummary prediction={free} freePrediction={free} />
-    <section className="matches-premium" aria-label="Premium options"><div className="matches-premium-option"><h3>Premium Match Intelligence</h3>{owned ? <strong>{owner ? "Premium Unlocked" : "Premium Intelligence Unlocked"}</strong> : null}<p>Premium intelligence being prepared</p><Link className="matches-option-link" href={`/matches/${free.match_id}`}>{owned && !owner ? "View Match Intelligence" : "View Premium Intelligence"} &rarr;</Link></div></section>
+    <section className="matches-premium" aria-label="Premium options"><div className="matches-premium-option"><h3>Premium Match Intelligence</h3>{owned ? <strong>{owner ? "Premium Unlocked" : "Premium Intelligence Unlocked"}</strong> : null}<p>{premiumLoading ? "Premium options are loading" : "Premium intelligence being prepared"}</p><Link className="matches-option-link" href={`/matches/${free.match_id}`}>{owned && !owner ? "View Match Intelligence" : "View Premium Intelligence"} &rarr;</Link></div></section>
   </article>;
 }
 

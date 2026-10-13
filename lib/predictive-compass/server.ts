@@ -125,17 +125,18 @@ export function createFootballCoreClient({
       if (free.match_id !== id) throw new CoreClientError("malformed");
       return free;
     },
-    async getStoredFreeUpcoming() {
+    async getStoredFreeUpcoming({retryInventory = true}: {retryInventory?:boolean} = {}) {
       const start = new Date();
       const end = new Date(start); end.setUTCDate(end.getUTCDate()+4);
       const query = new URLSearchParams({ from: start.toISOString().slice(0,10), to: end.toISOString().slice(0,10) });
-      const value = await inventoryRequest(`api/v1/domains/football/free/upcoming?${query}`, true);
+      const path = `api/v1/domains/football/free/upcoming?${query}`;
+      const value = retryInventory ? await inventoryRequest(path, true) : await request(path, "GET", true, inventoryTimeoutMs);
       if (value === null) return [];
       if (!value || typeof value !== "object" || !("predictions" in value) || !Array.isArray(value.predictions)) throw new CoreClientError("malformed");
       const predictions: unknown[] = value.predictions;
       return predictions.map(item => freePrematchSchema.parse(item));
     },
-    async getUpcomingFootballPredictions({ syncProducts = true }: { syncProducts?: boolean } = {}) {
+    async getUpcomingFootballPredictions({ syncProducts = true, retryInventory = true }: { syncProducts?: boolean; retryInventory?: boolean } = {}) {
       try {
         const start = new Date();
         const end = new Date(start);
@@ -144,11 +145,10 @@ export function createFootballCoreClient({
           from: start.toISOString().slice(0, 10),
           to: end.toISOString().slice(0, 10),
         });
-        const predictions = parseUpcomingFootballPredictions(
-          await inventoryRequest(
-            `api/v1/domains/football/predictions/upcoming?${parameters}`,
-          ),
-        );
+        const path = `api/v1/domains/football/predictions/upcoming?${parameters}`;
+        const predictions = parseUpcomingFootballPredictions(retryInventory
+          ? await inventoryRequest(path)
+          : await request(path, "GET", false, inventoryTimeoutMs));
         if (syncProducts && !matchPricingV2Enabled()) await syncUpcomingPredictionProducts(predictions).catch(() => undefined);
         return predictions;
       } catch (error) {
@@ -245,11 +245,11 @@ function getConfiguredClient() {
 export async function getStoredFreePrematch(matchId: string) {
   return getConfiguredClient().getStoredFreePrematch(matchId);
 }
-export async function getStoredFreeUpcoming() {
-  return getConfiguredClient().getStoredFreeUpcoming();
+export async function getStoredFreeUpcoming(options?: {retryInventory?:boolean}) {
+  return getConfiguredClient().getStoredFreeUpcoming(options);
 }
 
-export async function getUpcomingFootballPredictions(options?: { syncProducts?: boolean }) {
+export async function getUpcomingFootballPredictions(options?: { syncProducts?: boolean; retryInventory?: boolean }) {
   return getConfiguredClient().getUpcomingFootballPredictions(options);
 }
 
