@@ -4,6 +4,7 @@ import { PERFORMANCE_EMPTY, PERFORMANCE_METHODOLOGY, PERFORMANCE_PERIODS, PERIOD
 export function PerformanceView({report,unavailable=false}:{report:PerformanceReport;unavailable?:boolean}){
  const {window,summary,matches}=report;
  return <div className="performance-page"><header className="performance-heading"><p className="section-kicker">Official Premium performance</p><h1>Performance</h1><p>Verified pre-kickoff forecasts, measured against settled results.</p></header>
+ <p><Link href="/performance/weekend">View Weekend Prediction Report</Link></p>
  <nav className="performance-filters" aria-label="Report period">{PERFORMANCE_PERIODS.map(period=><Link key={period} href={`/performance?period=${period}`} aria-current={period===window.period?"page":undefined}>{PERIOD_LABELS[period]}</Link>)}</nav>
  <div className="performance-period"><p>{window.label} · {window.from} to {window.to} · Ghana time</p>{!unavailable?<a className="performance-download" href={`/api/reports/performance/pdf?period=${window.period}`}>Download PDF Report</a>:null}</div>
  {unavailable?<section className="performance-state" role="alert"><h2>Performance reports are temporarily unavailable.</h2><p>Please try again shortly. No accuracy figures are shown while the official source is unavailable.</p><Link href={`/performance?period=${window.period}`}>Try again</Link></section>:<>

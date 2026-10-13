@@ -1,0 +1,186 @@
+{
+  "from": "2026-10-10",
+  "to": "2026-10-12",
+  "matches": [
+    {
+      "match_id": "fm_6d661c9077f0cedf9051792906c29bc9",
+      "competition": "Premier League",
+      "home_team": "Arsenal",
+      "away_team": "Leeds",
+      "kickoff_at": "2026-10-10T11:30:00Z",
+      "status": "FINAL",
+      "final_score": {
+        "home": 2,
+        "away": 1
+      },
+      "home_team_identity": null,
+      "away_team_identity": null,
+      "free_prematch_available": true,
+      "premium_prematch_available": true,
+      "live_history_available": false,
+      "premium_classification": "LEGACY_PREMATCH"
+    },
+    {
+      "match_id": "fm_10281b717471df0c89bac6bfa8cf8440",
+      "competition": "Premier League",
+      "home_team": "Chelsea",
+      "away_team": "Bournemouth",
+      "kickoff_at": "2026-10-10T14:00:00Z",
+      "status": "FINAL",
+      "final_score": {
+        "home": 5,
+        "away": 1
+      },
+      "home_team_identity": null,
+      "away_team_identity": null,
+      "free_prematch_available": true,
+      "premium_prematch_available": true,
+      "live_history_available": true,
+      "premium_classification": "LEGACY_PREMATCH"
+    },
+    {
+      "match_id": "fm_204a6dc6f82e0ab5a5685777eb3d354a",
+      "competition": "Premier League",
+      "home_team": "Sunderland",
+      "away_team": "Brighton",
+      "kickoff_at": "2026-10-10T14:00:00Z",
+      "status": "FINAL",
+      "final_score": {
+        "home": 0,
+        "away": 2
+      },
+      "home_team_identity": null,
+      "away_team_identity": null,
+      "free_prematch_available": true,
+      "premium_prematch_available": true,
+      "live_history_available": true,
+      "premium_classification": "LEGACY_PREMATCH"
+    },
+    {
+      "match_id": "fm_771b2eb95a390b85947bb991ff8a1d2c",
+      "competition": "Premier League",
+      "home_team": "Aston Villa",
+      "away_team": "Brentford",
+      "kickoff_at": "2026-10-10T14:00:00Z",
+      "status": "FINAL",
+      "final_score": {
+        "home": 2,
+        "away": 2
+      },
+      "home_team_identity": null,
+      "away_team_identity": null,
+      "free_prematch_available": true,
+      "premium_prematch_available": true,
+      "live_history_available": true,
+      "premium_classification": "LEGACY_PREMATCH"
+    },
+    {
+      "match_id": "fm_aa4dbc9a12996b60943f0074ec3cd312",
+      "competition": "Premier League",
+      "home_team": "Ipswich",
+      "away_team": "Fulham",
+      "kickoff_at": "2026-10-10T14:00:00Z",
+      "status": "FINAL",
+      "final_score": {
+        "home": 2,
+        "away": 1
+      },
+      "home_team_identity": null,
+      "away_team_identity": null,
+      "free_prematch_available": true,
+      "premium_prematch_available": true,
+      "live_history_available": true,
+      "premium_classification": "LEGACY_PREMATCH"
+    },
+    {
+      "match_id": "fm_8639567894a61458ba6237adc0565e30",
+      "competition": "Premier League",
+      "home_team": "Manchester United",
+      "away_team": "Tottenham",
+      "kickoff_at": "2026-10-10T16:30:00Z",
+      "status": "FINAL",
+      "final_score": {
+        "home": 1,
+        "away": 1
+      },
+      "home_team_identity": null,
+      "away_team_identity": null,
+      "free_prematch_available": true,
+      "premium_prematch_available": false,
+      "live_history_available": false,
+      "premium_classification": null
+    },
+    {
+      "match_id": "fm_9ef89bb0444782316bd79725a57fac04",
+      "competition": "Premier League",
+      "home_team": "Hull City",
+      "away_team": "Everton",
+      "kickoff_at": "2026-10-11T13:00:00Z",
+      "status": "FINAL",
+      "final_score": {
+        "home": 2,
+        "away": 2
+      },
+      "home_team_identity": null,
+      "away_team_identity": null,
+      "free_prematch_available": true,
+      "premium_prematch_available": false,
+      "live_history_available": true,
+      "premium_classification": null
+    },
+    {
+      "match_id": "fm_d6a4752d67c196c0469e1e4932b1a9da",
+      "competition": "Premier League",
+      "home_team": "Crystal Palace",
+      "away_team": "Nottingham Forest",
+      "kickoff_at": "2026-10-11T13:00:00Z",
+      "status": "FINAL",
+      "final_score": {
+        "home": 3,
+        "away": 1
+      },
+      "home_team_identity": null,
+      "away_team_identity": null,
+      "free_prematch_available": true,
+      "premium_prematch_available": false,
+      "live_history_available": false,
+      "premium_classification": null
+    },
+    {
+      "match_id": "fm_41b5da514305bf91c1dc4faa2dceef4a",
+      "competition": "Premier League",
+      "home_team": "Liverpool",
+      "away_team": "Manchester City",
+      "kickoff_at": "2026-10-11T15:30:00Z",
+      "status": "FINAL",
+      "final_score": {
+        "home": 0,
+        "away": 3
+      },
+      "home_team_identity": null,
+      "away_team_identity": null,
+      "free_prematch_available": true,
+      "premium_prematch_available": false,
+      "live_history_available": false,
+      "premium_classification": null
+    },
+    {
+      "match_id": "fm_2887a864cb0b74701aa6abd1d9cf50d0",
+      "competition": "Premier League",
+      "home_team": "Coventry",
+      "away_team": "Newcastle",
+      "kickoff_at": "2026-10-12T19:00:00Z",
+      "status": "FINAL",
+      "final_score": {
+        "home": 4,
+        "away": 1
+      },
+      "home_team_identity": null,
+      "away_team_identity": null,
+      "free_prematch_available": true,
+      "premium_prematch_available": false,
+      "live_history_available": false,
+      "premium_classification": null
+    }
+  ]
+}
