@@ -4,6 +4,7 @@ import { hasPredictionAccess } from "../auth/match-access";
 import { createCustomerAuthServerClient } from "../supabase/auth-server";
 import { CoreClientError, requestPrematchFreshness, getPremiumFootballPrediction } from "./server";
 import { premiumIntelligenceReady } from "./premium-readiness";
+import {logReadFailure} from "./read-recovery";
 
 export async function authorizePremiumMatch(matchId: string) {
   const access = await getCustomerAccess();
@@ -20,6 +21,7 @@ export async function loadPremiumMatch(matchId: string) {
     prediction = freshness.prediction;
   } catch (error) {
     if (!(error instanceof CoreClientError)) throw error;
+    logReadFailure("premium_read_unavailable",matchId,"PREMATCH");
     // No current lifecycle decision: do not resurrect an older stored snapshot.
     return null;
   }

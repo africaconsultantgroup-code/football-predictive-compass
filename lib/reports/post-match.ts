@@ -7,7 +7,9 @@ import type { TeamIdentityRecord } from "../teams/identity";
 
 import { createHash } from "node:crypto";
 import type { FootballPredictionHistoryEntry, FootballScore } from "../predictive-compass/schema";
-import { getLiveFootballPrediction, getLiveFootballPredictionHistory } from "../predictive-compass/server";
+import { getLiveFootballPrediction, getLiveFootballPredictionHistory, getUpcomingFootballPredictions } from "../predictive-compass/server";
+import {premiumIntelligenceReady} from "../predictive-compass/premium-readiness";
+import {boundedReadMap} from "../predictive-compass/read-recovery";
 import { getServerSupabaseClient } from "../supabase/server";
 import { allocatedMatchPesewas, type BasketQuote } from "../payments/match-pricing";
 import { matchPricingV2Enabled } from "../payments/pricing-version";
@@ -43,7 +45,7 @@ export async function listCustomerMatches(userId:string,now=new Date()){
     admin.from("prediction_access_grants").select("product_id,prediction_access_products!inner(prediction_stage,prediction_access_product_matches(match_id,kickoff_at)),prediction_payments(amount,currency,status)").eq("user_id",userId),
     admin.from("prediction_access_product_matches").select("match_id,kickoff_at").lte("kickoff_at",now.toISOString()).order("kickoff_at",{ascending:false}).limit(200),
   ]);
-  if(grantResult.error||membershipResult.error)return[];
+  if(grantResult.error||membershipResult.error)throw new ReportAccessError("unavailable");
   const grants=grantResult.data as unknown as Array<{prediction_access_products:{prediction_stage:string;prediction_access_product_matches:{match_id:string;kickoff_at:string}[]};prediction_payments:PaymentSnapshot|PaymentSnapshot[]|null}>;
   const memberships=membershipResult.data as {match_id:string;kickoff_at:string}[];
   const matches=new Map<string,MatchSeed>();
@@ -73,10 +75,11 @@ export async function listCustomerMatches(userId:string,now=new Date()){
     matches.set(membership.match_id,item);
   }
   const unresolved: MatchSeed[] = [];
-  const resolved=await Promise.all([...matches.values()].map(async item=>{
-    try{const current=await getLiveFootballPrediction(item.matchId);return{...item,purchasedStages:[...item.purchasedStages],competition:current.competition,homeTeam:current.home_team,awayTeam:current.away_team,homeIdentity:current.home_team_identity,awayIdentity:current.away_team_identity,status:current.status,isFinal:isAuthoritativeFinal(current),finalScore:current.current_score,historicalPremiumAvailable:Boolean(current.premium_prematch),historicalPremiumClassification:current.premium_prematch?historicalClassification(current.premium_prematch):null}}
-    catch{unresolved.push(item);return{...item,purchasedStages:[...item.purchasedStages],competition:"",homeTeam:"",awayTeam:"",homeIdentity:undefined as TeamIdentityRecord | undefined,awayIdentity:undefined as TeamIdentityRecord | undefined,status:"Intelligence being prepared",isFinal:false,finalScore:null,historicalPremiumAvailable:false,historicalPremiumClassification:null}}
-  }));
+  const premiumStatesPromise=[...matches.values()].some(item=>item.purchased)?getUpcomingFootballPredictions({syncProducts:false,retryInventory:false}).catch(()=>[]):Promise.resolve([]);
+  const resolved=await boundedReadMap([...matches.values()],async item=>{
+    try{const current=await getLiveFootballPrediction(item.matchId);const premium=current.stage==="PREMATCH"?(await premiumStatesPromise).find(p=>p.match_id===item.matchId):undefined;const lifecycleLabel=current.stage==="FINAL"?"FINAL":current.stage==="HALFTIME"?"HALFTIME":current.stage!=="PREMATCH"?"LIVE":premiumIntelligenceReady(premium)?"PREMIUM READY":premium?.premium_intelligence?.readiness?.customer_visible===false?"PREPARING":"Status temporarily unavailable";return{...item,lifecycleLabel,purchasedStages:[...item.purchasedStages],competition:current.competition,homeTeam:current.home_team,awayTeam:current.away_team,homeIdentity:current.home_team_identity,awayIdentity:current.away_team_identity,status:current.status,isFinal:isAuthoritativeFinal(current),finalScore:current.current_score,historicalPremiumAvailable:Boolean(current.premium_prematch),historicalPremiumClassification:current.premium_prematch?historicalClassification(current.premium_prematch):null}}
+    catch{unresolved.push(item);return{...item,lifecycleLabel:"Match update temporarily delayed",purchasedStages:[...item.purchasedStages],competition:"",homeTeam:"",awayTeam:"",homeIdentity:undefined as TeamIdentityRecord | undefined,awayIdentity:undefined as TeamIdentityRecord | undefined,status:"Match update temporarily delayed",isFinal:false,finalScore:null,historicalPremiumAvailable:false,historicalPremiumClassification:null}}
+  });
   if (unresolved.length) {
     const identities = unresolved.some(item => !purchasedIdentities.has(item.matchId)) ? await loadFixtureIdentities() : new Map();
     await Promise.all(resolved.filter(item => !item.homeTeam || !item.awayTeam).map(async item => {

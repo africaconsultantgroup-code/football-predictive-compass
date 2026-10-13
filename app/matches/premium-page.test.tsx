@@ -97,10 +97,10 @@ describe("Actual match page premium branches", () => {
     expect(markup).toContain("Access active"); expect(markup).not.toContain("Purchased ✓");
     expect(markup).not.toContain("unlock-button");
   });
-  it("preserves paid state and shows preparing when premium is unavailable", async () => {
+  it("preserves paid state and explains transient unavailability", async () => {
     mocks.freshness.mockRejectedValue(new CoreClientError("unavailable"));
     const markup = await html();
-    expect(markup).toContain("Final match intelligence is being prepared");
+    expect(markup).toContain("Premium intelligence is temporarily unavailable");
     expect(markup).toContain("Premium Intelligence Unlocked"); expect(markup).toContain("Purchased ✓");
     expect(markup).toContain("50%"); expect(markup).not.toContain("What Changed");
     expect(markup).not.toContain("unlock-button");

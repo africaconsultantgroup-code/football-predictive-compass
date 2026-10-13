@@ -249,6 +249,7 @@ export default function LiveMatches({ stage = "all", compact = false, embeddedHe
   useEffect(() => {
     mountedRef.current = true;
     const refresh = async () => {
+      if (document.hidden || controllerRef.current) return;
       const controller = new AbortController();
       controllerRef.current = controller;
       try {
@@ -259,11 +260,12 @@ export default function LiveMatches({ stage = "all", compact = false, embeddedHe
         if (!response.ok) throw new Error("live update unavailable");
         const result = footballCustomerLiveMatchListSchema.parse(await response.json());
         if (mountedRef.current) {
+          const previousStage=matchId?ownedMatchStage(matchesRef.current,matchId)?.stage:undefined;
           matchesRef.current = result.matches;
           dispatch({ type: "success", matches: result.matches });
           // Refresh the same owned page as stronger pre-match information arrives.
           // Live snapshots continue through the existing polling path.
-          if (matchId && !document.hidden && !ownedMatchStage(result.matches, matchId)) router.refresh();
+          if (matchId && !document.hidden && ownedMatchStage(result.matches,matchId)?.stage==="FINAL" && previousStage!=="FINAL") router.refresh();
         }
       } catch (error) {
         if (mountedRef.current && !(error instanceof Error && error.name === "AbortError")) {
@@ -280,9 +282,12 @@ export default function LiveMatches({ stage = "all", compact = false, embeddedHe
       }
     };
     refreshRef.current = () => { void refresh(); };
+    const visibility=()=>{if(timeoutRef.current)clearTimeout(timeoutRef.current);if(document.hidden)controllerRef.current?.abort();else void refresh();};
+    document.addEventListener("visibilitychange",visibility);
     void refresh();
     return () => {
       mountedRef.current = false;
+      document.removeEventListener("visibilitychange",visibility);
       refreshRef.current = null;
       controllerRef.current?.abort();
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
