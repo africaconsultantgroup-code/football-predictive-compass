@@ -23,6 +23,7 @@ import { footballMatchIdSchema } from "../../../lib/predictive-compass/schema";
 import { CoreClientError, getLiveFootballPrediction, getUpcomingFootballPredictions, requestPrematchFreshness, getPremiumFootballPrediction } from "../../../lib/predictive-compass/server";
 import { createCustomerAuthServerClient } from "../../../lib/supabase/auth-server";
 import { matchPricingV2Enabled } from "../../../lib/payments/pricing-version";
+import {MatchRefreshBoundary} from "../match-refresh-boundary";
 
 function formatKickoff(value: string | null) {
   if (!value) return "Kickoff time to be confirmed";
@@ -39,6 +40,7 @@ export default async function MatchPage({ params }: { params: Promise<{ matchId:
   let authenticated = false;
   let premiumUnlocked = false;
   let purchased = false;
+  let transientReadFailure = false;
   try {
     const [access, supabase, historical] = await Promise.all([getCustomerAccess(), createCustomerAuthServerClient(), Promise.resolve().then(() => getLiveFootballPrediction(parsed.data)).catch((error: unknown) => {
       console.warn("[customer-history] Stored match read unavailable", { kind: error instanceof CoreClientError ? error.kind : "unavailable" });
@@ -47,8 +49,11 @@ export default async function MatchPage({ params }: { params: Promise<{ matchId:
     if (historical && isAuthoritativeFinal(historical)) {
       if (!access.customer) return <CustomerShell authenticated={false} theme="matches"><div className="match-page"><h1>{historical.home_team} {historical.current_score?.home}–{historical.current_score?.away} {historical.away_team}</h1><p>{historical.competition} · FINAL</p><Link href={`/login?next=${encodeURIComponent(`/matches/${parsed.data}`)}`}>Sign in to view your match report</Link></div></CustomerShell>;
       const report = await loadPostMatchReport(access.customer.id, parsed.data).catch(() => null);
-      if (!report) return <CustomerShell authenticated theme="matches"><div className="match-page" role="alert"><h1>Match report temporarily unavailable</h1><p>Please try again shortly. Your match ownership is preserved.</p><Link href="/my-predictions">Return to My Predictions</Link></div></CustomerShell>;
-      return <CustomerShell authenticated theme="matches"><div className="match-page"><Link href="/my-predictions">← My Predictions</Link><p><a href={`/api/reports/matches/${parsed.data}/pdf`}>Download PDF</a></p><ReportView report={report}/></div></CustomerShell>;
+      if (!report) {
+        const stillEntitled=await hasPredictionAccess({access,supabase,matchId:parsed.data,stage:"prematch"}).catch(()=>false);
+        return <MatchRefreshBoundary state={stillEntitled?"transient":"hidden"} interval={60000}><CustomerShell authenticated theme="matches"><div className="match-page" role="alert"><h1>Match report temporarily unavailable</h1><p>We will check again automatically. Your match ownership is preserved.</p><Link href="/my-predictions">Return to My Predictions</Link></div></CustomerShell></MatchRefreshBoundary>;
+      }
+      return <MatchRefreshBoundary state="final"><CustomerShell authenticated theme="matches"><div className="match-page"><Link href="/my-predictions">← My Predictions</Link><p><a href={`/api/reports/matches/${parsed.data}/pdf`}>Download PDF</a></p><ReportView report={report}/></div></CustomerShell></MatchRefreshBoundary>;
     }
     const unlocked = await hasPredictionAccess({ access, supabase, matchId: parsed.data, stage: "prematch" });
     authenticated = Boolean(access.customer);
@@ -59,6 +64,7 @@ export default async function MatchPage({ params }: { params: Promise<{ matchId:
       freshness = await requestPrematchFreshness(parsed.data);
     } catch (error) {
       if (!(error instanceof CoreClientError)) throw error;
+      transientReadFailure = error.kind === "timeout" || error.kind === "unavailable" && error.retryable;
       const fallback = (await getUpcomingFootballPredictions({ syncProducts: false })).find((item) => item.match_id === parsed.data && item.stage === "PREMATCH");
       if (!fallback) throw error;
       const currentReadinessConfirmed = false;
@@ -80,16 +86,16 @@ export default async function MatchPage({ params }: { params: Promise<{ matchId:
       pageData = { readiness, access, unlocked, prediction, offers, currentReadinessConfirmed: premiumIntelligenceReady(prediction) };
     }
   } catch (error) {
-    if (error instanceof CoreClientError) pageData = null;
+    if (error instanceof CoreClientError) {pageData = null; transientReadFailure = error.kind === "timeout" || error.kind === "unavailable" && error.retryable;}
     else throw error;
   }
 
   if (!pageData) {
     const free = await getFreePrematchPrediction(parsed.data).catch(() => null);
-    return <CustomerShell authenticated={authenticated} theme="matches"><div className="match-page"><Link className="back-link" href="/matches">← Upcoming Matches</Link>
+    return <MatchRefreshBoundary state={premiumUnlocked&&transientReadFailure?"transient":"hidden"}><CustomerShell authenticated={authenticated} theme="matches"><div className="match-page"><Link className="back-link" href="/matches">← Upcoming Matches</Link>
       {free ? <><h1 className="team-identity-heading"><TeamIdentity inline name={free.home_team} team={free.home_team_identity} /><span>vs</span><TeamIdentity inline name={free.away_team} team={free.away_team_identity} /></h1><p>{free.competition} · {formatKickoff(free.kickoff_at)}</p></> : null}
-      {premiumUnlocked ? <><div className="premium-access-state"><strong>Premium Intelligence Unlocked</strong>{purchased ? <span>Purchased ✓</span> : <span>Access active</span>}</div><PremiumMatchExperience prediction={null} free={free} /></> : <>{free ? <FreeMatchDetail free={free} unlocked={false} offers={[]} deliverable={false} /> : null}<div className="service-state" role="alert">Premium intelligence is temporarily unavailable. No payment can be started until a valid snapshot is ready.</div></>}
-    </div></CustomerShell>;
+      {premiumUnlocked ? <><div className="premium-access-state"><strong>Premium Intelligence Unlocked</strong>{purchased ? <span>Purchased ✓</span> : <span>Access active</span>}</div><PremiumMatchExperience prediction={null} free={free} preparationMessage="Premium intelligence is temporarily unavailable. We will check again automatically." /></> : <>{free ? <FreeMatchDetail free={free} unlocked={false} offers={[]} deliverable={false} /> : null}<div className="service-state" role="alert">Premium intelligence is temporarily unavailable. No payment can be started until a valid snapshot is ready.</div></>}
+    </div></CustomerShell></MatchRefreshBoundary>;
 
   }
 
@@ -98,12 +104,14 @@ export default async function MatchPage({ params }: { params: Promise<{ matchId:
   const label = `${readiness.home_team} vs ${readiness.away_team}`;
   let premium = null;
   if (pageData.currentReadinessConfirmed && prediction) {
-    try { premium = await getPremiumFootballPrediction(prediction.prediction_id, parsed.data); } catch { console.warn("[customer-premium] Stored intelligence unavailable", { matchId: parsed.data }); }
+    try { premium = await getPremiumFootballPrediction(prediction.prediction_id, parsed.data); } catch(error) { transientReadFailure=error instanceof CoreClientError&&(error.kind==="timeout"||error.kind==="unavailable"&&error.retryable);console.warn("[customer-premium]", { timestamp:new Date().toISOString(),category:"read_unavailable",match_id:parsed.data,lifecycle:"PREMATCH" }); }
   }
   const matchStatus = !readiness.kickoff_at ? "Kickoff to be confirmed" : new Date(readiness.kickoff_at) > new Date() ? "Upcoming · Pre-Match" : "Kickoff reached";
-  return <CustomerShell authenticated={Boolean(access.customer)} theme="matches"><div className="match-page">
+  return <MatchRefreshBoundary kickoff={readiness.kickoff_at} ready={premiumIntelligenceReady(premium)} state={!unlocked?"hidden":transientReadFailure?"transient":premiumIntelligenceReady(premium)?"current":"hidden"}><CustomerShell authenticated={Boolean(access.customer)} theme="matches"><div className="match-page">
     <nav className="match-breadcrumb" aria-label="Breadcrumb"><Link href="/matches">Upcoming Matches</Link><span aria-hidden="true">›</span><span>{label}</span></nav>
     <section className="match-intelligence-header"><span className={unlocked ? "premium-badge" : "matches-summary-badge"}>{unlocked ? "PREMIUM MATCH INTELLIGENCE" : "FREE PRE-MATCH"}</span><h1 className="team-identity-heading"><TeamIdentity inline name={readiness.home_team} team={readiness.home_team_identity} /><span>vs</span><TeamIdentity inline name={readiness.away_team} team={readiness.away_team_identity} /></h1><p>{readiness.competition} · {formatKickoff(readiness.kickoff_at)}</p><p>{matchStatus}</p>{unlocked ? <div className="premium-access-state"><strong>{access.owner ? "Premium Unlocked" : "Premium Intelligence Unlocked"}</strong>{purchased ? <span>Purchased ✓</span> : <span>Access active</span>}</div> : null}</section>
-    {unlocked ? premiumIntelligenceReady(premium) ? <LiveMatches matchId={parsed.data} identity={readiness}><PremiumMatchExperience prediction={premium} free={free} updating={["queued", "in_progress"].includes(readiness.refresh_status)} /></LiveMatches> : <PremiumMatchExperience prediction={null} free={free} /> : <FreeMatchDetail free={free ?? unavailableFreePrematch(readiness)} unlocked={false} offers={offers} deliverable={readiness.deliverable} pricingV2={matchPricingV2Enabled()} />}
-  </div></CustomerShell>;
+    {unlocked ? premiumIntelligenceReady(premium) ? <LiveMatches matchId={parsed.data} identity={readiness}><PremiumMatchExperience prediction={premium} free={free} updating={["queued", "in_progress"].includes(readiness.refresh_status)} /></LiveMatches> : <PremiumMatchExperience prediction={null} free={free} preparationMessage={historicalPreparationEnded(prediction?.premium_intelligence?.readiness?.status)||readiness.kickoff_at&&Date.parse(readiness.kickoff_at)<=Date.now()?"Kickoff reached. Premium intelligence is not available in the current release. Awaiting confirmed match updates.":undefined}/> : <FreeMatchDetail free={free ?? unavailableFreePrematch(readiness)} unlocked={false} offers={offers} deliverable={readiness.deliverable} pricingV2={matchPricingV2Enabled()} />}
+  </div></CustomerShell></MatchRefreshBoundary>;
 }
+
+function historicalPreparationEnded(status:string|undefined){return status==="LIVE"||status==="HISTORICAL";}

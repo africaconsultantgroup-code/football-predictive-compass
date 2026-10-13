@@ -15,6 +15,7 @@ import {
 } from "./schema";
 import { syncLivePredictionProducts, syncUpcomingPredictionProducts } from "../payments/product-sync";
 import { matchPricingV2Enabled } from "../payments/pricing-version";
+import {recoverRead} from "./read-recovery";
 
 const DEFAULT_TIMEOUT_MS = 8_000;
 const INVENTORY_TIMEOUT_MS = 20_000;
@@ -28,7 +29,7 @@ export type CoreClientErrorKind =
   | "malformed";
 
 export class CoreClientError extends Error {
-  constructor(public readonly kind: CoreClientErrorKind) {
+  constructor(public readonly kind: CoreClientErrorKind, public readonly retryable = kind === "timeout") {
     super(`Predictive Compass Core request failed: ${kind}`);
     this.name = "CoreClientError";
   }
@@ -63,12 +64,12 @@ export function createFootballCoreClient({
   timeoutMs = DEFAULT_TIMEOUT_MS,
   inventoryTimeoutMs = timeoutMs === DEFAULT_TIMEOUT_MS ? INVENTORY_TIMEOUT_MS : timeoutMs,
 }: CoreClientOptions) {
-  const request = async (path: string, method: "GET" | "POST" = "GET", allowNotFound = false, deadlineMs = timeoutMs) => {
+  const request = async (path: string, method: "GET" | "POST" = "GET", allowNotFound = false, deadlineMs = timeoutMs, recover = false) => {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), deadlineMs);
 
     try {
-      const response = await fetchImplementation(new URL(path, `${baseUrl.replace(/\/$/, "")}/`), {
+      const operation = () => fetchImplementation(new URL(path, `${baseUrl.replace(/\/$/, "")}/`), {
         method,
         headers: {
           Accept: "application/json",
@@ -77,19 +78,20 @@ export function createFootballCoreClient({
         cache: "no-store",
         signal: controller.signal,
       });
+      const response = await (recover && method === "GET" ? recoverRead(operation) : operation());
 
       if (allowNotFound && response.status === 404) return null;
       if (!response.ok) {
-        throw new CoreClientError(mapStatus(response.status));
+        throw new CoreClientError(mapStatus(response.status), response.status >= 500);
       }
 
       return normalizeFixtureTeamMetadata(await parseJson(response));
     } catch (error) {
       if (error instanceof CoreClientError) throw error;
       if (error instanceof Error && error.name === "AbortError") {
-        throw new CoreClientError("timeout");
+        throw new CoreClientError("timeout", true);
       }
-      throw new CoreClientError("unavailable");
+      throw new CoreClientError("unavailable", true);
     } finally {
       clearTimeout(timeout);
     }
@@ -100,7 +102,7 @@ export function createFootballCoreClient({
   const inventoryRequest = async (path: string, allowNotFound = false) => {
     try { return await request(path, "GET", allowNotFound, inventoryTimeoutMs); }
     catch (error) {
-      if (!(error instanceof CoreClientError) || !["timeout", "unavailable"].includes(error.kind)) throw error;
+      if (!(error instanceof CoreClientError) || !error.retryable) throw error;
       return request(path, "GET", allowNotFound, inventoryTimeoutMs);
     }
   };
@@ -119,7 +121,7 @@ export function createFootballCoreClient({
     },
     async getStoredFreePrematch(matchId: string) {
       const id = footballMatchIdSchema.parse(matchId);
-      const value = await request(`api/v1/domains/football/matches/${id}/free`, "GET", true);
+      const value = await request(`api/v1/domains/football/matches/${id}/free`, "GET", true, timeoutMs, true);
       if (value === null) return null;
       const free = freePrematchSchema.parse(value);
       if (free.match_id !== id) throw new CoreClientError("malformed");
@@ -205,7 +207,7 @@ export function createFootballCoreClient({
       try {
         // This endpoint retrieves persisted historical snapshots as well as live state.
         // Give the read the same bounded budget as stored forecast inventory.
-        const value = await request(`api/v1/domains/football/matches/${encodeURIComponent(validMatchId.data)}/prediction`, "GET", false, inventoryTimeoutMs);
+        const value = await request(`api/v1/domains/football/matches/${encodeURIComponent(validMatchId.data)}/prediction`, "GET", false, inventoryTimeoutMs, true);
         return value && typeof value === "object" && ("premium_prematch" in value || "history" in value)
           ? footballHistoricalMatchSchema.parse(value) : footballMatchPredictionSchema.parse(value);
       } catch (error) {

@@ -1,6 +1,7 @@
 import "server-only";
 import {officialPerformanceSchema,type OfficialPerformance} from "./performance-contract";
 import {performanceWindow,summarizePerformance,type PerformancePeriod,type PerformanceReport,type PerformanceMatch} from "./performance";
+import {recoverRead,logReadFailure} from "../predictive-compass/read-recovery";
 
 export class PerformanceUnavailable extends Error {constructor(){super("Official performance is temporarily unavailable.");}}
 export function projectPerformance(source:OfficialPerformance,window:PerformanceReport["window"]):PerformanceReport {
@@ -19,8 +20,8 @@ export async function loadPerformanceReport(period:PerformancePeriod,options:{no
  if(!baseUrl||!apiKey)throw new PerformanceUnavailable();
  try{
   const url=new URL("/api/v1/domains/football/performance/official",baseUrl);url.search=new URLSearchParams({from:window.from,to:window.to}).toString();
-  const response=await(options.fetch??fetch)(url,{method:"GET",headers:{Accept:"application/json","x-api-key":apiKey},cache:"no-store",signal:AbortSignal.timeout(20000)});
+  const response=await recoverRead(()=>(options.fetch??fetch)(url,{method:"GET",headers:{Accept:"application/json","x-api-key":apiKey},cache:"no-store",signal:AbortSignal.timeout(20000)}));
   if(!response.ok)throw new PerformanceUnavailable();
   return projectPerformance(officialPerformanceSchema.parse(await response.json()),window);
- }catch{throw new PerformanceUnavailable();}
+ }catch{logReadFailure("official_report_unavailable");throw new PerformanceUnavailable();}
 }

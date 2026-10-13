@@ -1,11 +1,14 @@
 import {beforeEach,it,expect,vi} from "vitest";
 import {renderToStaticMarkup} from "react-dom/server";
-vi.mock("server-only",()=>({}));vi.mock("next/server",()=>({connection:async()=>undefined}));
+vi.mock("server-only",()=>({}));vi.mock("../automatic-refresh",()=>({AutomaticRefresh:()=>null}));vi.mock("next/server",()=>({connection:async()=>undefined}));
 vi.mock("../../lib/auth/session",()=>({getCurrentUser:async()=>null}));
 vi.mock("../customer-shell",()=>({CustomerShell:({children}:{children:React.ReactNode})=>children}));
-const mocks=vi.hoisted(()=>({load:vi.fn()}));vi.mock("../../lib/reports/performance-server",()=>({loadPerformanceReport:mocks.load}));
+const mocks=vi.hoisted(()=>({load:vi.fn(),weekend:vi.fn()}));vi.mock("../../lib/reports/performance-server",()=>({loadPerformanceReport:mocks.load}));
+vi.mock("../../lib/reports/weekend-server",()=>({loadWeekendReport:mocks.weekend}));
+import {makeWeekendReport} from "../../lib/reports/weekend";
 import PerformancePage from "./page";
 import {performanceWindow,summarizePerformance,PERFORMANCE_EMPTY} from "../../lib/reports/performance";
 beforeEach(()=>{vi.clearAllMocks();mocks.load.mockResolvedValue({window:performanceWindow("today",new Date("2026-10-11Z")),matches:[],summary:summarizePerformance([])});});
 it("renders the expected live empty state and the same selected-period PDF",async()=>{const html=renderToStaticMarkup(await PerformancePage({searchParams:Promise.resolve({period:"today"})}));expect(mocks.load).toHaveBeenCalledWith("today");expect(html).toContain(PERFORMANCE_EMPTY);expect(html).toContain("/api/reports/performance/pdf?period=today");expect(html).not.toContain("97%");});
 it("handles a malformed/unavailable Core source without exposing raw errors or fake metrics",async()=>{mocks.load.mockRejectedValue(Error("secret model payload"));const html=renderToStaticMarkup(await PerformancePage({searchParams:Promise.resolve({period:"season"})}));expect(html).toContain("temporarily unavailable");expect(html).not.toContain("secret model payload");expect(html).not.toContain("Download PDF");expect(html).not.toContain("Compass Pick Accuracy");});
+it("defaults to the latest weekend directly with prominent category navigation and downloads",async()=>{mocks.weekend.mockResolvedValue(makeWeekendReport({from:"2026-10-10",to:"2026-10-12"},[]));const html=renderToStaticMarkup(await PerformancePage({searchParams:Promise.resolve({})}));expect(mocks.weekend).toHaveBeenCalledWith(null);expect(mocks.load).not.toHaveBeenCalled();expect(html).toContain("Weekend</span> Prediction Report");expect(html).toContain("View Full Weekend Report");expect(html).toContain("Download Weekend PDF");expect(html).toContain("Official Performance");expect(html).toContain("No qualifying T-30 READY settlements yet");});
